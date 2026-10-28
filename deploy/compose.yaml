@@ -1,0 +1,50 @@
+# Production: PostgreSQL, Kept and Caddy on one host. Settings come from deploy/.env (see .env.example).
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kept
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: kept
+      KEPT_APP_PASSWORD: ${KEPT_APP_PASSWORD:?}
+    volumes:
+      - ./db-init:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "kept"]
+      interval: 5s
+      retries: 10
+
+  kept:
+    build: ..
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://kept_app:${KEPT_APP_PASSWORD}@postgres:5432/kept
+      DATABASE_OWNER_URL: postgres://kept:${POSTGRES_PASSWORD}@postgres:5432/kept
+      PORT: 3000
+      PUBLIC_URL: https://${KEPT_HOST:?}
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - kept
+    environment:
+      KEPT_HOST: ${KEPT_HOST}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

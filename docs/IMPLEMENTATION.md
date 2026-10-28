@@ -445,7 +445,7 @@ sequenceDiagram
 - **Server:** TypeScript on Node with Fastify. Route schemas validate requests and generate the OpenAPI spec (§3). The MCP server uses the official MCP TypeScript SDK.
 - **Database:** PostgreSQL, one database for every household (§1).
 - **Database access:** Kysely for typed queries and migrations.
-- **Hosting:** one VPS running Docker Compose: PostgreSQL, the Kept server with its scheduler, and Caddy in front for HTTPS with automatic certificates. Assistants' connectors need the public HTTPS URL ([`VISION.md` §4.B](VISION.md#supported-assistants)).
-- **OAuth2:** Kept runs its own authorization server, with no identity vendor, built on `oidc-provider` ([§5.4](#54-connecting-an-assistant)). Its signing key and cookie secret are created on first start and kept in `oauth_keys`. Emails go through a `Mailer`; the only one so far logs them.
+- **Hosting:** one VPS running Docker Compose: PostgreSQL, the Kept server with its scheduler, and Caddy in front for HTTPS with automatic certificates. Assistants' connectors need the public HTTPS URL ([`VISION.md` §4.B](VISION.md#supported-assistants)). The server applies migrations on start. A host with a bare IP uses an sslip.io name, such as `203-0-113-7.sslip.io`, so Caddy can get an ordinary certificate.
+- **OAuth2:** Kept runs its own authorization server, with no identity vendor, built on `oidc-provider` ([§5.4](#54-connecting-an-assistant)). Its signing key and cookie secret are created on first start and kept in `oauth_keys`. Emails go through a `Mailer`; the only one logs them, so sign-in codes are read from the server log.
 - **`PUBLIC_URL`** is the address assistants reach. It is the OAuth2 issuer and, with `/mcp`, the resource every token is bound to, so it must match the deployed HTTPS address exactly.
 - **Scheduler:** the server creates due repeats every 15 minutes (`SCHEDULER_INTERVAL_MS`), each on its owner's local date.

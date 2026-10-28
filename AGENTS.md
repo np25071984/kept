@@ -21,7 +21,7 @@ Kept teaches the user's own AI assistant to track a household's expenses: what t
 - `docs/VISION.md`: product scope, the agent's behavior, the rules the ledger enforces, and what each part is for. No schema, endpoints, payloads, task lists, dates or progress.
 - `docs/IMPLEMENTATION.md`: how Kept is built: architecture, data model, REST API, security and the MCP server. Name a file or function only as a pointer.
 - `docs/ROADMAP.md`: remaining tasks and their order, without arguing scope.
-- `docs/DEVELOPMENT.md`: running Kept and its tests locally, and the source layout.
+- `docs/DEVELOPMENT.md`: running Kept and its tests locally, deploying it, and the source layout.
 - `AGENTS.md`: orientation and conventions only.
 
 When `VISION.md` changes a position, scan the other documents for restatements of the old position and fix each one or replace it with a pointer.

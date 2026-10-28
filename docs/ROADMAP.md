@@ -16,7 +16,8 @@ The playbook, delivered to any assistant.
 - [x] Tool descriptions that work without server instructions: when to call `get_playbook`, and that `log_transaction` comes only after confirmation (`IMPLEMENTATION.md` §5.3).
 - [x] Resources for the household's vocabulary and the prompts `setup_household`, `log_expense` and `catch_up` (`IMPLEMENTATION.md` §5.2).
 - [ ] Send email: pick a provider and replace the logging `Mailer` for sign-in codes and invites (`IMPLEMENTATION.md` §5.4, §6).
-- [ ] Deploy with Docker Compose and Caddy on the VPS at the public HTTPS URL (`IMPLEMENTATION.md` §6).
+- [x] Docker Compose deployment with Caddy: `Dockerfile` and `deploy/` (`IMPLEMENTATION.md` §6).
+- [ ] Deploy on the VPS under an sslip.io name and create the first household (`DEVELOPMENT.md`).
 
 **Gate:** Kept connects as a custom connector in Claude on the web, and the conversation in `VISION.md` §3.1 runs end to end from the Claude phone app.
 

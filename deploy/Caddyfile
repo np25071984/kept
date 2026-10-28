@@ -1,0 +1,5 @@
+# HTTPS with an automatic certificate for KEPT_HOST, forwarded to the Kept server.
+{$KEPT_HOST} {
+	encode gzip
+	reverse_proxy kept:3000
+}
