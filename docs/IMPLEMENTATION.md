@@ -103,9 +103,9 @@ Line items, cost centers, rules and notes store a link to the category's `id`, s
 | `household_id` | UUID      | Yes      |                                                             |
 | `email`        | String    | Yes      |                                                             |
 | `invited_by`   | UUID      | Yes      | An owner. Set from the authenticated identity.              |
-| `token_hash`   | String    | Yes      | Hash of the token in the emailed sign-in link.              |
+| `token_hash`   | String    | Yes      | Hash of the emailed token, for `POST /api/v1/invites/accept`. |
 | `expires_at`   | Timestamp | Yes      |                                                             |
-| `accepted_at`  | Timestamp | No       | Set when the invitee signs in; they join as a `member`.     |
+| `accepted_at`  | Timestamp | No       | Set when the invitee joins as a `member`: by signing in from an assistant ([§5.4](#54-connecting-an-assistant)) or with the token. |
 
 **Transactions** (one row per payment)
 
@@ -256,7 +256,7 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `POST`   | `/api/v1/updates/seen`      | Mark updates as shown.                                                                            |
 | `GET`    | `/api/v1/setup`             | The household's setup steps and whether the caller has been introduced.                          |
 | `PATCH`  | `/api/v1/setup`             | Save confirmed setup answers: currency, the caller's time zone, step states, the introduction.   |
-| `POST`   | `/api/v1/invites`           | Owners only. Invite a member by email; Kept sends the sign-in link.                               |
+| `POST`   | `/api/v1/invites`           | Owners only. Invite a member by email; Kept emails them the address to add to their assistant.    |
 | `DELETE` | `/api/v1/invites/{id}`      | Cancel an invite that hasn't been accepted.                                                       |
 | `POST`   | `/api/v1/invites/accept`    | No API key. Accept with the token from the link: creates the member and returns their first API key. |
 | `GET`    | `/api/v1/api-keys`          | The caller's active API keys.                                                                     |
@@ -340,7 +340,7 @@ A changed total resizes the rest line; if the explicit line items would exceed t
 
 ## 4. Security
 
-API Key authentication / OAuth2 tokens to prevent unauthorized submissions.
+Every request except sign-in and discovery carries a bearer token: a member's API key, or an OAuth2 access token issued to an assistant for the MCP address ([§5.4](#54-connecting-an-assistant)). The REST API and `/mcp` accept both. A request without a valid one gets 401 with `WWW-Authenticate: Bearer resource_metadata="…"`, which tells an MCP client where to sign in.
 
 Each household member gets their own API key or OAuth2 login. The ledger sets `spent_by` from the authenticated identity on every write, so the AI never sends it and can't spoof it. A single key shared by the whole household would make every entry look like the same person, and break [privacy](VISION.md#households-accounts-and-privacy), so keys must be per user. Every read is filtered by the caller's identity on the server, not by the client.
 
@@ -350,7 +350,7 @@ PostgreSQL row-level security backs up the filtering in code. Every household-sc
 
 ## 5. MCP Server
 
-The MCP server is stateless Streamable HTTP at `POST /mcp`, in the same process as the REST API. A request is authenticated like any REST call, by its bearer token (an API key until OAuth2 sign-in exists), so every tool call runs as that member. Each tool forwards to its REST route in-process with the same `Authorization` header and returns the JSON response; a REST error comes back as a tool error with the same `{"error": …}` body, which tells the agent what to fix (an unknown category lists the known ones). Responses are plain JSON, with no session and no server-initiated stream, so `GET` and `DELETE /mcp` return 405.
+The MCP server is stateless Streamable HTTP at `POST /mcp`, in the same process as the REST API. A request is authenticated like any REST call, by its bearer token, so every tool call runs as that member. Each tool forwards to its REST route in-process with the same `Authorization` header and returns the JSON response; a REST error comes back as a tool error with the same `{"error": …}` body, which tells the agent what to fix (an unknown category lists the known ones). Responses are plain JSON, with no session and no server-initiated stream, so `GET` and `DELETE /mcp` return 405.
 
 ### 5.1 Tools
 
@@ -407,11 +407,45 @@ Which assistants support what is in [`VISION.md` §4.B](VISION.md#supported-assi
 - **Tool descriptions carry the playbook.** Where server instructions are ignored, the description is the only guidance the model gets. "Call `get_playbook` before asking the user anything about an expense" has to be in the tool descriptions themselves.
 - **Reads work everywhere, writes may not.** If an assistant's phone app blocks write tools (as reported for ChatGPT on iOS), the user can still ask about spending there but has to log from the web or another assistant. The [messaging bot](VISION.md#other-clients) is the fallback.
 
+### 5.4 Connecting an Assistant
+
+A member adds `<PUBLIC_URL>/mcp` as a custom connector in their assistant's web settings ([`VISION.md` §4.B](VISION.md#supported-assistants)). The assistant finds Kept's authorization server, registers itself and signs the member in:
+
+```mermaid
+sequenceDiagram
+    participant A as Assistant
+    participant K as Kept
+    actor M as Member
+    A->>K: POST /mcp
+    K-->>A: 401, resource_metadata
+    A->>K: GET /.well-known/oauth-protected-resource/mcp, /.well-known/oauth-authorization-server
+    A->>K: POST /oauth/register (client name, redirect URI)
+    A->>M: Opens /oauth/authorize (PKCE)
+    M->>K: Email
+    K-->>M: 6-digit code by email
+    M->>K: Code
+    opt Invited, no account yet
+        M->>K: Name and time zone: joins the household
+    end
+    M->>K: Allow
+    K-->>A: Redirect with authorization code
+    A->>K: POST /oauth/token
+    K-->>A: Access token (1 hour), refresh token (90 days)
+    A->>K: POST /mcp, Bearer token
+```
+
+- **The code is typed, not clicked.** On a phone, the assistant's sign-in browser and the mail app's browser are different, so an emailed link arrives without the sign-in session. The email also carries a link, which works in the same browser. A code expires after 10 minutes or 5 wrong tries.
+- **Sign-in doesn't reveal accounts.** An email with no account and no open invite gets the same "check your email" page and no code.
+- **Invited people join by signing in.** A verified email with an open invite and no account gets a page for their name and time zone, then joins as a `member`; their assistant then runs the new-member path of [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
+- **Tokens:** PKCE with S256 is required. Access tokens are opaque, bound to `<PUBLIC_URL>/mcp` and scope `kept`; a request with no scope gets `kept`. Refresh tokens rotate and don't end with the browser session, so the assistant stays connected.
+- **State** (clients, grants, sessions, codes, tokens) lives in `oauth_models`, and sign-in codes in `sign_in_codes`, hashed. Neither belongs to a household, so neither has row-level security. `SECURITY DEFINER` functions find a user or an open invite by email and a user's household before the household is known.
+
 ## 6. Stack and Deployment
 
 - **Server:** TypeScript on Node with Fastify. Route schemas validate requests and generate the OpenAPI spec (§3). The MCP server uses the official MCP TypeScript SDK.
 - **Database:** PostgreSQL, one database for every household (§1).
 - **Database access:** Kysely for typed queries and migrations.
 - **Hosting:** one VPS running Docker Compose: PostgreSQL, the Kept server with its scheduler, and Caddy in front for HTTPS with automatic certificates. Assistants' connectors need the public HTTPS URL ([`VISION.md` §4.B](VISION.md#supported-assistants)).
-- **OAuth2:** Kept runs its own authorization server, with no identity vendor, built on `oidc-provider`. It supports what MCP clients need to connect: authorization code with PKCE, dynamic client registration, refresh tokens, and the metadata documents clients discover it by. Assistants and the web UI sign in to the same accounts. Members sign in with a link sent to their email. Emails go through a `Mailer`; the only one so far logs the link.
+- **OAuth2:** Kept runs its own authorization server, with no identity vendor, built on `oidc-provider` ([§5.4](#54-connecting-an-assistant)). Its signing key and cookie secret are created on first start and kept in `oauth_keys`. Emails go through a `Mailer`; the only one so far logs them.
+- **`PUBLIC_URL`** is the address assistants reach. It is the OAuth2 issuer and, with `/mcp`, the resource every token is bound to, so it must match the deployed HTTPS address exactly.
 - **Scheduler:** the server creates due repeats every 15 minutes (`SCHEDULER_INTERVAL_MS`), each on its owner's local date.

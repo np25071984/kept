@@ -10,12 +10,12 @@ The remaining work toward the product `VISION.md` describes, in order. Each task
 
 The playbook, delivered to any assistant.
 
-- [ ] Kept's own OAuth2 authorization server on `oidc-provider`, mounted in Fastify: authorization code with PKCE, dynamic client registration, refresh tokens, discovery metadata; one login per household member (`IMPLEMENTATION.md` §4, §6).
+- [x] Kept's own OAuth2 authorization server on `oidc-provider`, mounted in Fastify: authorization code with PKCE, dynamic client registration, refresh tokens, discovery metadata; one login per household member (`IMPLEMENTATION.md` §4, §6).
 - [x] Every tool in `IMPLEMENTATION.md` §5.1 as a thin call to the REST API, including `get_playbook`.
 - [x] Write the playbook: the question rules from `VISION.md` §3 as server instructions, and the same text returned by `get_playbook`, including the first conversation for a new household and a new member (`VISION.md` §3.6). Review the wording once real assistants run it (Phase 3).
 - [x] Tool descriptions that work without server instructions: when to call `get_playbook`, and that `log_transaction` comes only after confirmation (`IMPLEMENTATION.md` §5.3).
 - [x] Resources for the household's vocabulary and the prompts `setup_household`, `log_expense` and `catch_up` (`IMPLEMENTATION.md` §5.2).
-- [ ] Send invite emails: pick an email provider and replace the logging `Mailer` (`IMPLEMENTATION.md` §6).
+- [ ] Send email: pick a provider and replace the logging `Mailer` for sign-in codes and invites (`IMPLEMENTATION.md` §5.4, §6).
 - [ ] Deploy with Docker Compose and Caddy on the VPS at the public HTTPS URL (`IMPLEMENTATION.md` §6).
 
 **Gate:** Kept connects as a custom connector in Claude on the web, and the conversation in `VISION.md` §3.1 runs end to end from the Claude phone app.

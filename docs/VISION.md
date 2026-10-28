@@ -346,7 +346,7 @@ flowchart TD
 - **Nothing is saved before the summary is confirmed,** as with every other write.
 - **The starting categories are the same for every household:** Groceries, Eating out, Car, Home, Kids, Health, Clothing, Travel and Other. The interview adds to them and links them to cost centers (Car to both cars, Kids to Zoe and Maya).
 - **Repeating bills aren't asked about.** They come up when one is logged ([Repeating Spending](#35-repeating-spending-phone-rent-subscriptions)).
-- **Invites come from Kept.** Only an owner can invite. Kept emails a sign-in link; the invited member joins the household and connects their own assistant, which runs the new-member path above.
+- **Invites come from Kept.** Only an owner can invite. Kept emails the invited person; they add Kept to their own assistant and sign in with that email, which joins them to the household, and their assistant runs the new-member path above.
 - **A new member doesn't set up the household again.** Their agent introduces Kept, names the shared cost centers and categories, and asks whether anything should be logged as private.
 
 ## 4. Primary Features & Requirements

@@ -163,6 +163,31 @@ export interface Database {
     note_id: string
     category_id: string
   }
+  oauth_models: {
+    name: string
+    id: string
+    payload: Json<Record<string, unknown>>
+    grant_id: string | null
+    user_code: string | null
+    uid: string | null
+    expires_at: Timestamp | null
+    consumed_at: Timestamp | null
+  }
+  oauth_keys: {
+    id: number
+    jwks: Json<{ keys: Record<string, unknown>[] }>
+    cookie_keys: string[]
+  }
+  sign_in_codes: {
+    id: Generated<string>
+    interaction_uid: string
+    email: string
+    code_hash: string
+    expires_at: Timestamp
+    attempts: Generated<number>
+    verified_at: Timestamp | null
+    created_at: Generated<Date>
+  }
 }
 
 // The transaction a repeat creates, in the same shape POST /transactions accepts.

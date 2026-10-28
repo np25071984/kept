@@ -4,7 +4,10 @@ import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify'
 import { inHousehold, type Db, type Tx } from '../db/db.js'
 import type { Caller } from '../ledger/caller.js'
 import { ApiError } from '../ledger/errors.js'
-import { authenticate, type Mailer } from '../ledger/households.js'
+import { API_KEY_PREFIX, authenticate, callerFor, type Mailer } from '../ledger/households.js'
+import { loadKeys } from '../oauth/keys.js'
+import { createOAuth, verifyAccessToken } from '../oauth/provider.js'
+import { oauthRoutes, protectedResourceMetadataUrl } from '../oauth/routes.js'
 import { householdRoutes } from './routes/household.js'
 import { ledgerRoutes } from './routes/ledger.js'
 import { transactionRoutes } from './routes/transactions.js'
@@ -44,13 +47,25 @@ export async function buildApp(deps: AppDeps): Promise<App> {
     },
   })
 
+  const oauth = createOAuth(deps.db, await loadKeys(deps.db), deps.publicUrl)
+
+  // A bearer token is a member's API key or an OAuth2 access token issued for the MCP address (IMPLEMENTATION.md §4).
   app.decorateRequest('caller', null)
-  app.addHook('onRequest', async (request) => {
+  app.addHook('onRequest', async (request, reply) => {
     if (request.routeOptions.config?.public) return
     const header = request.headers.authorization ?? ''
-    const key = header.startsWith('Bearer ') ? header.slice(7).trim() : ''
-    const caller = key ? await authenticate(deps.db, key) : null
-    if (!caller) throw new ApiError(401, 'unauthorized', 'A valid API key is required: "Authorization: Bearer kept_…".')
+    const token = header.startsWith('Bearer ') ? header.slice(7).trim() : ''
+    let caller = null
+    if (token.startsWith(API_KEY_PREFIX)) caller = await authenticate(deps.db, token)
+    else if (token) {
+      const userId = await verifyAccessToken(oauth, token)
+      caller = userId ? await callerFor(deps.db, userId) : null
+    }
+    if (!caller) {
+      // MCP clients follow resource_metadata to find where to sign in (RFC 9728).
+      reply.header('www-authenticate', `Bearer resource_metadata="${protectedResourceMetadataUrl(oauth)}"${token ? ', error="invalid_token"' : ''}`)
+      throw new ApiError(401, 'unauthorized', 'Sign in, or send an API key: "Authorization: Bearer kept_…".')
+    }
     request.caller = caller
   })
 
@@ -81,5 +96,6 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   ledgerRoutes(app, routeDeps)
   householdRoutes(app, routeDeps)
   mcpRoutes(app)
+  oauthRoutes(app, { db: deps.db, mailer: deps.mailer, oauth })
   return app
 }

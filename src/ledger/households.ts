@@ -52,16 +52,22 @@ export async function authenticate(db: Db, key: string): Promise<Caller | null> 
   if (!key.startsWith(API_KEY_PREFIX)) return null
   const found = await sql<{ user_id: string; household_id: string }>`select * from kept_authenticate(${hashSecret(key)})`.execute(db)
   const row = found.rows[0]
-  if (!row) return null
-  return inHousehold(db, row.household_id, async (tx) => {
+  return row ? callerFor(db, row.user_id, row.household_id) : null
+}
+
+// The caller for a user whose household is known, e.g. from an OAuth2 access token.
+export async function callerFor(db: Db, userId: string, householdId?: string): Promise<Caller | null> {
+  const household = householdId ?? (await sql<{ household_id: string | null }>`select kept_user_household(${userId}) as household_id`.execute(db)).rows[0]?.household_id
+  if (!household) return null
+  return inHousehold(db, household, async (tx) => {
     const user = await tx
       .selectFrom('users')
       .innerJoin('households', 'households.id', 'users.household_id')
       .select(['users.id', 'users.name', 'users.role', 'users.timezone', 'households.currency'])
-      .where('users.id', '=', row.user_id)
+      .where('users.id', '=', userId)
       .executeTakeFirst()
     if (!user) return null
-    return { user_id: user.id, household_id: row.household_id, role: user.role, name: user.name, timezone: user.timezone, currency: user.currency }
+    return { user_id: user.id, household_id: household, role: user.role, name: user.name, timezone: user.timezone, currency: user.currency }
   })
 }
 
@@ -114,7 +120,9 @@ export async function updateSetup(tx: Tx, caller: Caller, patch: SetupPatch) {
 // Invites (VISION.md §3.6, "Invites come from Kept").
 
 export interface Mailer {
-  sendInvite(input: { to: string; link: string; inviter: string; household: string }): Promise<void>
+  // `connect` is the MCP address to add to an assistant; signing in there with the invited email joins the household.
+  sendInvite(input: { to: string; link: string; connect: string; inviter: string; household: string }): Promise<void>
+  sendSignInCode(input: { to: string; code: string; link: string }): Promise<void>
 }
 
 export async function createInvite(tx: Tx, caller: Caller, email: string, mailer: Mailer, publicUrl: string) {
@@ -130,7 +138,8 @@ export async function createInvite(tx: Tx, caller: Caller, email: string, mailer
     .returning(['id', 'email', 'expires_at'])
     .executeTakeFirstOrThrow()
   const household = await tx.selectFrom('households').select('name').executeTakeFirstOrThrow()
-  await mailer.sendInvite({ to: address, link: `${publicUrl.replace(/\/$/, '')}/invite#token=${token}`, inviter: caller.name, household: household.name })
+  const base = publicUrl.replace(/\/$/, '')
+  await mailer.sendInvite({ to: address, link: `${base}/invite#token=${token}`, connect: `${base}/mcp`, inviter: caller.name, household: household.name })
   return invite
 }
 
@@ -147,11 +156,17 @@ export async function acceptInvite(db: Db, input: { token: string; name: string;
   const invite = found.rows[0]
   if (!invite || invite.accepted_at || invite.expires_at < new Date()) throw new ApiError(410, 'invite_invalid', 'This invite link is invalid, used or expired.')
   return inHousehold(db, invite.household_id, async (tx) => {
-    const user = await tx.insertInto('users').values({ household_id: invite.household_id, name: input.name.trim(), email: invite.email, role: 'member', timezone }).returning('id').executeTakeFirstOrThrow()
-    await tx.updateTable('invites').set({ accepted_at: new Date() }).where('id', '=', invite.id).execute()
-    const key = await issueApiKey(tx, invite.household_id, user.id, 'First key')
-    return { user_id: user.id, api_key: key.key }
+    const userId = await joinHousehold(tx, invite, input.name, timezone)
+    const key = await issueApiKey(tx, invite.household_id, userId, 'First key')
+    return { user_id: userId, api_key: key.key }
   })
+}
+
+// Creates the invited member and marks the invite used. Runs inside the invite's household.
+export async function joinHousehold(tx: Tx, invite: { id: string; household_id: string; email: string }, name: string, timezone: string): Promise<string> {
+  const user = await tx.insertInto('users').values({ household_id: invite.household_id, name: name.trim(), email: invite.email, role: 'member', timezone: validateTimeZone(timezone) }).returning('id').executeTakeFirstOrThrow()
+  await tx.updateTable('invites').set({ accepted_at: new Date() }).where('id', '=', invite.id).execute()
+  return user.id
 }
 
 export async function listApiKeys(tx: Tx, caller: Caller) {

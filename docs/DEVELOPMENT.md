@@ -19,13 +19,13 @@ npm run dev              # http://localhost:3000, OpenAPI at /api/v1/openapi.jso
 
 ## Trying the MCP server
 
-Until OAuth2 sign-in exists, an MCP client connects to `http://localhost:3000/mcp` with an API key as its bearer token. In Claude Code:
+An MCP client connects to `http://localhost:3000/mcp` and signs in through OAuth2; sign-in codes appear in the server log instead of email. A client that takes a header can skip sign-in with an API key. In Claude Code:
 
 ```sh
 claude mcp add --transport http kept http://localhost:3000/mcp --header "Authorization: Bearer kept_…"
 ```
 
-Phone apps need the deployed HTTPS URL and OAuth2 (`ROADMAP.md`, Phase 2).
+Phone apps need the deployed HTTPS address, set as `PUBLIC_URL`.
 
 ## Tests
 
@@ -42,6 +42,7 @@ Integration tests drop and recreate the `kept_test` schema, then connect as `kep
 - `src/domain`: pure functions for everything the ledger decides (lines and shares, matching, rules, coverage, repeat dates, summaries), unit-tested in `test/unit`.
 - `src/ledger`: database reads and writes for each feature, run inside a household-scoped transaction.
 - `src/mcp`: the MCP server, its tools and the playbook text.
+- `src/oauth`: the OAuth2 authorization server, sign-in by emailed code, and the sign-in and consent pages.
 - `src/http`: Fastify routes and their TypeBox schemas, which also generate the OpenAPI spec.
 - `src/db`: the Kysely connection, the schema types and migrations.
 - `src/cli`: `migrate`, `create-household` and `openapi`.

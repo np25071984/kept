@@ -12,6 +12,7 @@ export interface Harness {
   db: Db
   owner: Db
   invites: { to: string; link: string }[]
+  codes: { to: string; code: string; link: string }[]
   close(): Promise<void>
 }
 
@@ -22,10 +23,14 @@ export async function startHarness(): Promise<Harness> {
   await migrateToLatest(owner)
   const db = createDb(APP_URL)
   const invites: { to: string; link: string }[] = []
-  const mailer: Mailer = { async sendInvite({ to, link }) { invites.push({ to, link }) } }
+  const codes: { to: string; code: string; link: string }[] = []
+  const mailer: Mailer = {
+    async sendInvite({ to, link }) { invites.push({ to, link }) },
+    async sendSignInCode(input) { codes.push(input) },
+  }
   const app = await buildApp({ db, mailer, publicUrl: 'https://kept.test' })
   return {
-    app, db, owner, invites,
+    app, db, owner, invites, codes,
     async close() {
       await app.close()
       await db.destroy()
