@@ -20,7 +20,7 @@ The playbook, delivered to any assistant.
 - [x] Deploy on the VPS and create the first household (`DEVELOPMENT.md`).
 - [ ] Give the server a domain and set `KEPT_HOST`: Gemini rejects the `sslip.io` name, and a temporary Cloudflare quick tunnel stands in (`IMPLEMENTATION.md` §6).
 
-**Gate:** Kept connects as a custom connector in Claude on the web, and the conversation in `VISION.md` §3.1 runs end to end from the Claude phone app.
+**Gate:** Kept connects as a custom app in Gemini on the web, and the conversation in `VISION.md` §3.1 runs end to end from the Gemini phone app.
 
 ## Phase 3 — Integration & Testing
 
