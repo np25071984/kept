@@ -1,0 +1,55 @@
+import { acceptInvite, createInvite, deleteInvite, getSetup, issueApiKey, listApiKeys, revokeApiKey, updateSetup } from '../../ledger/households.js'
+import type { App, RouteDeps } from '../app.js'
+import { AcceptBody, ApiKeyBody, IdParams, InviteBody, SetupPatch } from '../schemas.js'
+
+export function householdRoutes(app: App, deps: RouteDeps) {
+  const { run } = deps
+
+  app.get('/api/v1/setup', {
+    schema: { tags: ['setup'], summary: 'The household\'s setup steps and whether the caller has been introduced.' },
+  }, async (request) => run(request, (tx, caller) => getSetup(tx, caller)))
+
+  app.patch('/api/v1/setup', {
+    schema: { tags: ['setup'], summary: 'Save confirmed setup answers: name, currency (owners, before the first transaction), the caller\'s time zone, step states, the introduction.', body: SetupPatch },
+  }, async (request) => run(request, (tx, caller) => updateSetup(tx, caller, request.body)))
+
+  app.post('/api/v1/invites', {
+    schema: { tags: ['setup'], summary: 'Owners only. Invite a member by email; Kept sends the sign-in link.', body: InviteBody },
+  }, async (request, reply) => {
+    reply.status(201)
+    return run(request, (tx, caller) => createInvite(tx, caller, request.body.email, deps.mailer, deps.publicUrl))
+  })
+
+  app.delete('/api/v1/invites/:id', {
+    schema: { tags: ['setup'], summary: 'Cancel an invite that hasn\'t been accepted.', params: IdParams },
+  }, async (request, reply) => {
+    await run(request, (tx, caller) => deleteInvite(tx, caller, request.params.id))
+    return reply.status(204).send()
+  })
+
+  app.post('/api/v1/invites/accept', {
+    config: { public: true },
+    schema: { tags: ['setup'], summary: 'Accept an invite with the token from its link. Creates the member and returns their first API key.', body: AcceptBody, security: [] },
+  }, async (request, reply) => {
+    reply.status(201)
+    return acceptInvite(deps.db, request.body)
+  })
+
+  app.get('/api/v1/api-keys', {
+    schema: { tags: ['api keys'], summary: 'The caller\'s active API keys.' },
+  }, async (request) => ({ api_keys: await run(request, (tx, caller) => listApiKeys(tx, caller)) }))
+
+  app.post('/api/v1/api-keys', {
+    schema: { tags: ['api keys'], summary: 'Create an API key for the caller. The key is shown only once.', body: ApiKeyBody },
+  }, async (request, reply) => {
+    reply.status(201)
+    return run(request, (tx, caller) => issueApiKey(tx, caller.household_id, caller.user_id, request.body.name))
+  })
+
+  app.delete('/api/v1/api-keys/:id', {
+    schema: { tags: ['api keys'], summary: 'Revoke one of the caller\'s API keys.', params: IdParams },
+  }, async (request, reply) => {
+    await run(request, (tx, caller) => revokeApiKey(tx, caller, request.params.id))
+    return reply.status(204).send()
+  })
+}

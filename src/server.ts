@@ -1,0 +1,32 @@
+import { createDb } from './db/db.js'
+import { loadConfig } from './config.js'
+import { buildApp } from './http/app.js'
+import { runDueRepeats } from './ledger/repeats.js'
+import { logMailer } from './mailer.js'
+
+const config = loadConfig()
+const db = createDb(config.databaseUrl)
+const app = await buildApp({ db, mailer: logMailer(), publicUrl: config.publicUrl, logger: true })
+
+// Repeats come due at midnight in each owner's time zone, so the scheduler runs often and creates whatever is due.
+async function tick() {
+  try {
+    const created = await runDueRepeats(db)
+    if (created > 0) app.log.info({ created }, 'repeats registered')
+  } catch (error) {
+    app.log.error(error, 'repeat scheduler failed')
+  }
+}
+const timer = setInterval(tick, config.schedulerIntervalMs)
+void tick()
+
+for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+  process.once(signal, async () => {
+    clearInterval(timer)
+    await app.close()
+    await db.destroy()
+    process.exit(0)
+  })
+}
+
+await app.listen({ port: config.port, host: '0.0.0.0' })

@@ -1,0 +1,15 @@
+# Local PostgreSQL for development and tests. `kept` owns the tables; the server connects as `kept_app`.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: kept
+      POSTGRES_PASSWORD: kept
+      POSTGRES_DB: kept
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:

@@ -1,0 +1,48 @@
+import { describe, expect, it } from 'vitest'
+import { dueOccurrences, occurrence, occurrenceAfter } from '../../src/domain/repeats.js'
+
+describe('occurrence', () => {
+  it('moves the 31st to the last day of shorter months', () => {
+    const schedule = { frequency: 'monthly' as const, interval: 1, anchor: '2026-01-31' }
+    expect([0, 1, 2, 3].map((k) => occurrence(schedule, k))).toEqual(['2026-01-31', '2026-02-28', '2026-03-31', '2026-04-30'])
+  })
+
+  it('handles every two weeks', () => {
+    expect(occurrenceAfter({ frequency: 'weekly', interval: 2, anchor: '2026-10-01' }, '2026-10-01')).toBe('2026-10-15')
+  })
+
+  it('moves Feb 29 to Feb 28 in other years', () => {
+    expect(occurrence({ frequency: 'yearly', interval: 1, anchor: '2028-02-29' }, 1)).toBe('2029-02-28')
+  })
+
+  it('crosses the year end', () => {
+    expect(occurrence({ frequency: 'monthly', interval: 1, anchor: '2026-11-27' }, 2)).toBe('2027-01-27')
+  })
+})
+
+describe('dueOccurrences', () => {
+  const repeat = { frequency: 'monthly' as const, interval: 1, anchor: '2026-08-27', next_date: '2026-09-27', ends_on: null, remaining: null, paused: false }
+
+  it('creates every date missed up to today', () => {
+    const plan = dueOccurrences(repeat, '2026-11-01')
+    expect(plan.dates).toEqual(['2026-09-27', '2026-10-27'])
+    expect(plan.next.next_date).toBe('2026-11-27')
+    expect(plan.finished).toBe(false)
+  })
+
+  it('creates nothing while paused', () => {
+    expect(dueOccurrences({ ...repeat, paused: true }, '2026-11-01').dates).toEqual([])
+  })
+
+  it('stops after the remaining count', () => {
+    const plan = dueOccurrences({ ...repeat, remaining: 1 }, '2026-11-01')
+    expect(plan.dates).toEqual(['2026-09-27'])
+    expect(plan.finished).toBe(true)
+  })
+
+  it('stops after the end date', () => {
+    const plan = dueOccurrences({ ...repeat, ends_on: '2026-10-01' }, '2026-11-01')
+    expect(plan.dates).toEqual(['2026-09-27'])
+    expect(plan.finished).toBe(true)
+  })
+})
