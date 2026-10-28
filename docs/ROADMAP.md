@@ -17,7 +17,8 @@ The playbook, delivered to any assistant.
 - [x] Resources for the household's vocabulary and the prompts `setup_household`, `log_expense` and `catch_up` (`IMPLEMENTATION.md` §5.2).
 - [ ] Send email: pick a provider and replace the logging `Mailer` for sign-in codes and invites (`IMPLEMENTATION.md` §5.4, §6).
 - [x] Docker Compose deployment with Caddy: `Dockerfile` and `deploy/` (`IMPLEMENTATION.md` §6).
-- [ ] Deploy on the VPS under an sslip.io name and create the first household (`DEVELOPMENT.md`).
+- [x] Deploy on the VPS and create the first household (`DEVELOPMENT.md`).
+- [ ] Give the server a domain and set `KEPT_HOST`: Gemini rejects the `sslip.io` name, and a temporary Cloudflare quick tunnel stands in (`IMPLEMENTATION.md` §6).
 
 **Gate:** Kept connects as a custom connector in Claude on the web, and the conversation in `VISION.md` §3.1 runs end to end from the Claude phone app.
 

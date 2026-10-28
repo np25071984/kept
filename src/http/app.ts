@@ -6,7 +6,7 @@ import type { Caller } from '../ledger/caller.js'
 import { ApiError } from '../ledger/errors.js'
 import { API_KEY_PREFIX, authenticate, callerFor, type Mailer } from '../ledger/households.js'
 import { loadKeys } from '../oauth/keys.js'
-import { createOAuth, verifyAccessToken } from '../oauth/provider.js'
+import { createOAuth, SCOPE, verifyAccessToken } from '../oauth/provider.js'
 import { oauthRoutes, protectedResourceMetadataUrl } from '../oauth/routes.js'
 import { householdRoutes } from './routes/household.js'
 import { ledgerRoutes } from './routes/ledger.js'
@@ -63,7 +63,8 @@ export async function buildApp(deps: AppDeps): Promise<App> {
     }
     if (!caller) {
       // MCP clients follow resource_metadata to find where to sign in (RFC 9728).
-      reply.header('www-authenticate', `Bearer resource_metadata="${protectedResourceMetadataUrl(oauth)}"${token ? ', error="invalid_token"' : ''}`)
+      reply.header('cache-control', 'no-store')
+      reply.header('www-authenticate', `Bearer realm="OAuth", resource_metadata="${protectedResourceMetadataUrl(oauth)}", scope="${SCOPE}"${token ? ', error="invalid_token"' : ''}`)
       throw new ApiError(401, 'unauthorized', 'Sign in, or send an API key: "Authorization: Bearer kept_…".')
     }
     request.caller = caller

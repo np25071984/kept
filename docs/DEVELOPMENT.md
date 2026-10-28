@@ -43,12 +43,18 @@ One host with Docker runs PostgreSQL, Kept and Caddy from `deploy/compose.yaml`;
 
 ```sh
 git clone … kept && cd kept/deploy
-cp .env.example .env     # set KEPT_HOST and two passwords
+cp .env.example .env     # set KEPT_HOST, a domain pointing at the server, and two passwords
 docker compose up -d --build
 docker compose exec kept node dist/cli/create-household.js --name "The Smiths" --owner Sam --email sam@example.com --timezone America/New_York
 ```
 
-The server applies migrations each time it starts. Connect an assistant to `https://KEPT_HOST/mcp`. Until email is sent, read sign-in codes and invite links from the log:
+The server applies migrations each time it starts. Gemini needs a client created for it, with the redirect URI its "Connect to an MCP server" dialog shows; it takes the printed ID and secret:
+
+```sh
+docker compose exec kept node dist/cli/create-client.js --id gemini --name Gemini --redirect-uri https://oauth-redirect.googleusercontent.com/r/…
+```
+
+Connect an assistant to `https://KEPT_HOST/mcp`. Until email is sent, read sign-in codes and invite links from the log:
 
 ```sh
 docker compose logs kept | grep -E "Sign-in code|Invite"
@@ -64,5 +70,5 @@ Update with `git pull && docker compose up -d --build`.
 - `src/oauth`: the OAuth2 authorization server, sign-in by emailed code, and the sign-in and consent pages.
 - `src/http`: Fastify routes and their TypeBox schemas, which also generate the OpenAPI spec.
 - `src/db`: the Kysely connection, the schema types and migrations.
-- `src/cli`: `migrate`, `create-household` and `openapi`.
+- `src/cli`: `migrate`, `create-household`, `create-client` and `openapi`.
 - `deploy`: the production compose file, the Caddyfile and the database role script.

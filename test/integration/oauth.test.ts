@@ -111,11 +111,21 @@ describe('OAuth2 for MCP clients', () => {
   it('points an unauthenticated MCP request to the protected resource metadata', async () => {
     const response = await fetch(`${base}/mcp`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
     expect(response.status).toBe(401)
-    expect(response.headers.get('www-authenticate')).toBe(`Bearer resource_metadata="${base}/.well-known/oauth-protected-resource/mcp"`)
+    expect(response.headers.get('www-authenticate')).toBe(`Bearer realm="OAuth", resource_metadata="${base}/.well-known/oauth-protected-resource/mcp", scope="kept"`)
     const metadata = await (await fetch(`${base}/.well-known/oauth-protected-resource/mcp`)).json()
     expect(metadata).toMatchObject({ resource: `${base}/mcp`, authorization_servers: [base] })
     const server = await (await fetch(`${base}/.well-known/oauth-authorization-server`)).json()
-    expect(server).toMatchObject({ issuer: base, code_challenge_methods_supported: ['S256'] })
+    expect(server).toMatchObject({
+      issuer: base,
+      code_challenge_methods_supported: ['S256'],
+      response_types_supported: ['code'],
+      response_modes_supported: ['query'],
+      client_id_metadata_document_supported: true,
+      scopes_supported: ['kept'],
+      protected_resources: [`${base}/mcp`],
+    })
+    expect(server.userinfo_endpoint).toBeUndefined()
+    expect(server.grant_types_supported).not.toContain('implicit')
     expect(server.registration_endpoint).toBe(`${base}/oauth/register`)
   })
 

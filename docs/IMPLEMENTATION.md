@@ -409,7 +409,7 @@ Which assistants support what is in [`VISION.md` §4.B](VISION.md#supported-assi
 
 ### 5.4 Connecting an Assistant
 
-A member adds `<PUBLIC_URL>/mcp` as a custom connector in their assistant's web settings ([`VISION.md` §4.B](VISION.md#supported-assistants)). The assistant finds Kept's authorization server, registers itself and signs the member in:
+A member adds `<PUBLIC_URL>/mcp` as a custom connector in their assistant's web settings ([`VISION.md` §4.B](VISION.md#supported-assistants)). The assistant finds Kept's authorization server, registers itself or uses a client created ahead of time, and signs the member in:
 
 ```mermaid
 sequenceDiagram
@@ -419,7 +419,11 @@ sequenceDiagram
     A->>K: POST /mcp
     K-->>A: 401, resource_metadata
     A->>K: GET /.well-known/oauth-protected-resource/mcp, /.well-known/oauth-authorization-server
-    A->>K: POST /oauth/register (client name, redirect URI)
+    alt Registers itself (Claude)
+        A->>K: POST /oauth/register (client name, redirect URI)
+    else Client ID and secret entered by the member (Gemini)
+        Note over A,K: created with create-client
+    end
     A->>M: Opens /oauth/authorize (PKCE)
     M->>K: Email
     K-->>M: 6-digit code by email
@@ -438,6 +442,8 @@ sequenceDiagram
 - **Sign-in doesn't reveal accounts.** An email with no account and no open invite gets the same "check your email" page and no code.
 - **Invited people join by signing in.** A verified email with an open invite and no account gets a page for their name and time zone, then joins as a `member`; their assistant then runs the new-member path of [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
 - **Tokens:** PKCE with S256 is required. Access tokens are opaque, bound to `<PUBLIC_URL>/mcp` and scope `kept`; a request with no scope gets `kept`. Refresh tokens rotate and don't end with the browser session, so the assistant stays connected.
+- **Metadata:** `/.well-known/oauth-authorization-server` serves the OAuth part of the OpenID document at `/.well-known/openid-configuration`: the `code` flow only, scope `kept`, and `protected_resources` pointing back to `/mcp`.
+- **Clients created ahead of time:** Gemini asks for a client ID and secret instead of registering. `create-client` stores one with Gemini's redirect URI, which its dialog shows under "Copy redirect URI" and which contains the host name.
 - **State** (clients, grants, sessions, codes, tokens) lives in `oauth_models`, and sign-in codes in `sign_in_codes`, hashed. Neither belongs to a household, so neither has row-level security. `SECURITY DEFINER` functions find a user or an open invite by email and a user's household before the household is known.
 
 ## 6. Stack and Deployment
@@ -445,7 +451,7 @@ sequenceDiagram
 - **Server:** TypeScript on Node with Fastify. Route schemas validate requests and generate the OpenAPI spec (§3). The MCP server uses the official MCP TypeScript SDK.
 - **Database:** PostgreSQL, one database for every household (§1).
 - **Database access:** Kysely for typed queries and migrations.
-- **Hosting:** one VPS running Docker Compose: PostgreSQL, the Kept server with its scheduler, and Caddy in front for HTTPS with automatic certificates. Assistants' connectors need the public HTTPS URL ([`VISION.md` §4.B](VISION.md#supported-assistants)). The server applies migrations on start. A host with a bare IP uses an sslip.io name, such as `203-0-113-7.sslip.io`, so Caddy can get an ordinary certificate.
+- **Hosting:** one VPS running Docker Compose: PostgreSQL, the Kept server with its scheduler, and Caddy in front for HTTPS with automatic certificates. Assistants' connectors need the public HTTPS URL ([`VISION.md` §4.B](VISION.md#supported-assistants)). The server applies migrations on start. The host needs a domain name of its own: Gemini rejects wildcard IP names such as `sslip.io` before sign-in starts.
 - **OAuth2:** Kept runs its own authorization server, with no identity vendor, built on `oidc-provider` ([§5.4](#54-connecting-an-assistant)). Its signing key and cookie secret are created on first start and kept in `oauth_keys`. Emails go through a `Mailer`; the only one logs them, so sign-in codes are read from the server log.
 - **`PUBLIC_URL`** is the address assistants reach. It is the OAuth2 issuer and, with `/mcp`, the resource every token is bound to, so it must match the deployed HTTPS address exactly.
 - **Scheduler:** the server creates due repeats every 15 minutes (`SCHEDULER_INTERVAL_MS`), each on its owner's local date.

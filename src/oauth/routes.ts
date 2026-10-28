@@ -13,6 +13,34 @@ export function protectedResourceMetadataUrl(oauth: OAuth): string {
   return `${oauth.issuer}/.well-known/oauth-protected-resource/mcp`
 }
 
+const OAUTH_METADATA = [
+  'issuer',
+  'authorization_endpoint',
+  'token_endpoint',
+  'registration_endpoint',
+  'revocation_endpoint',
+  'scopes_supported',
+  'response_types_supported',
+  'grant_types_supported',
+  'code_challenge_methods_supported',
+  'authorization_response_iss_parameter_supported',
+  'client_id_metadata_document_supported',
+]
+
+export function authorizationServerMetadata(openid: Record<string, unknown>, resource: string, resourceMetadata: string): Record<string, unknown> {
+  const metadata = Object.fromEntries(OAUTH_METADATA.filter((key) => key in openid).map((key) => [key, openid[key]]))
+  return {
+    ...metadata,
+    scopes_supported: [SCOPE],
+    // Codes come back in the query string; Kept offers no OpenID browser flows.
+    response_modes_supported: ['query'],
+    token_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post', 'none'],
+    protected_resources: [resource],
+    resource,
+    resource_metadata: resourceMetadata,
+  }
+}
+
 export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAuth }) {
   const { provider } = deps.oauth
   const callback = provider.callback()
@@ -40,16 +68,13 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
     const options = { config: { public: true }, schema: { hide: true } }
     scope.route({ method: ['GET', 'POST', 'OPTIONS', 'DELETE', 'PUT'], url: '/oauth/*', ...options, handler: forward })
     scope.route({ method: ['GET', 'OPTIONS'], url: '/.well-known/openid-configuration', ...options, handler: forward })
-    // RFC 8414 clients look here first; it serves the same document.
-    scope.route({
-      method: ['GET', 'OPTIONS'],
-      url: '/.well-known/oauth-authorization-server',
-      ...options,
-      handler: async (request, reply) => {
-        request.raw.url = '/.well-known/openid-configuration'
-        return forward(request, reply)
-      },
-    })
+  })
+
+  // RFC 8414 metadata for MCP clients: the OAuth part of the OpenID document, pointing back to /mcp (RFC 9728 §4).
+  app.get('/.well-known/oauth-authorization-server', { config: { public: true }, schema: { hide: true } }, async (request, reply) => {
+    const headers = { host: request.headers.host ?? '', 'x-forwarded-proto': request.headers['x-forwarded-proto'] ?? request.protocol }
+    const openid = (await app.inject({ method: 'GET', url: '/.well-known/openid-configuration', headers })).json()
+    return reply.header('access-control-allow-origin', '*').send(authorizationServerMetadata(openid, deps.oauth.resource, protectedResourceMetadataUrl(deps.oauth)))
   })
 
   app.register(async (scope) => {

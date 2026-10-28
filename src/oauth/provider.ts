@@ -29,6 +29,8 @@ export function createOAuth(db: Db, keys: OAuthKeys, publicUrl: string): OAuth {
     features: {
       devInteractions: { enabled: false },
       registration: { enabled: true },
+      // A client may use the URL of its metadata document as its client ID instead of registering (MCP 2025-11-25).
+      clientIdMetadataDocument: { enabled: true, ack: 'draft-02', allowFetch: async (_ctx, clientId) => clientId.startsWith('https://') },
       revocation: { enabled: true },
       resourceIndicators: {
         enabled: true,
@@ -40,6 +42,8 @@ export function createOAuth(db: Db, keys: OAuthKeys, publicUrl: string): OAuth {
         },
       },
     },
+    // Authorization code only, as OAuth 2.1 and MCP clients expect; no implicit or hybrid flows.
+    responseTypes: ['code'],
     clientDefaults: { grant_types: ['authorization_code', 'refresh_token'], response_types: ['code'], token_endpoint_auth_method: 'none' },
     pkce: { required: () => true },
     // Assistants stay connected: tokens don't end with the browser session, and refreshing doesn't need offline_access.
