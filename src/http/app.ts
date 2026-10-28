@@ -8,6 +8,7 @@ import { authenticate, type Mailer } from '../ledger/households.js'
 import { householdRoutes } from './routes/household.js'
 import { ledgerRoutes } from './routes/ledger.js'
 import { transactionRoutes } from './routes/transactions.js'
+import { mcpRoutes } from '../mcp/server.js'
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -79,5 +80,6 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   transactionRoutes(app, routeDeps)
   ledgerRoutes(app, routeDeps)
   householdRoutes(app, routeDeps)
+  mcpRoutes(app)
   return app
 }

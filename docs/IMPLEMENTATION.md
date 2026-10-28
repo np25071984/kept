@@ -350,7 +350,7 @@ PostgreSQL row-level security backs up the filtering in code. Every household-sc
 
 ## 5. MCP Server
 
-The MCP server speaks Streamable HTTP with OAuth2. Each household member connects with their own login, so every tool call runs as that person.
+The MCP server is stateless Streamable HTTP at `POST /mcp`, in the same process as the REST API. A request is authenticated like any REST call, by its bearer token (an API key until OAuth2 sign-in exists), so every tool call runs as that member. Each tool forwards to its REST route in-process with the same `Authorization` header and returns the JSON response; a REST error comes back as a tool error with the same `{"error": …}` body, which tells the agent what to fix (an unknown category lists the known ones). Responses are plain JSON, with no session and no server-initiated stream, so `GET` and `DELETE /mcp` return 405.
 
 ### 5.1 Tools
 
@@ -358,6 +358,8 @@ The MCP server speaks Streamable HTTP with OAuth2. Each household member connect
 | --------------------- | ------------------------------ | ------------------------------------------------------------------------- |
 | `log_transaction`     | `POST /api/v1/transactions`    | Write one or more transactions with optional line items, `spent_for` shares, `private` and a source. Returns whether each matched an existing purchase. |
 | `list_transactions`   | `GET /api/v1/transactions`     | Recent history, used to infer category, merchant, cost center and items.  |
+| `edit_transaction`    | `PATCH /api/v1/transactions/{id}` | Change a purchase after the user confirmed, e.g. a return.             |
+| `delete_transaction`  | `DELETE /api/v1/transactions/{id}` | Delete a purchase after the user confirmed.                           |
 | `list_cost_centers`   | `GET /api/v1/cost-centers`     | Cost centers, optionally filtered by category.                            |
 | `get_rules`           | `GET /api/v1/rules`            | Rules that apply to this merchant, category and person.                   |
 | `save_rule`           | `POST /api/v1/rules`           | Save a rule the user confirmed.                                           |
@@ -372,7 +374,7 @@ The MCP server speaks Streamable HTTP with OAuth2. Each household member connect
 | `list_repeats`        | `GET /api/v1/repeats`          | The user's repeats with next date and amount.                             |
 | `update_repeat`       | `PATCH /api/v1/repeats/{id}`   | Change, pause or resume a repeat.                                         |
 | `stop_repeat`         | `DELETE /api/v1/repeats/{id}`  | Stop a repeat.                                                            |
-| `get_updates`         | `GET /api/v1/updates`          | What happened since the user last talked to the agent; called at the start of a conversation. |
+| `get_updates`         | `GET /api/v1/updates`, `POST /api/v1/updates/seen` | What happened since the user last talked to the agent; called at the start of a conversation. Marks what it returns as seen. |
 | `get_summary`         | `GET /api/v1/expenses/summary` | Totals by category, cost center or item for a period, with coverage for watched groups. |
 | `add_cost_center`     | `POST /api/v1/cost-centers`    | Add a cost center the user confirmed.                                     |
 | `add_category`        | `POST /api/v1/categories`      | Add a category or subcategory the user confirmed.                         |
@@ -388,10 +390,12 @@ Which MCP mechanism carries each part of the playbook in [`VISION.md` §4.B](VIS
 | --------------------------- | -------------------- |
 | The question playbook       | Server instructions  |
 | When to call each tool      | Tool descriptions; e.g. `log_transaction` is only called after the user confirms the final record |
-| The household's vocabulary  | Resources            |
+| The household's vocabulary  | Resource `kept://household` |
 | Setting up                  | The setup state from `get_playbook`, which starts it in every assistant; prompt `setup_household` where supported |
 | Logging an expense          | Prompt `log_expense` |
 | Catching up                 | Prompt `catch_up`    |
+
+The playbook text is one source, `src/mcp/playbook.ts`: the server instructions, and `get_playbook`'s `playbook` field. `get_playbook` also returns `start_with`: the first-member or new-member path of [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up) while setup is unfinished or the caller hasn't been introduced, the remaining steps for an owner who left some pending, or nothing.
 
 Server instructions, resources and prompts are the preferred mechanisms, but not every assistant supports them (see [§5.3](#53-uneven-client-support)). Each one has a tool equivalent: `get_playbook` returns the playbook and the vocabulary, and the tool descriptions say when to call it. That way an assistant that only calls tools still follows the playbook.
 

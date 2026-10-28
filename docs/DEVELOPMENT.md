@@ -17,6 +17,16 @@ npm run dev              # http://localhost:3000, OpenAPI at /api/v1/openapi.jso
 
 `create-household` prints the owner's API key once. Send it as `Authorization: Bearer kept_…`. Invite links are logged by the server instead of emailed.
 
+## Trying the MCP server
+
+Until OAuth2 sign-in exists, an MCP client connects to `http://localhost:3000/mcp` with an API key as its bearer token. In Claude Code:
+
+```sh
+claude mcp add --transport http kept http://localhost:3000/mcp --header "Authorization: Bearer kept_…"
+```
+
+Phone apps need the deployed HTTPS URL and OAuth2 (`ROADMAP.md`, Phase 2).
+
 ## Tests
 
 ```sh
@@ -31,6 +41,7 @@ Integration tests drop and recreate the `kept_test` schema, then connect as `kep
 
 - `src/domain`: pure functions for everything the ledger decides (lines and shares, matching, rules, coverage, repeat dates, summaries), unit-tested in `test/unit`.
 - `src/ledger`: database reads and writes for each feature, run inside a household-scoped transaction.
+- `src/mcp`: the MCP server, its tools and the playbook text.
 - `src/http`: Fastify routes and their TypeBox schemas, which also generate the OpenAPI spec.
 - `src/db`: the Kysely connection, the schema types and migrations.
 - `src/cli`: `migrate`, `create-household` and `openapi`.
