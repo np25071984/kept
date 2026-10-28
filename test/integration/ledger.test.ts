@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { inHousehold } from '../../src/db/db.js'
+import { addDays, todayIn } from '../../src/domain/dates.js'
 import { authenticate } from '../../src/ledger/households.js'
 import { runDueRepeats, updateRepeat } from '../../src/ledger/repeats.js'
 import { client, newHousehold, startHarness, type Harness } from './helpers.js'
@@ -17,6 +18,17 @@ beforeAll(async () => {
   await sam.post('/api/v1/cost-centers', { name: 'Kia', kind: 'Car', categories: ['Car'] })
 })
 afterAll(() => h.close())
+
+describe('dates', () => {
+  it('saves a date said long ago but asks the assistant to check it', async () => {
+    const today = todayIn('America/New_York', new Date())
+    const old = await sam.post('/api/v1/transactions', { date: addDays(today, -400), amount: 10.79, merchant: 'Old Navy', category: 'Other' })
+    expect(old.status).toBe(201)
+    expect(old.body.warnings).toEqual([expect.stringContaining('400 days ago')])
+    const recent = await sam.post('/api/v1/transactions', { date: today, amount: 3, merchant: 'Bodega', category: 'Other' })
+    expect(recent.body.warnings).toBeUndefined()
+  })
+})
 
 describe('repeats', () => {
   it('registers the next occurrence and announces it', async () => {

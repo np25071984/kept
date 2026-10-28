@@ -284,6 +284,8 @@ Authorization: Bearer <api-key>
 }
 ```
 
+The response has `result` (`created`, `attached` or `possible_duplicate`, §3.2), the `transaction`, and `warnings` when the date may be a slip ([`VISION.md` §3.1](VISION.md#step-7-feedback)).
+
 **Several line items** ([`VISION.md` §3.2](VISION.md#32-mixed-purchase-several-things-in-one-payment)). The agent sends only the explicit line items; the ledger adds the rest line:
 
 ```json

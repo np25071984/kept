@@ -100,7 +100,7 @@ export function registerTools(server: McpServer, rest: Rest) {
 
   server.registerTool('log_transaction', {
     title: 'Log transactions',
-    description: 'Write one or more purchases. Only after the user confirmed the final record you showed them ("Log $60.00 to Car/Fuel for the Kia, today?"). Each is matched against purchases already logged: "created", "attached" (tell the user what changed, and what was kept because they edited it) or "possible_duplicate" (ask if it\'s the same purchase; merge_transactions if yes).',
+    description: 'Write one or more purchases. Only after the user confirmed the final record you showed them ("Log $60.00 to Car/Fuel for the Kia, today?"). Each is matched against purchases already logged: "created", "attached" (tell the user what changed, and what was kept because they edited it) or "possible_duplicate" (ask if it\'s the same purchase; merge_transactions if yes). "warnings" flags a date the user may not have meant; ask them.',
     inputSchema: { transactions: z.array(transaction).min(1).describe('One entry per purchase; a statement batch goes in one call.') },
     annotations: write,
   }, async ({ transactions }) => result(await rest('POST', '/api/v1/transactions', { transactions })))

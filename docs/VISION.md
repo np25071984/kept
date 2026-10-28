@@ -111,6 +111,8 @@ Before writing anything, the AI shows the final record:
 >
 > **User:** "Yes."
 
+The AI says the date as "today", "yesterday" or a weekday and day, and reads a date without a year as the most recent one that isn't in the future.
+
 #### Step 6: Submit
 
 Only after confirmation does the AI call `log_transaction` ([`IMPLEMENTATION.md` §3.1](IMPLEMENTATION.md#31-request-examples) shows the request).
@@ -120,6 +122,8 @@ Only after confirmation does the AI call `log_transaction` ([`IMPLEMENTATION.md`
 The ledger stores the entry and returns `201 Created`. The AI replies:
 
 > "Logged $60.00 to Car/Fuel (Kia)."
+
+If the date looks like a slip, the ledger still stores the entry but flags it, and the AI asks: "That's dated October 25, 2025, over a year ago. Right?" A date is flagged when it is in the future, or more than 60 days back for a purchase the user told about (statements and receipts are often old).
 
 ### 3.2 Mixed Purchase: Several Things in One Payment
 

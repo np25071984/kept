@@ -48,4 +48,5 @@ Looking back, fixing and managing (`VISION.md` §4.C).
 
 ## Later
 
+- [ ] Spending caps: "I don't want to spend more than $1,000 on groceries this month." A cap per category, cost center or member per month or year; the agent says how much is left when logging and warns when one is close or crossed. Design it in `VISION.md` first.
 - [ ] Siri through App Intents in a native iOS app (`VISION.md` §4.B, "Other clients"). Not before Phase 3's gate.

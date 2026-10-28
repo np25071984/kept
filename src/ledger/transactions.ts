@@ -1,6 +1,6 @@
 import type { Tx } from '../db/db.js'
 import { groupsWithLines, type WatchedGroup } from '../domain/coverage.js'
-import { addDays, isLocalDate, todayIn } from '../domain/dates.js'
+import { addDays, dateWarning, isLocalDate, todayIn } from '../domain/dates.js'
 import { buildLines, resizeLines, validateShares, type Line, type SpentFor } from '../domain/lines.js'
 import { decideMatch, reconcile, type FieldChange, type KeptField, type MatchCandidate, type SourceKind } from '../domain/matching.js'
 import { centsToNumeric, formatAmount, fromCents, numericToCents, toCents } from '../domain/money.js'
@@ -74,12 +74,17 @@ export interface WriteResult {
   possible_duplicate_of?: string
   changes?: FieldChange[]
   kept?: KeptField[]
+  warnings?: string[]
 }
 
 // Every write is matched against the caller's own transactions first (VISION.md §3.4, "One purchase, many sources").
 export async function createTransactions(tx: Tx, caller: Caller, bodies: TransactionBody[], now = new Date()): Promise<WriteResult[]> {
   const results: WriteResult[] = []
-  for (const body of bodies) results.push(await createOne(tx, caller, body, now))
+  for (const body of bodies) {
+    const result = await createOne(tx, caller, body, now)
+    const warning = body.date ? dateWarning(body.date, todayIn(caller.timezone, now), (body.source?.kind ?? 'talk') === 'talk') : null
+    results.push(warning ? { ...result, warnings: [warning] } : result)
+  }
   return results
 }
 
