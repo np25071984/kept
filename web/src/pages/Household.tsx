@@ -93,8 +93,8 @@ function CostCenters() {
   return (
     <section className="section">
       <div className="section-head">
-        <h2>Cost centers</h2>
-        {!adding && <button onClick={() => setAdding(true)}>Add a cost center</button>}
+        <h2>People &amp; things</h2>
+        {!adding && <button onClick={() => setAdding(true)}>Add a person or thing</button>}
       </div>
       <p className="muted small">The people, cars, homes and projects money is spent for. Linked categories tell your assistant when to ask which one.</p>
       {adding && <CostCenterEditor onDone={() => setAdding(false)} />}

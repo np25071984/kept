@@ -15,7 +15,7 @@ const destroy = { readOnlyHint: false, destructiveHint: true, openWorldHint: fal
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe('YYYY-MM-DD')
 const amount = z.number().positive()
 const spentFor = z.array(z.object({
-  cost_center: z.string().describe('An existing cost center name.'),
+  cost_center: z.string().describe('An existing person or thing (cost center) by name.'),
   share: z.number().gt(0).lte(1).nullish().describe('Fraction of the line. Omit to split the remainder evenly.'),
 }))
 const lineItem = z.object({
@@ -34,7 +34,7 @@ const transactionFields = {
   notes: z.string().nullish().describe('E.g. the original amount and rate of a foreign purchase.'),
   private: z.boolean().optional().describe('Left out of household totals.'),
   category: z.string().nullish().describe('Main category: the whole purchase, or the rest beside line_items.'),
-  spent_for: spentFor.optional().describe('Cost centers for the main category.'),
+  spent_for: spentFor.optional().describe('Who or what the main category was for.'),
   line_items: z.array(lineItem).optional().describe('Only the parts the user priced; the rest goes to category.'),
   checked_groups: z.array(z.string()).optional().describe('Watched groups the user answered about, "no" included.'),
 }
@@ -144,15 +144,15 @@ export function registerTools(server: McpServer, rest: Rest) {
   }, async ({ id, other_id }) => result(await rest('POST', `/api/v1/transactions/${id}/merge`, { other_id })))
 
   server.registerTool('list_cost_centers', {
-    title: 'List cost centers',
-    description: 'The household\'s cost centers (cars, homes, kids, pets), or those for a category. Ask which one only when there is more than one.',
+    title: 'List people & things',
+    description: 'The people and things the household spends for (cars, homes, kids, pets; "cost centers" in the API), or those linked to a category. Ask which one only when there is more than one.',
     inputSchema: { category: z.string().optional() },
     annotations: read,
   }, async (args) => result(await rest('GET', `/api/v1/cost-centers${query(args)}`)))
 
   server.registerTool('add_cost_center', {
-    title: 'Add a cost center',
-    description: 'Add a car, home, child, pet or anything else the household tracks spending against. Only after the user said yes to adding this name as new, asked on its own: a name that isn\'t in list_cost_centers is often a typo for one that is. Link it to the categories it applies to.',
+    title: 'Add a person or thing',
+    description: 'Add a car, home, child, pet or anything else the household tracks spending for. Only after the user said yes to adding this name as new, asked on its own: a name that isn\'t in list_cost_centers is often a typo for one that is. Link it to the categories it applies to.',
     inputSchema: { name: z.string(), kind: z.string().describe('Car, Home, Child, Pet, …'), categories: z.array(z.string()).optional() },
     annotations: write,
   }, async (args) => result(await rest('POST', '/api/v1/cost-centers', args)))
@@ -179,15 +179,15 @@ export function registerTools(server: McpServer, rest: Rest) {
   }, async ({ path }) => result(await rest('DELETE', `/api/v1/categories${query({ path })}`)))
 
   server.registerTool('rename_cost_center', {
-    title: 'Rename a cost center',
-    description: 'Fix a cost center\'s name ("Iva" to "Ivy"), after the user said yes to that change on its own. Purchases, rules, notes and repeats keep it.',
+    title: 'Rename a person or thing',
+    description: 'Fix the name of a person or thing ("Iva" to "Ivy"), after the user said yes to that change on its own. Purchases, rules, notes and repeats keep it.',
     inputSchema: { name: z.string(), new_name: z.string() },
     annotations: write,
   }, async (args) => result(await rest('PATCH', '/api/v1/cost-centers', args)))
 
   server.registerTool('delete_cost_center', {
-    title: 'Delete a cost center',
-    description: 'Delete a cost center nothing uses, after the user said yes. If purchases, rules, notes or repeats still use it, Kept refuses and says which: offer to move them with edit_transaction, or to rename instead.',
+    title: 'Delete a person or thing',
+    description: 'Delete a person or thing nothing uses, after the user said yes. If purchases, rules, notes or repeats still use it, Kept refuses and says which: offer to move them with edit_transaction, or to rename instead.',
     inputSchema: { name: z.string() },
     annotations: destroy,
   }, async ({ name }) => result(await rest('DELETE', `/api/v1/cost-centers${query({ name })}`)))
@@ -221,14 +221,14 @@ export function registerTools(server: McpServer, rest: Rest) {
 
   server.registerTool('get_notes', {
     title: 'Get notes',
-    description: 'What the household told you about a cost center, category or merchant ("we\'re selling the Kia in December"). Load notes for what the conversation touches before guessing.',
+    description: 'What the household told you about a person or thing, category or merchant ("we\'re selling the Kia in December"). Load notes for what the conversation touches before guessing.',
     inputSchema: { cost_center: z.string().optional(), category: z.string().optional(), merchant: z.string().optional(), q: z.string().optional(), include_expired: z.boolean().optional() },
     annotations: read,
   }, async (args) => result(await rest('GET', `/api/v1/notes${query(args)}`)))
 
   server.registerTool('save_note', {
     title: 'Save a note',
-    description: 'Remember context that affects how expenses are asked about or filed, after telling the user. Link it to at least one cost center, category or merchant; give plans an expires_on.',
+    description: 'Remember context that affects how expenses are asked about or filed, after telling the user. Link it to at least one person or thing, category or merchant; give plans an expires_on.',
     inputSchema: {
       text: z.string(), personal: z.boolean().optional(), cost_centers: z.array(z.string()).optional(),
       categories: z.array(z.string()).optional(), merchants: z.array(z.string()).optional(), expires_on: date.nullish(),
@@ -285,7 +285,7 @@ export function registerTools(server: McpServer, rest: Rest) {
 
   server.registerTool('get_summary', {
     title: 'Get a spending summary',
-    description: 'Totals by category, cost center or item, per month, year or in total. scope "me" (default) is the user\'s own spending, private included; "household" is every member\'s non-private spending, never by member. Watched groups come with checked_share and estimate: say how reliable the total is.',
+    description: 'Totals by category, person or thing (group_by cost_center) or item, per month, year or in total. scope "me" (default) is the user\'s own spending, private included; "household" is every member\'s non-private spending, never by member. Watched groups come with checked_share and estimate: say how reliable the total is.',
     inputSchema: {
       from: date.optional(), to: date.optional(), group_by: z.enum(['category', 'cost_center', 'item']).optional(),
       period: z.enum(['month', 'year', 'total']).optional(), scope: z.enum(['me', 'household']).optional(),

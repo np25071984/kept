@@ -28,7 +28,7 @@ The examples below use these terms:
 
 - **Transaction:** one payment, as the card or bank sees it. For example, $40 at Target.
 - **Line item:** what part of that payment was for. Every transaction has at least one. Each line item has its own category, cost centers and, optionally, an item.
-- **Cost center:** anything the household tracks spending against, such as cars (Hyundai, Kia), homes (House, Apartment), kids (Zoe, Maya) or pets (Rex, Daisy).
+- **Cost center:** anything the household tracks spending for, such as cars (Hyundai, Kia), homes (House, Apartment), kids (Zoe, Maya) or pets (Rex, Daisy). "Cost center" is Kept's internal term; users see "people & things", and the agent asks "who or what was it for?".
 - **Category:** what kind of spending a line item is, such as Groceries or Car/Fuel. Categories can have subcategories, such as Groceries/Alcohol, which roll up into the parent in reports.
 - **Item:** free text naming a specific thing the user wants to track, such as "nuts". Item totals answer questions like "how much do I spend on nuts?", while category totals answer "how much do I spend on groceries?"
 - **Watched group:** a subcategory or item the household wants to make decisions about, such as alcohol or nuts. The AI asks about watched groups where they are bought.

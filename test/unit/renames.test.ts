@@ -65,8 +65,8 @@ describe('renaming text references', () => {
 
 describe('usageProblem', () => {
   it('lets an unused name go and lists what still uses one', () => {
-    expect(usageProblem('Cost center', 'Iva', { purchases: 0, rules: 0 })).toBeNull()
-    expect(usageProblem('Category', 'Car', { purchases: 1, subcategories: 2, rules: 0 })?.message).toBe(
+    expect(usageProblem('', 'Iva', { purchases: 0, rules: 0 })).toBeNull()
+    expect(usageProblem('Category ', 'Car', { purchases: 1, subcategories: 2, rules: 0 })?.message).toBe(
       'Category "Car" is still used by 1 purchase, 2 subcategories. Move or change those first, or rename it instead.',
     )
   })

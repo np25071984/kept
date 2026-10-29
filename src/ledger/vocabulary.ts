@@ -43,7 +43,7 @@ export async function loadVocabulary(tx: Tx): Promise<Vocabulary> {
     categoryPath: (id) => pathById.get(id) ?? '',
     costCenterId(name) {
       const id = byName.get(name.trim().toLowerCase())
-      if (!id) throw unknown('unknown_cost_center', 'cost center', name, costCenters.map((c) => c.name))
+      if (!id) throw unknown('unknown_cost_center', 'person or thing called', name, costCenters.map((c) => c.name))
       return id
     },
     costCenterName: (id) => nameById.get(id) ?? '',
@@ -92,7 +92,7 @@ export async function listCostCenters(tx: Tx, category?: string): Promise<CostCe
 
 export async function addCostCenter(tx: Tx, caller: Caller, input: { name: string; kind: string; categories?: string[] }): Promise<CostCenterView> {
   const name = input.name.trim()
-  if (!name) throw invalid('invalid_cost_center', 'A cost center needs a name.')
+  if (!name) throw invalid('invalid_cost_center', 'A person or thing needs a name.')
   const vocabulary = await loadVocabulary(tx)
   const categoryIds = (input.categories ?? []).map((path) => vocabulary.categoryId(path))
   const existing = await tx.selectFrom('cost_centers').select('name').where((eb) => eb(eb.fn('lower', ['name']), '=', name.toLowerCase())).executeTakeFirst()
@@ -160,7 +160,7 @@ export async function deleteCategory(tx: Tx, path: string): Promise<void> {
   const linkedRules = await tx.selectFrom('rules').select('id').where('category_id', '=', category.id).execute()
   const text = await textMentions(tx, categoryRenamer(category.path, '\0'))
   const notes = await tx.selectFrom('note_categories').select((eb) => eb.fn.countAll<string>().as('count')).where('category_id', '=', category.id).executeTakeFirstOrThrow()
-  const problem = usageProblem('Category', category.path, {
+  const problem = usageProblem('Category ', category.path, {
     purchases: Number(purchases.count),
     subcategories: categories.filter((c) => c.path.toLowerCase().startsWith(`${category.path.toLowerCase()}/`)).length,
     rules: new Set([...linkedRules.map((rule) => rule.id), ...text.rules]).size,
@@ -182,7 +182,7 @@ export async function updateCostCenter(tx: Tx, caller: Caller, name: string, pat
   const from = name.trim()
   const centers = await tx.selectFrom('cost_centers').select(['id', 'name']).execute()
   const center = centers.find((c) => c.name.toLowerCase() === from.toLowerCase())
-  if (!center) throw invalid('unknown_cost_center', `There is no cost center "${from}".`)
+  if (!center) throw invalid('unknown_cost_center', `There is no person or thing called "${from}".`)
   let current = center.name
   if (patch.new_name !== undefined) {
     const to = patch.new_name.trim()
@@ -193,7 +193,7 @@ export async function updateCostCenter(tx: Tx, caller: Caller, name: string, pat
     current = to
   }
   if (patch.kind !== undefined) {
-    if (!patch.kind.trim()) throw invalid('invalid_cost_center', 'A cost center needs a kind, such as Car or Child.')
+    if (!patch.kind.trim()) throw invalid('invalid_cost_center', 'A person or thing needs a kind, such as Car or Child.')
     await tx.updateTable('cost_centers').set({ kind: patch.kind.trim() }).where('id', '=', center.id).execute()
   }
   if (patch.categories !== undefined) {
@@ -207,7 +207,7 @@ export async function updateCostCenter(tx: Tx, caller: Caller, name: string, pat
 
 export async function deleteCostCenter(tx: Tx, name: string): Promise<void> {
   const center = await tx.selectFrom('cost_centers').select(['id', 'name']).where((eb) => eb(eb.fn('lower', ['name']), '=', name.trim().toLowerCase())).executeTakeFirst()
-  if (!center) throw invalid('unknown_cost_center', `There is no cost center "${name}".`)
+  if (!center) throw invalid('unknown_cost_center', `There is no person or thing called "${name}".`)
   const purchases = await tx
     .selectFrom('line_item_cost_centers')
     .innerJoin('line_items', 'line_items.id', 'line_item_cost_centers.line_item_id')
@@ -216,7 +216,7 @@ export async function deleteCostCenter(tx: Tx, name: string): Promise<void> {
     .executeTakeFirstOrThrow()
   const text = await textMentions(tx, costCenterRenamer(center.name, '\0'))
   const notes = await tx.selectFrom('note_cost_centers').select((eb) => eb.fn.countAll<string>().as('count')).where('cost_center_id', '=', center.id).executeTakeFirstOrThrow()
-  const problem = usageProblem('Cost center', center.name, { purchases: Number(purchases.count), rules: text.rules.size, notes: Number(notes.count), repeats: text.repeats })
+  const problem = usageProblem('', center.name, { purchases: Number(purchases.count), rules: text.rules.size, notes: Number(notes.count), repeats: text.repeats })
   if (problem) fail(problem)
   await tx.deleteFrom('cost_centers').where('id', '=', center.id).execute()
 }

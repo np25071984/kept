@@ -60,7 +60,7 @@ export function formFromNote(note: Note): NoteForm {
 export function noteProblem(form: NoteForm): string | null {
   if (!form.text.trim()) return 'Write the note.'
   const merchants = form.merchants.split(',').map((m) => m.trim()).filter(Boolean)
-  if (!form.cost_centers.length && !form.categories.length && !merchants.length) return 'Link the note to a cost center, a category or a merchant, so the assistant knows when it matters.'
+  if (!form.cost_centers.length && !form.categories.length && !merchants.length) return 'Link the note to a person or thing, a category or a merchant, so the assistant knows when it matters.'
   return null
 }
 

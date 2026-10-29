@@ -13,7 +13,7 @@ export function createMcpServer(rest: Rest): McpServer {
 
   server.registerResource('household', 'kept://household', {
     title: 'The household',
-    description: 'Categories, cost centers, rules and setup state, for context before the first question.',
+    description: 'Categories, people & things, rules and setup state, for context before the first question.',
     mimeType: 'application/json',
   }, async (uri) => {
     const { playbook: _, ...household } = await playbook(rest)
@@ -23,7 +23,7 @@ export function createMcpServer(rest: Rest): McpServer {
   const prompt = (text: string) => ({ messages: [{ role: 'user' as const, content: { type: 'text' as const, text } }] })
   server.registerPrompt('setup_household', {
     title: 'Set up Kept',
-    description: 'The first conversation: introduce Kept, cost centers, categories, watched groups, invites.',
+    description: 'The first conversation: introduce Kept, people & things, categories, watched groups, invites.',
   }, async () => prompt('Set up Kept for my household. Call get_playbook and follow its first-conversation steps.'))
   server.registerPrompt('log_expense', {
     title: 'Log an expense',

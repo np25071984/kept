@@ -43,8 +43,8 @@ export function checkCategoryRename(from: string, to: string, paths: string[]): 
 }
 
 export function checkCostCenterRename(from: string, to: string, names: string[]): Problem | null {
-  if (!to.trim()) return { code: 'invalid_cost_center', message: 'A cost center needs a name.' }
-  if (!names.some((name) => same(name, from))) return { code: 'unknown_cost_center', message: `There is no cost center "${from}".` }
+  if (!to.trim()) return { code: 'invalid_cost_center', message: 'A person or thing needs a name.' }
+  if (!names.some((name) => same(name, from))) return { code: 'unknown_cost_center', message: `There is no person or thing called "${from}".` }
   const taken = names.find((name) => same(name, to))
   if (taken && !same(taken, from)) return { code: 'cost_center_exists', message: `"${taken}" already exists.` }
   return null
@@ -83,11 +83,11 @@ export function mentions(renamer: Renamer, value: { params?: Record<string, unkn
 
 export type Usage = Partial<Record<'purchases' | 'subcategories' | 'rules' | 'notes' | 'repeats', number>>
 
-// Why a category or cost center can't be deleted yet, or null when nothing uses it.
+// Why a category or cost center can't be deleted yet, or null when nothing uses it. `what` prefixes the name, e.g. "Category ".
 export function usageProblem(what: string, name: string, usage: Usage): Problem | null {
   const parts = Object.entries(usage)
     .filter(([, count]) => (count ?? 0) > 0)
     .map(([kind, count]) => `${count} ${count === 1 ? kind.replace(/ies$/, 'y').replace(/s$/, '') : kind}`)
   if (parts.length === 0) return null
-  return { code: 'in_use', message: `${what} "${name}" is still used by ${parts.join(', ')}. Move or change those first, or rename it instead.` }
+  return { code: 'in_use', message: `${what}"${name}" is still used by ${parts.join(', ')}. Move or change those first, or rename it instead.` }
 }

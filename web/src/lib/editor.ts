@@ -56,8 +56,8 @@ export function restCents(form: PurchaseForm): number | null {
 function shareProblems(entries: SpentForForm[], where: string): string[] {
   const problems: string[] = []
   const names = entries.map((e) => e.cost_center.trim().toLowerCase())
-  if (names.some((name) => !name)) problems.push(`Pick a cost center for every entry ${where}.`)
-  if (new Set(names).size !== names.length) problems.push(`A cost center appears twice ${where}.`)
+  if (names.some((name) => !name)) problems.push(`Pick who or what for every entry ${where}.`)
+  if (new Set(names).size !== names.length) problems.push(`Someone or something appears twice ${where}.`)
   const shares = entries.filter((e) => e.share.trim() !== '').map((e) => Number(e.share))
   if (shares.some((share) => !(share > 0 && share <= 100))) problems.push(`Shares ${where} are percentages above 0 and up to 100.`)
   const total = shares.reduce((sum, share) => sum + share, 0)

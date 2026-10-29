@@ -38,7 +38,7 @@ describe('purchase editor', () => {
     expect(validateForm({ ...form, category: '' })).toContain('Pick a category for the rest of the amount.')
     expect(validateForm({ ...form, amount: 'abc' })).toContain('The amount must be a number above zero, like 12.50.')
     expect(validateForm({ ...form, spent_for: [{ cost_center: 'Hyundai', share: '70' }, { cost_center: 'Kia', share: '40' }] })).toContain('Shares for the rest add up to more than 100%.')
-    expect(validateForm({ ...form, spent_for: [{ cost_center: 'Hyundai', share: '50' }, { cost_center: 'hyundai', share: '' }] })).toContain('A cost center appears twice for the rest.')
+    expect(validateForm({ ...form, spent_for: [{ cost_center: 'Hyundai', share: '50' }, { cost_center: 'hyundai', share: '' }] })).toContain('Someone or something appears twice for the rest.')
   })
 })
 

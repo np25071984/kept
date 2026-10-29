@@ -89,10 +89,10 @@ export function validateShares(spentFor: SpentFor[]): Result<SpentFor[]> {
   }
   if (total > 1 + SHARE_EPSILON) return fail('shares_exceed_one', 'Shares add up to more than 1.')
   if (spentFor.length > 0 && unshared === 0 && total < 1 - SHARE_EPSILON) {
-    return fail('shares_incomplete', 'When every cost center has a share, the shares must add up to 1.')
+    return fail('shares_incomplete', 'When everyone and everything it was for has a share, the shares must add up to 1.')
   }
   if (unshared > 0 && total >= 1 - SHARE_EPSILON) {
-    return fail('shares_exceed_one', 'Shares leave nothing for the cost centers without one.')
+    return fail('shares_exceed_one', 'The shares leave nothing for those without one.')
   }
   return { ok: true, value: spentFor }
 }

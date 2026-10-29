@@ -82,7 +82,7 @@ export async function saveNote(tx: Tx, caller: Caller, body: NoteBody & { text: 
   const vocabulary = await loadVocabulary(tx)
   const links = resolveLinks(vocabulary, body)
   if (links.costCenterIds.length + links.categoryIds.length + links.merchants.length === 0) {
-    throw invalid('note_needs_link', 'A note links to at least one cost center, category or merchant.')
+    throw invalid('note_needs_link', 'A note links to at least one person or thing, category or merchant.')
   }
   checkExpiry(body.expires_on)
   const { id } = await tx
@@ -105,7 +105,7 @@ export async function updateNote(tx: Tx, caller: Caller, id: string, body: NoteB
     merchants: body.merchants ?? current.merchants,
   })
   if (links.costCenterIds.length + links.categoryIds.length + links.merchants.length === 0) {
-    throw invalid('note_needs_link', 'A note links to at least one cost center, category or merchant.')
+    throw invalid('note_needs_link', 'A note links to at least one person or thing, category or merchant.')
   }
   await tx
     .updateTable('notes')

@@ -114,7 +114,7 @@ function NoteEditor({ note, personal, onDone }: { note?: Note; personal: boolean
     <form className="panel editor grow" onSubmit={(e) => { e.preventDefault(); void save() }}>
       <label>Note<textarea rows={2} value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} placeholder="The Kia needs premium fuel" /></label>
       <div className="grid">
-        <label>Cost centers
+        <label>People &amp; things
           <MultiSelect options={costCenters.map((c) => c.name)} value={form.cost_centers} onChange={(cost_centers) => setForm({ ...form, cost_centers })} />
         </label>
         <label>Categories

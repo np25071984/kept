@@ -236,7 +236,7 @@ function SpentForEditor({ entries, onChange }: { entries: SpentForForm[]; onChan
         </span>
       ))}
       {unused.length > 0 && (
-        <select value="" onChange={(e) => e.target.value && onChange([...entries, { cost_center: e.target.value, share: '' }])} aria-label="Add a cost center">
+        <select value="" onChange={(e) => e.target.value && onChange([...entries, { cost_center: e.target.value, share: '' }])} aria-label="Add who or what it was for">
           <option value="">{entries.length ? 'Add…' : 'Nobody in particular'}</option>
           {unused.map((cc) => <option key={cc.name} value={cc.name}>{cc.name}</option>)}
         </select>

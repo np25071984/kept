@@ -67,7 +67,7 @@ ${error ? `<p class="error">${escape(error)}</p>` : ''}
 export function joinPage(uid: string, household: string, inviter: string, error?: string): string {
   return layout('Join your household', `
 <h1>Join ${escape(household)}</h1>
-<p>${escape(inviter)} invited you. Your purchases stay yours; the household shares categories, cost centers and totals.</p>
+<p>${escape(inviter)} invited you. Your purchases stay yours; the household shares categories, people &amp; things, and totals.</p>
 ${error ? `<p class="error">${escape(error)}</p>` : ''}
 <form method="post" action="/oauth/interaction/${escape(uid)}/join">
   <label for="name">Your name</label>
