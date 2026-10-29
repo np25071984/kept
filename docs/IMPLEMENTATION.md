@@ -208,6 +208,17 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `category`   | Category link | No       | Exactly one of `category` and `item`.                    |
 | `item`       | String        | No       | E.g. "snacks".                                           |
 
+**Caps** (personal; see [Caps](VISION.md#caps))
+
+| Field         | Type             | Required | Notes                                                      |
+| ------------- | ---------------- | -------- | ---------------------------------------------------------- |
+| `id`          | UUID             | Yes      |                                                            |
+| `user_id`     | UUID             | Yes      | Set from the authenticated identity.                       |
+| `category`    | Category link    | No       | Exactly one of `category` and `cost_center`. Subcategories count toward it. |
+| `cost_center` | Cost center link | No       |                                                            |
+| `amount`      | Decimal          | Yes      | In the household currency.                                 |
+| `period`      | String           | Yes      | `month` or `year`, the calendar one in the household's time zone. |
+
 **Notes** (personal; see [Notes](VISION.md#notes))
 
 | Field        | Type      | Required | Notes                                                            |
@@ -240,6 +251,8 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `GET`    | `/api/v1/watches`           | List the caller's watched groups.                                                                 |
 | `POST`   | `/api/v1/watches`           | Watch a category or an item. Watching one already watched returns it.                             |
 | `DELETE` | `/api/v1/watches/{id}`      | Stop watching, e.g. "stop tracking snacks".                                                       |
+| `GET`    | `/api/v1/caps`              | The caller's caps with `spent` this month or year (own purchases, private included) and `state`: `under`, `close` (from 80%) or `over`. |
+| `POST`   | `/api/v1/caps`              | Set a cap. `PATCH` and `DELETE` on `/api/v1/caps/{id}` change or remove one. A write that takes a cap past 80% or over returns the lines to say in `caps`. |
 | `GET`    | `/api/v1/notes`             | List the caller's notes, newest first.                                                            |
 | `POST`   | `/api/v1/notes`             | Save a note.                                                                                      |
 | `PATCH`  | `/api/v1/notes/{id}`        | Change a note's text.                                                                             |
@@ -367,6 +380,9 @@ The MCP server is stateless Streamable HTTP at `POST /mcp`, in the same process 
 | `list_cost_centers`   | `GET /api/v1/cost-centers`     | Cost centers with their kind.                                             |
 | `watch_group`         | `POST /api/v1/watches`         | Start watching a category or item, after the user asked.                  |
 | `stop_watching`       | `DELETE /api/v1/watches/{id}`  | Stop watching a group.                                                    |
+| `set_cap`             | `POST /api/v1/caps`            | Set a cap the user confirmed.                                             |
+| `change_cap`          | `PATCH /api/v1/caps/{id}`      | Change a cap's amount or period.                                          |
+| `remove_cap`          | `DELETE /api/v1/caps/{id}`     | Remove a cap.                                                             |
 | `save_note`           | `POST /api/v1/notes`           | Remember something the user said, after telling them.                     |
 | `update_note`         | `PATCH /api/v1/notes/{id}`     | Change a note's text.                                                     |
 | `delete_note`         | `DELETE /api/v1/notes/{id}`    | Forget a note.                                                            |
@@ -386,7 +402,7 @@ The MCP server is stateless Streamable HTTP at `POST /mcp`, in the same process 
 | `delete_category`     | `DELETE /api/v1/categories`    | Delete a category nothing uses, after the user confirmed.                 |
 | `update_setup`        | `PATCH /api/v1/setup`          | Save confirmed setup answers and mark steps `done` or `later`.            |
 | `invite_member`       | `POST /api/v1/invites`         | Invite a member by email, after the user confirms. Owners only.           |
-| `get_playbook`        | `GET /api/v1/notes`, `/watches`, `/categories`, `/cost-centers`, `/setup` | The question playbook plus the household's categories and cost centers, the user's current notes and watched groups, and setup state in one call. Called before the first question; when setup is incomplete or the caller hasn't been introduced, the playbook tells the agent to run the first conversation. |
+| `get_playbook`        | `GET /api/v1/notes`, `/watches`, `/categories`, `/cost-centers`, `/setup` | The question playbook plus the household's categories and cost centers, the user's current notes, watched groups and caps, and setup state in one call. Called before the first question; when setup is incomplete or the caller hasn't been introduced, the playbook tells the agent to run the first conversation. |
 
 ### 5.2 Teaching the Agent
 

@@ -57,12 +57,13 @@ function query(params: Record<string, unknown>): string {
 
 // The playbook, the household's vocabulary, the user's notes and watched groups, and what to do first, in one call.
 export async function playbook(rest: Rest, now = new Date()) {
-  const [setup, categories, costCenters, notes, watches] = await Promise.all([
+  const [setup, categories, costCenters, notes, watches, caps] = await Promise.all([
     rest('GET', '/api/v1/setup'),
     rest('GET', '/api/v1/categories'),
     rest('GET', '/api/v1/cost-centers'),
     rest('GET', '/api/v1/notes'),
     rest('GET', '/api/v1/watches'),
+    rest('GET', '/api/v1/caps'),
   ])
   const s = setup.body as { household: { name: string; currency: string; timezone: string; next_step: string | null }; you: { introduced: boolean; role: string } }
   let startWith = 'Setup is done. Handle the user\'s request.'
@@ -78,6 +79,7 @@ export async function playbook(rest: Rest, now = new Date()) {
     cost_centers: (costCenters.body as { cost_centers: unknown[] }).cost_centers,
     notes: (notes.body as { notes: unknown[] }).notes,
     watching: (watches.body as { watches: unknown[] }).watches,
+    caps: (caps.body as { caps: unknown[] }).caps,
     playbook: PLAYBOOK,
   }
 }
@@ -206,6 +208,27 @@ export function registerTools(server: McpServer, rest: Rest) {
     inputSchema: { id },
     annotations: destroy,
   }, async ({ id }) => result(await rest('DELETE', `/api/v1/watches/${id}`)))
+
+  server.registerTool('set_cap', {
+    title: 'Set a cap',
+    description: 'Set a soft reminder the user asked for ("cap eating out at $250 a month"), after they confirmed: a category or one of the people & things, an amount, per month or year. It never blocks a purchase.',
+    inputSchema: { category: z.string().nullish(), cost_center: z.string().nullish(), amount, period: z.enum(['month', 'year']) },
+    annotations: write,
+  }, async (args) => result(await rest('POST', '/api/v1/caps', args)))
+
+  server.registerTool('change_cap', {
+    title: 'Change a cap',
+    description: 'Change a cap\'s amount or period ("make the groceries cap $1,200"), by the id from get_playbook\'s caps.',
+    inputSchema: { id, amount: amount.optional(), period: z.enum(['month', 'year']).optional() },
+    annotations: write,
+  }, async ({ id, ...body }) => result(await rest('PATCH', `/api/v1/caps/${id}`, body)))
+
+  server.registerTool('remove_cap', {
+    title: 'Remove a cap',
+    description: 'Remove a cap ("drop my groceries cap"), by the id from get_playbook\'s caps.',
+    inputSchema: { id },
+    annotations: destroy,
+  }, async ({ id }) => result(await rest('DELETE', `/api/v1/caps/${id}`)))
 
   server.registerTool('save_note', {
     title: 'Save a note',

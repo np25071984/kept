@@ -141,6 +141,18 @@ describe('two members of one household', () => {
     expect((await sam.patch('/api/v1/setup', { timezone: 'nowhere' })).status).toBe(422)
   })
 
+  it('tracks a member\'s caps and says when a purchase passes 80% or the cap', async () => {
+    const cap = await alex.post('/api/v1/caps', { category: 'Eating out', amount: 100, period: 'month' })
+    expect(cap.status).toBe(201)
+    const first = await alex.post('/api/v1/transactions', { amount: 85, merchant: 'Chipotle', category: 'Eating out' })
+    expect(first.body.caps).toEqual(['That\'s $85.00 of the $100.00 Eating out cap this month.'])
+    const second = await alex.post('/api/v1/transactions', { amount: 30, merchant: 'Chipotle', category: 'Eating out' })
+    expect(second.body.caps).toEqual(['That puts Eating out $15.00 over the cap this month.'])
+    expect((await alex.get('/api/v1/caps')).body.caps).toMatchObject([{ spent: 115, state: 'over' }])
+    expect((await sam.get('/api/v1/caps')).body.caps).toEqual([])
+    expect((await sam.delete(`/api/v1/caps/${cap.body.id}`)).status).toBe(404)
+  })
+
   it('keeps each member\'s notes and watched groups to themselves', async () => {
     const note = await alex.post('/api/v1/notes', { text: 'Anything at Sephora is private.' })
     const watch = await alex.post('/api/v1/watches', { item: 'makeup' })

@@ -4,10 +4,11 @@ import { getSummary } from '../../ledger/summary.js'
 import { getUpdates, markSeen } from '../../ledger/updates.js'
 import { addCategory, addCostCenter, deleteCategory, deleteCostCenter, listCategories, listCostCenters, renameCategory, updateCostCenter } from '../../ledger/vocabulary.js'
 import { addWatch, deleteWatch, listWatches } from '../../ledger/watches.js'
+import { addCap, deleteCap, listCaps, updateCap } from '../../ledger/caps.js'
 import type { App, RouteDeps } from '../app.js'
 import {
   CategoryBody, CategoryQuery, CategoryRename, CostCenterBody, CostCenterName, CostCenterPatch, IdParams, NoteBody, RepeatBody, RepeatPatch,
-  SeenBody, SummaryQuery, UpdatesQuery, WatchBody,
+  SeenBody, SummaryQuery, UpdatesQuery, WatchBody, CapBody, CapPatch,
 } from '../schemas.js'
 
 export function ledgerRoutes(app: App, { run }: RouteDeps) {
@@ -73,6 +74,28 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
     schema: { tags: ['memory'], summary: 'Stop watching a group. Purchases already logged keep their checked groups.', params: IdParams },
   }, async (request, reply) => {
     await run(request, (tx, caller) => deleteWatch(tx, caller, request.params.id))
+    return reply.status(204).send()
+  })
+
+  app.get('/api/v1/caps', {
+    schema: { tags: ['memory'], summary: 'The caller\'s caps with what is spent toward each this month or year, private purchases included.' },
+  }, async (request) => ({ caps: await run(request, (tx, caller) => listCaps(tx, caller)) }))
+
+  app.post('/api/v1/caps', {
+    schema: { tags: ['memory'], summary: 'Set a cap on a category or one of the people & things, per month or year. A reminder, never a block.', body: CapBody },
+  }, async (request, reply) => {
+    reply.status(201)
+    return run(request, (tx, caller) => addCap(tx, caller, request.body))
+  })
+
+  app.patch('/api/v1/caps/:id', {
+    schema: { tags: ['memory'], summary: 'Change a cap\'s amount or period.', params: IdParams, body: CapPatch },
+  }, async (request) => run(request, (tx, caller) => updateCap(tx, caller, request.params.id, request.body)))
+
+  app.delete('/api/v1/caps/:id', {
+    schema: { tags: ['memory'], summary: 'Remove a cap.', params: IdParams },
+  }, async (request, reply) => {
+    await run(request, (tx, caller) => deleteCap(tx, caller, request.params.id))
     return reply.status(204).send()
   })
 

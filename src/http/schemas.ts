@@ -85,6 +85,14 @@ export const CostCenterBody = Type.Object({
   kind: Type.String({ minLength: 1, description: 'Car, Home, Child, Pet or anything else.' }),
 })
 
+export const CapBody = Type.Object({
+  category: Type.Optional(Nullable(Type.String({ description: 'A category; its subcategories count toward it.' }))),
+  cost_center: Type.Optional(Nullable(Type.String({ description: 'One of the people & things.' }))),
+  amount: Amount,
+  period: Type.Union([Type.Literal('month'), Type.Literal('year')]),
+})
+export const CapPatch = Type.Object({ amount: Type.Optional(Amount), period: Type.Optional(Type.Union([Type.Literal('month'), Type.Literal('year')])) })
+
 export const WatchBody = Type.Object({
   category: Type.Optional(Nullable(Type.String({ description: 'A category or subcategory, e.g. "Groceries/Alcohol".' }))),
   item: Type.Optional(Nullable(Type.String({ description: 'An item bought across categories, e.g. "snacks".' }))),

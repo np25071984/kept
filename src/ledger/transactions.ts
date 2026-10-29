@@ -4,6 +4,7 @@ import { addDays, dateWarning, isLocalDate, todayIn } from '../domain/dates.js'
 import { buildLines, resizeLines, validateShares, type Line, type SpentFor } from '../domain/lines.js'
 import { decideMatch, reconcile, type FieldChange, type KeptField, type MatchCandidate, type SourceKind } from '../domain/matching.js'
 import { centsToNumeric, formatAmount, fromCents, numericToCents, toCents } from '../domain/money.js'
+import { capNotes, listCaps } from './caps.js'
 import type { Caller } from './caller.js'
 import { invalid, notFound, unwrap } from './errors.js'
 import { loadVocabulary, type Vocabulary } from './vocabulary.js'
@@ -74,15 +75,24 @@ export interface WriteResult {
   changes?: FieldChange[]
   kept?: KeptField[]
   warnings?: string[]
+  // Caps this write took past 80% or over, as lines to say in the confirmation (VISION.md §4.A, "Caps").
+  caps?: string[]
 }
 
 // Every write is matched against the caller's own transactions first (VISION.md §3.4, "One purchase, many sources").
 export async function createTransactions(tx: Tx, caller: Caller, bodies: TransactionBody[], now = new Date()): Promise<WriteResult[]> {
   const results: WriteResult[] = []
+  const capsBefore = await listCaps(tx, caller, now)
   for (const body of bodies) {
     const result = await createOne(tx, caller, body, now)
     const warning = body.date ? dateWarning(body.date, todayIn(caller.timezone, now), (body.source?.kind ?? 'talk') === 'talk') : null
     results.push(warning ? { ...result, warnings: [warning] } : result)
+  }
+  if (capsBefore.length && results.length) {
+    const after = await listCaps(tx, caller, now)
+    const added = new Map(after.map((c) => [c.id, toCents(c.spent) - toCents(capsBefore.find((b) => b.id === c.id)?.spent ?? 0)]))
+    const notes = capNotes(after, added, caller.currency)
+    if (notes.length) results[results.length - 1] = { ...results[results.length - 1]!, caps: notes }
   }
   return results
 }

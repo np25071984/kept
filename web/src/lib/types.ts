@@ -68,6 +68,16 @@ export interface Recurring {
   last: { amount: number; date: string } | null
 }
 
+export interface Cap {
+  id: string
+  category: string | null
+  cost_center: string | null
+  amount: number
+  period: 'month' | 'year'
+  spent: number
+  state: 'under' | 'close' | 'over'
+}
+
 export interface Member {
   id: string
   name: string

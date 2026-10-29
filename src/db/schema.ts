@@ -132,6 +132,16 @@ export interface Database {
     item: string | null
     created_at: Generated<Date>
   }
+  caps: {
+    id: Generated<string>
+    household_id: string
+    user_id: string
+    category_id: string | null
+    cost_center_id: string | null
+    amount: Numeric
+    period: 'month' | 'year'
+    created_at: Generated<Date>
+  }
   notes: {
     id: Generated<string>
     household_id: string
