@@ -83,7 +83,7 @@ The costs are real. MCP is young and the spec still changes. Assistants support 
 | `last_used_at` | Timestamp | No       |                                                             |
 | `revoked_at`   | Timestamp | No       |                                                             |
 
-Every table carries a `household_id` for [row-level security](#4-security), including those whose rows belong to one member. Cost centers, categories, household-wide rules and household-wide notes are shared by every member. Transactions belong to the user in `spent_by` (see [Households, Accounts and Privacy](VISION.md#households-accounts-and-privacy)).
+Every table carries a `household_id` for [row-level security](#4-security), including those whose rows belong to one member. Cost centers and categories are shared by every member. Transactions, notes and watched groups belong to their user (see [Households, Accounts and Privacy](VISION.md#households-accounts-and-privacy)).
 
 **Categories** (shared by the household)
 
@@ -93,9 +93,9 @@ Every table carries a `household_id` for [row-level security](#4-security), incl
 | `household_id` | UUID   | Yes      |                                      |
 | `path`         | String | Yes      | Groceries, Groceries/Alcohol, Car/Fuel |
 
-Line items, cost centers, rules and notes store a link to the category's `id`, so renaming a category ("Car/Fuel" to "Car/Gas") doesn't break anything that uses it. The API and MCP tools accept and return the `path`, which is what the agent and the user see. The AI picks from this list and asks before adding a new one, so the household doesn't end up with "Car/Fuel", "Gas" and "Fuel" side by side. A write naming an unknown category or cost center fails with `unknown_category` or `unknown_cost_center`, listing the `known` names and the `similar` ones: a typo, swapped letters, a shorter form or another form of the word ([`VISION.md` §3.1](VISION.md#step-4-clarify-the-cost-center)).
+Line items, cost centers and watched groups store a link to the category's `id`, so renaming a category ("Car/Fuel" to "Car/Gas") doesn't break anything that uses it. The API and MCP tools accept and return the `path`, which is what the agent and the user see. The AI picks from this list and asks before adding a new one, so the household doesn't end up with "Car/Fuel", "Gas" and "Fuel" side by side. A write naming an unknown category or cost center fails with `unknown_category` or `unknown_cost_center`, listing the `known` names and the `similar` ones: a typo, swapped letters, a shorter form or another form of the word ([`VISION.md` §3.1](VISION.md#step-4-clarify-the-cost-center)).
 
-Renaming a category or cost center keeps every link. Rule params, repeat templates and `checked_groups` hold paths and names as text, so a rename rewrites them, and a category's subcategories move with it. A delete fails with `409 in_use`, naming the counts, while any purchase, subcategory, rule, note or repeat uses the name; links from cost centers to the category go with it. A new household starts with the fixed seed in [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
+Renaming a category or cost center keeps every link. Repeat templates and `checked_groups` hold paths and names as text, so a rename rewrites them, and a category's subcategories move with it. A delete fails with `409 in_use`, naming the counts, while any purchase, subcategory, watched group or repeat uses the name; links from cost centers to the category go with it. A new household starts with the fixed seed in [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
 
 **Invites**
 
@@ -123,7 +123,7 @@ Renaming a category or cost center keeps every link. Rule params, repeat templat
 | `merchant` | String    | No       |                                                                    |
 | `notes`    | Text      | No       |                                                                    |
 | `repeat_id` | UUID     | No       | Set when the transaction was created by a [repeat](VISION.md#35-repeating-spending-phone-rent-subscriptions). |
-| `checked_groups` | List of strings | No | Watched groups the user answered about or a receipt covered, e.g. `["Groceries/Alcohol", "nuts"]`. A checked group with no line item is a known $0. Groups with a line item are added on every write. Used for [coverage](VISION.md#coverage). |
+| `checked_groups` | List of strings | No | Watched groups the user answered about or a receipt covered, e.g. `["Groceries/Alcohol", "snacks"]`. A checked group with no line item is a known $0. Groups with a line item are added on every write. Used for [coverage](VISION.md#coverage). |
 | `main_category` | Category link | No | The category sent as the top-level `category`: the single line's, or the rest line's beside explicit line items. |
 | `user_edited` | List of strings | No | Fields the user changed with `PATCH`: `amount`, `date`, `merchant`, `line_items`. A later source never changes them ([§3.2](#32-matching)). |
 
@@ -137,9 +137,9 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `transaction_id` | UUID                      | Yes      |                                                     |
 | `amount`         | Decimal                   | Yes      |                                                     |
 | `category`       | Category link             | Yes      | Sent and returned as the `path`, e.g. "Car/Fuel".   |
-| `item`           | String                    | No       | Free text, e.g. "nuts", "shoes". Empty for the rest line. |
+| `item`           | String                    | No       | Free text, e.g. "snacks", "shoes". Empty for the rest line. |
 | `spent_for`      | List of cost center links | No       |                                                     |
-| `notes`          | Text                      | No       | Details, e.g. "almonds, cashews".                   |
+| `notes`          | Text                      | No       | Details, e.g. "chips, cookies".                   |
 | `is_rest`        | Boolean                   | Yes      | The rest line, which absorbs a change of total.     |
 | `position`       | Integer                   | Yes      | Order within the transaction.                       |
 
@@ -200,33 +200,24 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `cost_center_id` | UUID    | Yes      |                                                                    |
 | `share`          | Decimal | No       | Fraction of the line item amount (0–1). Empty = even split of the remainder. |
 
-**Household Rules** (the household's playbook; see [Household Rules](VISION.md#rules))
+**Watched Groups** (personal; see [`VISION.md` §3.3](VISION.md#33-watched-groups-alcohol-and-snacks))
 
-| Field        | Type   | Required | Notes                                                                                   |
-| ------------ | ------ | -------- | --------------------------------------------------------------------------------------- |
-| `id`         | UUID   | Yes      |                                                                                         |
-| `kind`       | String | Yes      | `watch`, `ask_breakdown`, `set_category`, `set_spent_for`, `set_private`                |
-| `user_id`    | UUID   | No       | Empty = whole household. Set = personal: applies to and is visible to this person only. |
-| `merchant`   | String | No       | Condition. Empty = any merchant.                                                        |
-| `category`   | Category link | No | Condition. Empty = any category.                                                 |
-| `account_ref` | String | No      | Condition. Matches the account number on a bill or statement.                          |
-| `params`     | JSON   | Yes      | What the rule does; shape depends on `kind`.                                            |
-| `text`       | Text   | Yes      | The rule in the user's words, e.g. "Always ask about nuts at Whole Foods".              |
-| `created_by` | UUID   | Yes      | Set from the authenticated identity.                                                    |
+| Field        | Type          | Required | Notes                                                    |
+| ------------ | ------------- | -------- | -------------------------------------------------------- |
+| `id`         | UUID          | Yes      |                                                          |
+| `user_id`    | UUID          | Yes      | Set from the authenticated identity.                     |
+| `category`   | Category link | No       | Exactly one of `category` and `item`.                    |
+| `item`       | String        | No       | E.g. "snacks".                                           |
 
-**Household Notes** (the agent's shared memory; see [Household Notes](VISION.md#notes))
+**Notes** (personal; see [Notes](VISION.md#notes))
 
-| Field          | Type                       | Required | Notes                                                                  |
-| -------------- | -------------------------- | -------- | ---------------------------------------------------------------------- |
-| `id`           | UUID                       | Yes      |                                                                        |
-| `text`         | Text                       | Yes      | E.g. "We're selling the Kia in December."                              |
-| `user_id`      | UUID                       | No       | Empty = whole household. Set = personal: visible to this person only.  |
-| `cost_centers` | List of cost center links  | No       | At least one of `cost_centers`, `categories` or `merchants` is required. |
-| `categories`   | List of category links     | No       |                                                                        |
-| `merchants`    | List of strings            | No       |                                                                        |
-| `expires_on`   | Date                       | No       | After this date the note is no longer loaded, but stays visible.       |
-| `created_by`   | UUID                       | Yes      | Set from the authenticated identity.                                   |
-| `created_at`   | Timestamp                  | Yes      |                                                                        |
+| Field        | Type      | Required | Notes                                                            |
+| ------------ | --------- | -------- | ---------------------------------------------------------------- |
+| `id`         | UUID      | Yes      |                                                                  |
+| `user_id`    | UUID      | Yes      | Set from the authenticated identity.                             |
+| `text`       | Text      | Yes      | In the user's words, e.g. "Costco is always groceries."          |
+| `expires_on` | Date      | No       | After this date the note is no longer loaded, but stays visible. |
+| `created_at` | Timestamp | Yes      |                                                                  |
 
 ## 3. REST API
 
@@ -248,12 +239,12 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `GET`    | `/api/v1/connections`       | The caller's connected assistants and web sign-ins, one per client, with when each was last used. |
 | `DELETE` | `/api/v1/connections/{client_id}` | Disconnect one: its grants and tokens are deleted, so it has to sign in again.              |
 | `POST`   | `/api/v1/connections/clients` | Create a client ID and secret for an assistant that asks for them, with its redirect URI. The secret is shown once. |
-| `GET`    | `/api/v1/rules`             | List household rules, optionally filtered to those matching a merchant, category and the current user. |
-| `POST`   | `/api/v1/rules`             | Save a rule (track an item, set a default category or split, mark a store as mixed).              |
-| `DELETE` | `/api/v1/rules/{id}`        | Remove a rule, e.g. "stop tracking nuts".                                                         |
-| `GET`    | `/api/v1/notes`             | List household notes linked to given cost centers, categories or merchants, or matching a search. Expired notes only on request. |
+| `GET`    | `/api/v1/watches`           | List the caller's watched groups.                                                                 |
+| `POST`   | `/api/v1/watches`           | Watch a category or an item. Watching one already watched returns it.                             |
+| `DELETE` | `/api/v1/watches/{id}`      | Stop watching, e.g. "stop tracking snacks".                                                       |
+| `GET`    | `/api/v1/notes`             | List the caller's notes, newest first. Expired notes only on request.                             |
 | `POST`   | `/api/v1/notes`             | Save a note.                                                                                      |
-| `PATCH`  | `/api/v1/notes/{id}`        | Change a note's text, links or expiry.                                                            |
+| `PATCH`  | `/api/v1/notes/{id}`        | Change a note's text or expiry.                                                                   |
 | `DELETE` | `/api/v1/notes/{id}`        | Delete a note.                                                                                    |
 | `POST`   | `/api/v1/transactions/{id}/sources` | Attach a source (what the agent read from a photo, document or email) to one of the caller's transactions, e.g. a receipt added later. |
 | `POST`   | `/api/v1/transactions/{id}/merge` | Merge another of the caller's transactions into this one, keeping both sets of sources.     |
@@ -372,12 +363,11 @@ The MCP server is stateless Streamable HTTP at `POST /mcp`, in the same process 
 | `edit_transaction`    | `PATCH /api/v1/transactions/{id}` | Change a purchase after the user confirmed, e.g. a return.             |
 | `delete_transaction`  | `DELETE /api/v1/transactions/{id}` | Delete a purchase after the user confirmed.                           |
 | `list_cost_centers`   | `GET /api/v1/cost-centers`     | Cost centers, optionally filtered by category.                            |
-| `get_rules`           | `GET /api/v1/rules`            | Rules that apply to this merchant, category and person.                   |
-| `save_rule`           | `POST /api/v1/rules`           | Save a rule the user confirmed.                                           |
-| `delete_rule`         | `DELETE /api/v1/rules/{id}`    | Remove a rule.                                                            |
-| `get_notes`           | `GET /api/v1/notes`            | Notes linked to what the conversation touches, or matching a search.      |
+| `watch_group`         | `POST /api/v1/watches`         | Start watching a category or item, after the user asked.                  |
+| `stop_watching`       | `DELETE /api/v1/watches/{id}`  | Stop watching a group.                                                    |
+| `get_notes`           | `GET /api/v1/notes`            | The user's notes, expired ones included on request.                       |
 | `save_note`           | `POST /api/v1/notes`           | Remember something the user said, after telling them.                     |
-| `update_note`         | `PATCH /api/v1/notes/{id}`     | Change a note's text, links or expiry.                                    |
+| `update_note`         | `PATCH /api/v1/notes/{id}`     | Change a note's text or expiry.                                           |
 | `delete_note`         | `DELETE /api/v1/notes/{id}`    | Forget a note.                                                            |
 | `add_source`          | `POST /api/v1/transactions/{id}/sources` | Attach what the agent read from a photo, document or email to an existing transaction, e.g. a receipt added later. |
 | `merge_transactions`  | `POST /api/v1/transactions/{id}/merge` | Merge a duplicate after the user agrees they're the same purchase. |
@@ -395,7 +385,7 @@ The MCP server is stateless Streamable HTTP at `POST /mcp`, in the same process 
 | `delete_category`     | `DELETE /api/v1/categories`    | Delete a category nothing uses, after the user confirmed.                 |
 | `update_setup`        | `PATCH /api/v1/setup`          | Save confirmed setup answers and mark steps `done` or `later`.            |
 | `invite_member`       | `POST /api/v1/invites`         | Invite a member by email, after the user confirms. Owners only.           |
-| `get_playbook`        | `GET /api/v1/rules`, `/categories`, `/cost-centers`, `/setup` | The question playbook plus the household's categories, cost centers, rules and setup state in one call. Called before the first question; when setup is incomplete or the caller hasn't been introduced, the playbook tells the agent to run the first conversation. |
+| `get_playbook`        | `GET /api/v1/notes`, `/watches`, `/categories`, `/cost-centers`, `/setup` | The question playbook plus the household's categories and cost centers, the user's current notes and watched groups, and setup state in one call. Called before the first question; when setup is incomplete or the caller hasn't been introduced, the playbook tells the agent to run the first conversation. |
 
 ### 5.2 Teaching the Agent
 

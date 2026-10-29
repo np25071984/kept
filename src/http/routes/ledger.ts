@@ -1,13 +1,13 @@
 import { deleteNote, getNotes, saveNote, updateNote } from '../../ledger/notes.js'
 import { createRepeat, listRepeats, stopRepeat, updateRepeat } from '../../ledger/repeats.js'
-import { deleteRule, getRules, saveRule } from '../../ledger/rules.js'
 import { getSummary } from '../../ledger/summary.js'
 import { getUpdates, markSeen } from '../../ledger/updates.js'
 import { addCategory, addCostCenter, deleteCategory, deleteCostCenter, listCategories, listCostCenters, renameCategory, updateCostCenter } from '../../ledger/vocabulary.js'
+import { addWatch, deleteWatch, listWatches } from '../../ledger/watches.js'
 import type { App, RouteDeps } from '../app.js'
 import {
-  CategoryBody, CategoryQuery, CategoryRename, CostCenterBody, CostCenterName, CostCenterQuery, CostCenterPatch, IdParams, NoteBody, NotePatch, NoteQuery, RepeatBody, RepeatPatch, RuleBody, RuleQuery,
-  SeenBody, SummaryQuery, UpdatesQuery,
+  CategoryBody, CategoryQuery, CategoryRename, CostCenterBody, CostCenterName, CostCenterQuery, CostCenterPatch, IdParams, NoteBody, NotePatch, NoteQuery, RepeatBody, RepeatPatch,
+  SeenBody, SummaryQuery, UpdatesQuery, WatchBody,
 } from '../schemas.js'
 
 export function ledgerRoutes(app: App, { run }: RouteDeps) {
@@ -23,11 +23,11 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.patch('/api/v1/categories', {
-    schema: { tags: ['vocabulary'], summary: 'Rename or move a category. Purchases, rules, notes and repeats keep pointing at it.', body: CategoryRename },
+    schema: { tags: ['vocabulary'], summary: 'Rename or move a category. Purchases, watched groups and repeats keep pointing at it.', body: CategoryRename },
   }, async (request) => run(request, (tx) => renameCategory(tx, request.body.path, request.body.new_path)))
 
   app.delete('/api/v1/categories', {
-    schema: { tags: ['vocabulary'], summary: 'Delete a category nothing uses: no purchases, subcategories, rules, notes or repeats.', querystring: CategoryQuery },
+    schema: { tags: ['vocabulary'], summary: 'Delete a category nothing uses: no purchases, subcategories, watched groups or repeats.', querystring: CategoryQuery },
   }, async (request, reply) => {
     await run(request, (tx) => deleteCategory(tx, request.query.path))
     return reply.status(204).send()
@@ -45,54 +45,54 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.patch('/api/v1/cost-centers', {
-    schema: { tags: ['vocabulary'], summary: 'Rename a cost center, change its kind or the categories it is linked to. Purchases, rules, notes and repeats keep pointing at it.', body: CostCenterPatch },
+    schema: { tags: ['vocabulary'], summary: 'Rename a cost center, change its kind or the categories it is linked to. Purchases and repeats keep pointing at it.', body: CostCenterPatch },
   }, async (request) => {
     const { name, ...patch } = request.body
     return run(request, (tx, caller) => updateCostCenter(tx, caller, name, patch))
   })
 
   app.delete('/api/v1/cost-centers', {
-    schema: { tags: ['vocabulary'], summary: 'Delete a cost center nothing uses: no purchases, rules, notes or repeats.', querystring: CostCenterName },
+    schema: { tags: ['vocabulary'], summary: 'Delete a cost center nothing uses: no purchases or repeats.', querystring: CostCenterName },
   }, async (request, reply) => {
     await run(request, (tx) => deleteCostCenter(tx, request.query.name))
     return reply.status(204).send()
   })
 
-  app.get('/api/v1/rules', {
-    schema: { tags: ['rules'], summary: 'Household-wide and the caller\'s personal rules. With filters, only matching rules plus the one that wins for each kind.', querystring: RuleQuery },
-  }, async (request) => run(request, (tx, caller) => getRules(tx, caller, request.query)))
+  app.get('/api/v1/watches', {
+    schema: { tags: ['memory'], summary: 'The caller\'s watched groups.' },
+  }, async (request) => ({ watches: await run(request, (tx, caller) => listWatches(tx, caller)) }))
 
-  app.post('/api/v1/rules', {
-    schema: { tags: ['rules'], summary: 'Save a rule the user confirmed. set_private rules are always personal.', body: RuleBody },
+  app.post('/api/v1/watches', {
+    schema: { tags: ['memory'], summary: 'Watch a category or an item. Watching one already watched returns it.', body: WatchBody },
   }, async (request, reply) => {
     reply.status(201)
-    return run(request, (tx, caller) => saveRule(tx, caller, request.body))
+    return run(request, (tx, caller) => addWatch(tx, caller, request.body))
   })
 
-  app.delete('/api/v1/rules/:id', {
-    schema: { tags: ['rules'], summary: 'Remove a rule. Past transactions are not changed.', params: IdParams },
+  app.delete('/api/v1/watches/:id', {
+    schema: { tags: ['memory'], summary: 'Stop watching a group. Purchases already logged keep their checked groups.', params: IdParams },
   }, async (request, reply) => {
-    await run(request, (tx, caller) => deleteRule(tx, caller, request.params.id))
+    await run(request, (tx, caller) => deleteWatch(tx, caller, request.params.id))
     return reply.status(204).send()
   })
 
   app.get('/api/v1/notes', {
-    schema: { tags: ['notes'], summary: 'Notes linked to any of the given cost center, category or merchant, or matching q. Expired notes only on request.', querystring: NoteQuery },
-  }, async (request) => ({ notes: await run(request, (tx, caller) => getNotes(tx, caller, request.query)) }))
+    schema: { tags: ['memory'], summary: 'The caller\'s notes, newest first. Expired notes only on request.', querystring: NoteQuery },
+  }, async (request) => ({ notes: await run(request, (tx, caller) => getNotes(tx, caller, request.query.include_expired)) }))
 
   app.post('/api/v1/notes', {
-    schema: { tags: ['notes'], summary: 'Save a note linked to at least one cost center, category or merchant.', body: NoteBody },
+    schema: { tags: ['memory'], summary: 'Save a note the user agreed to.', body: NoteBody },
   }, async (request, reply) => {
     reply.status(201)
     return run(request, (tx, caller) => saveNote(tx, caller, request.body))
   })
 
   app.patch('/api/v1/notes/:id', {
-    schema: { tags: ['notes'], summary: 'Change a note\'s text, links or expiry.', params: IdParams, body: NotePatch },
+    schema: { tags: ['memory'], summary: 'Change a note\'s text or expiry.', params: IdParams, body: NotePatch },
   }, async (request) => run(request, (tx, caller) => updateNote(tx, caller, request.params.id, request.body)))
 
   app.delete('/api/v1/notes/:id', {
-    schema: { tags: ['notes'], summary: 'Delete a note.', params: IdParams },
+    schema: { tags: ['memory'], summary: 'Delete a note.', params: IdParams },
   }, async (request, reply) => {
     await run(request, (tx, caller) => deleteNote(tx, caller, request.params.id))
     return reply.status(204).send()

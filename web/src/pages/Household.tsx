@@ -3,9 +3,8 @@ import { api } from '../api.js'
 import type { CostCenter } from '../lib/types.js'
 import { categoryTree } from '../lib/vocabulary.js'
 import { useAction, useSession } from '../session.js'
-import { MultiSelect, NotesSection, RulesSection } from './RulesAndNotes.js'
 
-// The household's shared vocabulary, rules and notes (VISION.md §4.C, "Household").
+// The household's shared vocabulary (VISION.md §4.C, "Household").
 export function HouseholdPage() {
   const { setup } = useSession()
   return (
@@ -16,8 +15,6 @@ export function HouseholdPage() {
       </div>
       <Categories />
       <CostCenters />
-      <RulesSection personal={false} />
-      <NotesSection personal={false} />
     </>
   )
 }
@@ -163,5 +160,25 @@ function CostCenterEditor({ cc, onDone }: { cc?: CostCenter; onDone: () => void 
         <button type="button" onClick={onDone}>Cancel</button>
       </div>
     </form>
+  )
+}
+
+function MultiSelect({ options, value, onChange }: { options: string[]; value: string[]; onChange: (value: string[]) => void }) {
+  const rest = options.filter((option) => !value.includes(option))
+  return (
+    <span className="spent-for">
+      {value.map((item) => (
+        <span key={item} className="chip">
+          {item}
+          <button type="button" className="link" aria-label={`Remove ${item}`} onClick={() => onChange(value.filter((v) => v !== item))}>×</button>
+        </span>
+      ))}
+      {rest.length > 0 && (
+        <select value="" onChange={(e) => e.target.value && onChange([...value, e.target.value])}>
+          <option value="">{value.length ? 'Add…' : 'None'}</option>
+          {rest.map((option) => <option key={option} value={option}>{option}</option>)}
+        </select>
+      )}
+    </span>
   )
 }

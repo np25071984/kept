@@ -13,7 +13,7 @@ export function createMcpServer(rest: Rest): McpServer {
 
   server.registerResource('household', 'kept://household', {
     title: 'The household',
-    description: 'Categories, people & things, rules and setup state, for context before the first question.',
+    description: 'Categories, people & things, the user\'s notes and watched groups, and setup state, for context before the first question.',
     mimeType: 'application/json',
   }, async (uri) => {
     const { playbook: _, ...household } = await playbook(rest)

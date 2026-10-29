@@ -37,10 +37,10 @@ describe('MCP server', () => {
     expect(client.getInstructions()).toContain('Call get_playbook before the first question about money')
     const tools = (await client.listTools()).tools.map((t) => t.name).sort()
     expect(tools).toEqual([
-      'add_category', 'add_cost_center', 'add_source', 'delete_category', 'delete_cost_center', 'delete_note', 'delete_rule', 'delete_transaction',
-      'edit_transaction', 'get_notes', 'get_playbook', 'get_rules', 'get_summary', 'get_updates', 'invite_member', 'list_cost_centers', 'list_repeats',
-      'list_transactions', 'log_transaction', 'merge_transactions', 'rename_category', 'rename_cost_center', 'save_note', 'save_rule', 'set_repeat',
-      'stop_repeat', 'update_note', 'update_repeat', 'update_setup',
+      'add_category', 'add_cost_center', 'add_source', 'delete_category', 'delete_cost_center', 'delete_note', 'delete_transaction',
+      'edit_transaction', 'get_notes', 'get_playbook', 'get_summary', 'get_updates', 'invite_member', 'list_cost_centers', 'list_repeats',
+      'list_transactions', 'log_transaction', 'merge_transactions', 'rename_category', 'rename_cost_center', 'save_note', 'set_repeat',
+      'stop_repeat', 'stop_watching', 'update_note', 'update_repeat', 'update_setup', 'watch_group',
     ])
     expect((await client.listPrompts()).prompts.map((p) => p.name).sort()).toEqual(['catch_up', 'log_expense', 'setup_household'])
     const resource = await client.readResource({ uri: 'kept://household' })
@@ -58,6 +58,12 @@ describe('MCP server', () => {
     expect((await call(client, 'get_playbook')).body.start_with).toContain('offer to continue setup at "categories"')
     await call(client, 'update_setup', { steps: { categories: 'later', watch: 'later', invite: 'later' } })
     expect((await call(client, 'get_playbook')).body.start_with).toBe('Setup is done. Handle the user\'s request.')
+
+    await call(client, 'save_note', { text: 'Costco is always groceries.' })
+    await call(client, 'watch_group', { item: 'snacks' })
+    const later = (await call(client, 'get_playbook')).body
+    expect(later.notes.map((n: { text: string }) => n.text)).toContain('Costco is always groceries.')
+    expect(later.watching.map((w: { group: string }) => w.group)).toContain('snacks')
     await client.close()
   })
 

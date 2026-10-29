@@ -11,8 +11,8 @@ AI assistants remove the typing: a user can say "I just spent $60" and any assis
 **The Solution:** Kept teaches the agent to be a good bookkeeper for one specific household. It gives the agent three things:
 
 1. **A way to group spending.** Transactions, line items, categories, cost centers, watched groups (like alcohol or snacks) and the "rest" line, so every answer the user gives has a place to go (see [Data Flow Examples](#3-data-flow-examples)).
-2. **A playbook of questions.** What to ask, in what order, and when to stay quiet: lead with the best guess, ask about cost centers only when there is a choice, ask about all watched groups in one question and only where they are sold, and always confirm before writing. The household extends the playbook with its own rules, like "Costco is always groceries."
-3. **Memory of the household.** History the agent reads to make its guesses (the usual car, the last split, existing item names, which stores are mixed), plus shared notes on context such as "we're selling the Kia in December." Memory lives in the ledger, not in any one assistant, so it is shared by every household member and every assistant.
+2. **A playbook of questions.** What to ask, in what order, and when to stay quiet: lead with the best guess, ask about cost centers only when there is a choice, ask about all watched groups in one question and only where they are sold, and always confirm before writing. Each member extends the playbook with their own notes, like "Costco is always groceries."
+3. **Memory of the household.** History the agent reads to make its guesses (the usual car, the last split, existing item names, which stores are mixed), plus each member's notes, such as "Costco is always groceries" or "we're selling the Kia in December." Memory lives in the ledger, not in any one assistant, so every assistant a member connects shares it.
 
 The ledger stores the records, but the product is the behavior. Any capable assistant connected to Kept asks the right questions from day one and gets better as history builds up. Kept doesn't read banks, inboxes or receipts itself: the user's own AI does that, with whatever access the user chooses to give it, and Kept keeps what it learns.
 
@@ -168,7 +168,7 @@ A **watched group** is either:
 - a **subcategory**, such as `Groceries/Alcohol`, `Groceries/Meat` or `Groceries/Candy`, which rolls up into its parent category in reports, or
 - an **item**, such as "snacks", which can cut across categories: chips at the gas station, cookies at Target.
 
-The user sets one up in conversation ("I want to keep an eye on alcohol", "track how much I spend on snacks"), and the AI saves a `watch` [rule](#rules) for them. Watching is personal: each member picks their own groups. Groceries stays one category until someone watches something inside it.
+The user sets one up in conversation ("I want to keep an eye on alcohol", "track how much I spend on snacks"), and the AI saves it as one of their watched groups. Watching is personal: each member picks their own groups. Groceries stays one category until someone watches something inside it. A watched group is asked about wherever it has been bought before, and in its parent category (for alcohol and snacks, Groceries) until there is history.
 
 #### Asking
 
@@ -207,8 +207,8 @@ sequenceDiagram
     participant API as Ledger API
 
     User->>AI: "I spent $40 at Whole Foods"
-    AI->>API: GET /api/v1/rules?merchant=Whole Foods
-    API-->>AI: watch: Groceries/Alcohol, watch: snacks
+    AI->>API: GET /api/v1/watches
+    API-->>AI: Groceries/Alcohol, snacks
     AI->>User: "You're watching alcohol and snacks. Any of that in there?"
     User->>AI: "Some snacks, not sure how much"
     AI->>User: "Send me a photo of the receipt and I'll find them"
@@ -248,11 +248,11 @@ Kept doesn't connect to banks, inboxes or provider accounts. Getting spending in
 | **Bank or card statement** | CSV export, statement PDF, the bank's website         | Completeness: every payment, exact amount and date |
 | **Other**                  | Anything else with an amount and a date               |                                                    |
 
-Whatever the source, the agent runs the same playbook: rules first, best guess as a yes/no question, watched groups asked about once, confirm before writing. A statement with many charges is confirmed as one batch, and the agent asks only about what it couldn't file:
+Whatever the source, the agent runs the same playbook: notes first, best guess as a yes/no question, watched groups asked about once, confirm before writing. A statement with many charges is confirmed as one batch, and the agent asks only about what it couldn't file:
 
 > **AI:** "6 charges on this statement aren't in Kept yet. 4 I can file like usual (Shell for the Kia, Netflix, two Trader Joe's). 2 I'm not sure about: $23.40 at `SQ *BLUE BTL 0423`, coffee?"
 
-Bank descriptions like `SQ *BLUE BTL 0423` are what the agent and the household's rules turn into "Blue Bottle, Coffee."
+Bank descriptions like `SQ *BLUE BTL 0423` are what the agent and the member's notes turn into "Blue Bottle, Coffee."
 
 #### One purchase, many sources
 
@@ -277,7 +277,7 @@ The same purchase often reaches the ledger several times: the user mentions it, 
 
 Any source with line detail is grouped the same way as a [receipt scan](#receipt-scan): one line item per watched group and per other category or cost center, plus the rest. An Amazon order email with eight products becomes, say, Home $34 for the House, Groceries/Snacks $12 and the rest. A source without detail, like a bank charge, keeps the transaction at one line item unless the user or another source adds more.
 
-Utility and phone bills are usually for a specific home or car. A rule can match the account number on a bill, so "account 4471 is the Apartment" files every electricity bill for that account under the Apartment without asking.
+Utility and phone bills are usually for a specific home or car. A note can name the account number on a bill, so "account 4471 is the Apartment" files every electricity bill for that account under the Apartment without asking.
 
 #### Whose purchase it is
 
@@ -359,7 +359,7 @@ flowchart TD
 - **Repeating bills aren't asked about.** They come up when one is logged ([Repeating Spending](#35-repeating-spending-phone-rent-subscriptions)).
 - **One way in.** The web UI and every assistant start with the same sign-in: an email and a code. A verified email with no account and no invite is offered to create a household; with an invite, to join it.
 - **Invites come from Kept.** Only an owner can invite. Kept emails the invited person; they add Kept to their own assistant and sign in with that email, which joins them to the household, and their assistant runs the new-member path above.
-- **A new member doesn't set up the household again.** Their agent introduces Kept, names the shared cost centers and categories, and asks what they want to keep an eye on and whether anything should be logged as private: watched groups and rules are personal.
+- **A new member doesn't set up the household again.** Their agent introduces Kept, names the shared cost centers and categories, and asks what they want to keep an eye on and whether anything should be logged as private: watched groups and notes are personal.
 
 ## 4. Primary Features & Requirements
 
@@ -376,56 +376,35 @@ The ledger always stores the real total once. The per–cost center numbers are 
 | One cost center         | "$60 gas for the Kia"              | $60, `spent_for`: Kia                  | Kia $60                             |
 | Shared, costs unknown   | "$900 car insurance, both cars"    | $900, `spent_for`: Hyundai, Kia        | $450 each (even)                    |
 | Shared, costs known     | "$900, the Hyundai is $520 of it"  | $900, Hyundai 0.58, Kia (remainder)    | Hyundai $520, Kia $380              |
-| Same bill next time     | "Paid car insurance, $930"         | $930, split from the `set_spent_for` rule | Hyundai ≈ $539, Kia ≈ $391       |
+| Same bill next time     | "Paid car insurance, $930"         | $930, split as the member's note says  | Hyundai ≈ $539, Kia ≈ $391          |
 | Shared, not tracked     | "$150 groceries"                   | $150, no `spent_for`                   | Counts only under Groceries         |
 
 - **Even is the default.** If the per-car breakdown is never known, each car gets half. That is accurate enough for questions like "what do our cars cost us per year?"
-- **Detail is optional and remembered.** If a renewal letter shows per-car prices, the user mentions it once. The AI saves the shares as a `set_spent_for` rule for that merchant and category and reuses them for later bills, showing them in the confirmation: "Split like last time: Hyundai 58%, Kia 42%?"
+- **Detail is optional and remembered.** If a renewal letter shows per-car prices, the user mentions it once. The AI saves the shares as a note ("The Hyundai is $520 of the Geico insurance") and reuses them for later bills, showing them in the confirmation: "Split like last time: Hyundai 58%, Kia 42%?"
 - **Not everything needs a cost center.** Shared household spending such as groceries can leave `spent_for` empty and still counts under its category.
-
-#### Rules
-
-A rule is something a member has taught their agent once, so it doesn't have to be asked or explained again. Rules are personal: each member's rules apply to their own purchases, and no other member sees them. The household shares its vocabulary (categories and people & things), not its habits. Every rule has an optional condition (merchant, category) and one effect:
-
-| Kind            | Effect on the conversation                                  | Example in the user's words                     | `params`                                                       |
-| --------------- | ----------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------- |
-| `watch`         | Ask about this group where it's bought (see [Watched Groups](#33-watched-groups-alcohol-and-snacks)). | "Keep an eye on alcohol." / "Track how much I spend on snacks." | `{ "category": "Groceries/Alcohol" }` or `{ "item": "snacks" }` |
-| `ask_breakdown` | Ask "anything else in there?" instead of assuming one category. | "Target is usually a mix."                   | `{}`                                                           |
-| `set_category`  | Use this category and skip the category question.            | "Costco is always groceries."                   | `{ "category": "Groceries" }`                                  |
-| `set_spent_for` | Prefill cost centers and shares.                             | "The Hyundai is $520 of the insurance."         | `{ "spent_for": [{ "cost_center": "Hyundai", "share": 0.58 }, { "cost_center": "Kia" }] }` |
-| `set_private`   | Log matching purchases as private.                           | "Anything at Sephora is private."               | `{}`                                                           |
-
-How the agent uses rules:
-
-- **Rules come before guesses.** The agent fetches the rules that match the merchant, category and current person, and applies them before inferring anything from history. History fills in only what no rule covers.
-- **Rules shorten questions, they never skip the confirmation.** A `set_category` rule turns "Was that groceries?" into nothing, but the final "Log $85 at Costco to Groceries?" is still shown.
-- **The most specific rule wins.** A rule for Kia fuel at Shell beats a rule for all fuel.
-- **Rules are made in conversation.** When the user corrects the agent the same way twice, the agent offers to save a rule: "Want me to always log Costco as groceries?" Rules are never saved silently.
-- **Rules are visible and reversible.** "What rules do you have for me?" lists them by `text`, and "stop tracking snacks" deletes the rule. Past transactions are not changed.
-
-A `watch` rule with no merchant applies wherever the group has been bought before, and in its parent category (for alcohol and snacks, Groceries) until there is history.
 
 #### Notes
 
-Some things a member tells the agent change how it should ask or file expenses, but aren't rules. Notes are the agent's memory for these. They live in the ledger, not in any one assistant's memory, so every assistant the member connects sees the same context. Like rules, notes are personal: when both partners want their agents to know "we're selling the Kia in December," each tells their own.
+A note is something a member has taught their agent, in their own words, so it doesn't have to be asked or explained again. Notes live in the ledger, not in any one assistant's memory, so every assistant the member connects knows them. They are personal: no other member sees them, and when both partners want their agents to know "we're selling the Kia in December," each tells their own. The household shares its vocabulary (categories and people & things), not its habits.
 
-| What the user says                                            | What the agent does with it                                           | Links         | Expires   |
-| ------------------------------------------------------------- | --------------------------------------------------------------------- | ------------- | --------- |
-| "We're selling the Kia in December."                          | Stops offering the Kia for fuel and insurance after December.         | Kia           | Dec 31    |
-| "Rex is on a special diet, his food always comes from Chewy." | Files Chewy orders under Pets for Rex without asking.           | Rex        |           |
-| "Zoe's school fees are about $1,200 every quarter."           | Recognizes "$1,200" in those months as school fees for Zoe.           | Zoe           |           |
-| "We're saving for Japan in March."                            | Asks whether travel spending is for the Japan trip.                   | Travel        | Mar 31    |
-| "Groceries are high this month, we hosted family."            | Mentions it when the user asks why groceries went up.                 | Groceries     | Month end |
+| What the user says                                            | What the agent does with it                                           | Expires   |
+| ------------------------------------------------------------- | --------------------------------------------------------------------- | --------- |
+| "Costco is always groceries."                                 | Skips the category question at Costco.                                |           |
+| "Target is usually a mix."                                    | Asks "anything else in there?" instead of assuming one category.      |           |
+| "The Hyundai is $520 of the Geico insurance."                 | Splits later Geico bills 58/42 and says so in the confirmation.       |           |
+| "Anything at Sephora is private."                             | Logs Sephora purchases as private.                                    |           |
+| "We're selling the Kia in December."                          | Stops offering the Kia for fuel and insurance after December.         | Dec 31    |
+| "Groceries are high this month, we hosted family."            | Mentions it when the user asks why groceries went up.                 | Month end |
 
 How notes work:
 
-- **Rules first, notes second.** A rule changes behavior every time and the ledger enforces it. A note is context the agent weighs. When a note reads like a rule ("Costco is always groceries"), the agent offers to save it as a rule instead.
-- **Only about money.** The agent saves notes that affect how expenses are asked about, filed or explained, nothing else.
+- **Loaded at the start.** The agent reads all of the member's current notes before the first question, and a note comes before guesses from history.
+- **The agent applies them, the ledger keeps them.** Kept stores the text and doesn't interpret it. A note shortens questions but never skips the confirmation, so a note the agent missed ("private" not in "Log $80 at Sephora?") shows there.
+- **Made in conversation.** When the user corrects the agent the same way twice, the agent offers a note: "Want me to remember that Costco is always groceries?"
 - **Never saved silently.** The agent says what it will remember: "I'll remember the Kia is being sold in December."
-- **Linked and fetched by context.** Each note links to at least one cost center, category or merchant. The agent loads notes for what the current conversation touches, not the whole list. A search covers anything else.
-- **Most notes expire.** Plans and one-off explanations get an `expires_on`. Expired notes stop being loaded but stay visible, so "why were groceries high in March?" still has an answer.
-- **Not a copy of the ledger.** "We usually spend $600 on groceries" can be calculated from transactions, so it isn't saved as a note.
-- **Visible and editable.** "What do you remember about the Kia?" lists the notes. Only their owner sees or changes them.
+- **Only about money.** Notes cover how expenses are asked about, filed or explained, nothing else, and never what the ledger can calculate ("we usually spend $600 on groceries").
+- **Plans expire.** Plans and one-off explanations get an end date. Expired notes stop being loaded but stay visible, so "why were groceries high in March?" still has an answer.
+- **Visible and editable.** "What do you remember about the Kia?" lists the matching notes, and the member can change or delete any of them on the web.
 
 #### Caps
 
@@ -433,7 +412,7 @@ A cap is a personal soft reminder: "I don't want to spend more than $1,000 on gr
 
 - **It reminds, it never blocks.** Purchases over a cap are logged like any other.
 - **The agent mentions it when it matters.** Once a purchase that counts toward a cap takes it past 80%, the confirmation says so: "Log $64 at Trader Joe's? That's $860 of your $1,000 groceries cap this month." Crossing it gets one line: "That puts groceries $40 over your cap for October." Below 80% it says nothing.
-- **Set in conversation or on the web.** "Cap eating out at $250 a month" is saved after the user confirms, like a rule. Me lists each cap's progress, and My spending shows the ones past 80%.
+- **Set in conversation or on the web.** "Cap eating out at $250 a month" is saved after the user confirms, like a note. Me lists each cap's progress, and My spending shows the ones past 80%.
 
 #### Households, Accounts and Privacy
 
@@ -447,9 +426,9 @@ Joining a household means agreeing to share spending with it. People who want to
 | Their non-private purchases         | Yes        | Only as part of household totals                |
 | Their private purchases             | Yes        | No, not even in household totals                |
 | Cost centers and categories         | Yes        | Yes, shared and editable by every member        |
-| Their rules, notes and caps         | Yes        | No                                              |
+| Their notes, watched groups and caps | Yes       | No                                              |
 
-- **Private is per purchase.** A purchase is private when the user says so ("log this privately", "it's a gift for her"), or when a personal `set_private` rule matches. The confirmation says so: "Log $80 at Sephora, private?" When a purchase sounds like a gift (the user says gift, present or birthday, or the store or item suggests one) and nothing settles it, the agent offers privacy in the same confirmation: "Log $43 at SuperBestGiftStore. Sounds like a gift: keep it private, so it stays out of household totals?" Otherwise purchases are not private.
+- **Private is per purchase.** A purchase is private when the user says so ("log this privately", "it's a gift for her"), or when one of their notes says so ("anything at Sephora is private"). The confirmation says so: "Log $80 at Sephora, private?" When a purchase sounds like a gift (the user says gift, present or birthday, or the store or item suggests one) and nothing settles it, the agent offers privacy in the same confirmation: "Log $43 at SuperBestGiftStore. Sounds like a gift: keep it private, so it stays out of household totals?" Otherwise purchases are not private.
 - **Private purchases still count for their owner.** They appear in the owner's history and personal graphs, with their cost centers and watched groups, and are left out only of household totals.
 - **The agent only sees the caller's data.** `list_transactions` returns only the caller's own purchases, so "like your last fill-up" means *your* last fill-up, and an agent can never reveal one member's purchases to another. What the agent knows about the household comes from its shared vocabulary; anything else comes from the caller's own rules and notes, never from other members' transactions.
 - **Household totals don't show who spent.** They are broken down by category, cost center and item, never by member. In a two-person household a member can still subtract their own spending from a total; that is part of agreeing to share spending with the household, and `private` is the way to keep a purchase out.
@@ -483,14 +462,14 @@ Kept delivers the playbook, not just the data, so every assistant behaves the sa
 | --------------------------- | -------------------------------------------------------------------------------------------------------- |
 | The question playbook       | The rules from [Data Flow Examples](#3-data-flow-examples): best guess as a yes/no question, one question at a time, cost center only when there is a choice, confirm before writing. Start each conversation by announcing [updates](#what-happens-on-the-date) in one line. |
 | When to call each tool      | E.g. the expense is only written after the user confirms the final record.                               |
-| The household's vocabulary  | Categories, cost centers, the member's rules and known merchants, in context before the first question. |
+| The household's vocabulary  | Categories, cost centers, the member's notes and watched groups, in context before the first question. |
 | Setting up                  | The first conversation for a new household or a new member ([First Conversation](#36-first-conversation-setting-up)). |
 | Logging an expense          | The capture → infer → clarify → confirm flow.                                                            |
 | Catching up                 | Announces updates, asks about uncategorized transactions and possible duplicates.                       |
 
 [`IMPLEMENTATION.md` §5.2](IMPLEMENTATION.md#52-teaching-the-agent) says which MCP mechanism carries each one.
 
-Each member can also teach the agent their own rules in conversation, for example "always ask about snacks at Target" or "Costco is always groceries." These are stored in the ledger as [rules](#rules), so they apply in every assistant the member uses, not only the one where they were said. Context that isn't a rule, like "we're selling the Kia in December," is stored as [notes](#notes) in the same way, so agents don't need to keep their own memory of the household's finances.
+Each member can also teach the agent in conversation, for example "always ask about snacks at Target" or "we're selling the Kia in December." These are stored in the ledger as [notes](#notes), so they apply in every assistant the member uses, not only the one where they were said, and agents don't need to keep their own memory of the household's finances.
 
 #### Other clients
 
@@ -514,6 +493,6 @@ Every member signs in with their own account and sees:
 | **My spending**        | Graphs of the member's own spending, private purchases included, with their watched groups and the caps past 80%. |
 | **Household spending** | Graphs of the household's spending: every member's non-private purchases, by category, cost center and item. |
 | **Household**          | Shared cost centers and categories, in tabs. Owners also invite and remove members and set the household's name and currency. |
-| **Me**                 | Profile, the member's rules, notes and caps, and connections: connect an assistant over MCP and manage API keys. |
+| **Me**                 | Profile, the member's watched groups, caps and notes, and connections: connect an assistant over MCP and manage API keys. |
 
 Every page, the spending graphs included (what to show, how to compare periods, how to show watched-group [coverage](#coverage)), is drawn in `docs/mockups/`.

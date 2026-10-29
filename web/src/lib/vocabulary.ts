@@ -1,6 +1,6 @@
-import type { Note, Rule } from './types.js'
+import type { Note } from './types.js'
 
-// Categories as a tree, rules in plain words, and the note form (VISION.md §4.C, "Household" and "Me").
+// Categories as a tree, and the note and watch forms (VISION.md §4.C, "Household" and "Me").
 
 export interface TreeRow {
   path: string
@@ -25,52 +25,30 @@ export function categoryTree(paths: string[]): TreeRow[] {
   })
 }
 
-const KIND_LABELS: Record<Rule['kind'], string> = {
-  watch: 'Watch',
-  ask_breakdown: 'Ask what was bought',
-  set_category: 'Category',
-  set_spent_for: 'Who or what for',
-  set_private: 'Private',
-}
-
-export function ruleKindLabel(rule: Rule): string {
-  return KIND_LABELS[rule.kind] ?? rule.kind
-}
-
-// Where a rule applies: "Costco · Groceries", or "Everywhere".
-export function ruleScope(rule: Rule): string {
-  const parts = [rule.merchant, rule.category, rule.account_ref && `account ${rule.account_ref}`].filter(Boolean)
-  return parts.length ? parts.join(' · ') : 'Everywhere'
-}
-
 export interface NoteForm {
   text: string
-  cost_centers: string[]
-  categories: string[]
-  merchants: string
   expires_on: string
 }
 
-export const emptyNote: NoteForm = { text: '', cost_centers: [], categories: [], merchants: '', expires_on: '' }
+export const emptyNote: NoteForm = { text: '', expires_on: '' }
 
 export function formFromNote(note: Note): NoteForm {
-  return { text: note.text, cost_centers: note.cost_centers, categories: note.categories, merchants: note.merchants.join(', '), expires_on: note.expires_on ?? '' }
+  return { text: note.text, expires_on: note.expires_on ?? '' }
 }
 
-export function noteProblem(form: NoteForm): string | null {
-  if (!form.text.trim()) return 'Write the note.'
-  const merchants = form.merchants.split(',').map((m) => m.trim()).filter(Boolean)
-  if (!form.cost_centers.length && !form.categories.length && !merchants.length) return 'Link the note to a person or thing, a category or a merchant, so the assistant knows when it matters.'
-  return null
+export function noteBody(form: NoteForm): { text: string; expires_on: string | null } | null {
+  const text = form.text.trim()
+  return text ? { text, expires_on: form.expires_on || null } : null
 }
 
-export function noteBody(form: NoteForm, personal: boolean) {
-  return {
-    text: form.text.trim(),
-    personal,
-    cost_centers: form.cost_centers,
-    categories: form.categories,
-    merchants: form.merchants.split(',').map((m) => m.trim()).filter(Boolean),
-    expires_on: form.expires_on || null,
-  }
+// A category picked from the list, or an item typed in.
+export interface WatchForm {
+  category: string
+  item: string
+}
+
+export function watchBody(form: WatchForm): { category: string } | { item: string } | null {
+  if (form.category) return { category: form.category }
+  const item = form.item.trim()
+  return item ? { item } : null
 }

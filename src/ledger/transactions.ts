@@ -1,14 +1,13 @@
 import type { Tx } from '../db/db.js'
-import { groupsWithLines, type WatchedGroup } from '../domain/coverage.js'
+import { groupsWithLines } from '../domain/coverage.js'
 import { addDays, dateWarning, isLocalDate, todayIn } from '../domain/dates.js'
 import { buildLines, resizeLines, validateShares, type Line, type SpentFor } from '../domain/lines.js'
 import { decideMatch, reconcile, type FieldChange, type KeptField, type MatchCandidate, type SourceKind } from '../domain/matching.js'
 import { centsToNumeric, formatAmount, fromCents, numericToCents, toCents } from '../domain/money.js'
-import { resolveRules } from '../domain/rules.js'
 import type { Caller } from './caller.js'
 import { invalid, notFound, unwrap } from './errors.js'
-import { loadRules } from './rules.js'
 import { loadVocabulary, type Vocabulary } from './vocabulary.js'
+import { watchedGroups } from './watches.js'
 
 export interface SpentForBody {
   cost_center: string
@@ -130,13 +129,7 @@ async function prepare(tx: Tx, caller: Caller, body: TransactionBody, vocabulary
   }
   const mainCategory = body.category ? vocabulary.categoryPath(vocabulary.categoryId(body.category)) : null
 
-  const rules = await loadRules(tx, caller)
-  const resolved = resolveRules(rules, { user_id: caller.user_id, merchant: body.merchant, category: mainCategory ?? lines[0]?.category })
-  const watched = rules.flatMap((rule): WatchedGroup[] => {
-    if (rule.kind !== 'watch') return []
-    const { category, item } = rule.params as { category?: string; item?: string }
-    return category ? [{ kind: 'category', path: category }] : item ? [{ kind: 'item', item }] : []
-  })
+  const watched = await watchedGroups(tx, caller)
   const checked = [...new Set([...(body.checked_groups ?? []).map((g) => g.trim()), ...groupsWithLines(watched, lines)])]
   const kind = body.source?.kind ?? 'talk'
   return {
@@ -147,8 +140,7 @@ async function prepare(tx: Tx, caller: Caller, body: TransactionBody, vocabulary
     amount,
     merchant: body.merchant?.trim() || null,
     notes: body.notes ?? null,
-    // A personal set_private rule makes the purchase private unless the request says otherwise (VISION.md §4.A).
-    private: body.private ?? resolved.set_private != null,
+    private: body.private ?? false,
     main_category: mainCategory,
     lines,
     checked_groups: checked,

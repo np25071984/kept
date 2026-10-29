@@ -1,8 +1,8 @@
 import type { RepeatTemplate } from '../db/schema.js'
 import { isValidCategoryPath, parentPath } from './setup.js'
 
-// Renaming and deleting the household's vocabulary. Most references link by id, but rule params, repeat templates and
-// checked groups hold paths and names as text, so a rename rewrites them too.
+// Renaming and deleting the household's vocabulary. Most references link by id, but repeat templates and checked groups
+// hold paths and names as text, so a rename rewrites them too.
 
 export interface Renamer {
   category(path: string): string
@@ -50,15 +50,6 @@ export function checkCostCenterRename(from: string, to: string, names: string[])
   return null
 }
 
-export function renameRuleParams(params: Record<string, unknown>, renamer: Renamer): Record<string, unknown> {
-  const renamed = { ...params }
-  if (typeof params.category === 'string') renamed.category = renamer.category(params.category)
-  if (Array.isArray(params.spent_for)) {
-    renamed.spent_for = (params.spent_for as { cost_center: string }[]).map((entry) => ({ ...entry, cost_center: renamer.costCenter(entry.cost_center) }))
-  }
-  return renamed
-}
-
 export function renameTemplate(template: RepeatTemplate, renamer: Renamer): RepeatTemplate {
   return {
     ...template,
@@ -71,17 +62,12 @@ export function renameTemplate(template: RepeatTemplate, renamer: Renamer): Repe
   }
 }
 
-// Whether rule params or a repeat template mention this category (or one under it) or this cost center.
-export function mentions(renamer: Renamer, value: { params?: Record<string, unknown>; template?: RepeatTemplate }): boolean {
-  const before = JSON.stringify(value)
-  const after = JSON.stringify({
-    ...(value.params && { params: renameRuleParams(value.params, renamer) }),
-    ...(value.template && { template: renameTemplate(value.template, renamer) }),
-  })
-  return before !== after
+// Whether a repeat template mentions this category (or one under it) or this cost center.
+export function mentions(renamer: Renamer, template: RepeatTemplate): boolean {
+  return JSON.stringify(template) !== JSON.stringify(renameTemplate(template, renamer))
 }
 
-export type Usage = Partial<Record<'purchases' | 'subcategories' | 'rules' | 'notes' | 'repeats', number>>
+export type Usage = Partial<Record<'purchases' | 'subcategories' | 'watched groups' | 'repeats', number>>
 
 // Why a category or cost center can't be deleted yet, or null when nothing uses it. `what` prefixes the name, e.g. "Category ".
 export function usageProblem(what: string, name: string, usage: Usage): Problem | null {

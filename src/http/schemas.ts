@@ -83,33 +83,15 @@ export const CostCenterBody = Type.Object({
   categories: Type.Optional(Type.Array(Type.String())),
 })
 
-export const RuleQuery = Type.Object({ merchant: Type.Optional(Type.String()), category: Type.Optional(Type.String()), account_ref: Type.Optional(Type.String()) })
-export const RuleBody = Type.Object({
-  kind: Type.Union(['watch', 'ask_breakdown', 'set_category', 'set_spent_for', 'set_private'].map((k) => Type.Literal(k))),
-  merchant: Type.Optional(Nullable(Type.String())),
-  category: Type.Optional(Nullable(Type.String())),
-  account_ref: Type.Optional(Nullable(Type.String())),
-  params: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
-  text: Type.String({ minLength: 1, description: 'The rule in the user\'s words.' }),
-  personal: Type.Optional(Type.Boolean()),
+export const WatchBody = Type.Object({
+  category: Type.Optional(Nullable(Type.String({ description: 'A category or subcategory, e.g. "Groceries/Alcohol".' }))),
+  item: Type.Optional(Nullable(Type.String({ description: 'An item bought across categories, e.g. "snacks".' }))),
 })
 
-export const NoteQuery = Type.Object({
-  cost_center: Type.Optional(Type.String()),
-  category: Type.Optional(Type.String()),
-  merchant: Type.Optional(Type.String()),
-  q: Type.Optional(Type.String()),
-  include_expired: Type.Optional(Type.Boolean()),
-})
-const NoteFields = {
-  personal: Type.Optional(Type.Boolean()),
-  cost_centers: Type.Optional(Type.Array(Type.String())),
-  categories: Type.Optional(Type.Array(Type.String())),
-  merchants: Type.Optional(Type.Array(Type.String())),
-  expires_on: Type.Optional(Nullable(LocalDate)),
-}
-export const NoteBody = Type.Object({ ...NoteFields, text: Type.String({ minLength: 1 }) })
-export const NotePatch = Type.Object({ ...NoteFields, text: Type.Optional(Type.String({ minLength: 1 })) })
+export const NoteQuery = Type.Object({ include_expired: Type.Optional(Type.Boolean()) })
+const expiresOn = Type.Optional(Nullable(LocalDate))
+export const NoteBody = Type.Object({ text: Type.String({ minLength: 1 }), expires_on: expiresOn })
+export const NotePatch = Type.Object({ text: Type.Optional(Type.String({ minLength: 1 })), expires_on: expiresOn })
 
 const Frequency = Type.Union([Type.Literal('weekly'), Type.Literal('monthly'), Type.Literal('yearly')])
 export const RepeatBody = Type.Object({

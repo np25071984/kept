@@ -1,4 +1,3 @@
-import { isUnder } from './rules.js'
 import type { Cents } from './money.js'
 
 // Watched-group totals and how much of the relevant spending was checked for them (VISION.md §3.3, "Coverage").
@@ -23,6 +22,17 @@ export interface Coverage {
   checked_share: number | null
   // The total if unchecked spending is like checked spending; null when nothing was checked.
   estimate: Cents | null
+}
+
+export function isUnder(path: string, ancestor: string): boolean {
+  const p = path.toLowerCase()
+  const a = ancestor.toLowerCase()
+  return p === a || p.startsWith(`${a}/`)
+}
+
+// One entry per group, whatever the case it was written in.
+export function uniqueGroups(groups: WatchedGroup[]): WatchedGroup[] {
+  return [...new Map(groups.map((group) => [groupKey(group).toLowerCase(), group])).values()]
 }
 
 export function groupKey(group: WatchedGroup): string {

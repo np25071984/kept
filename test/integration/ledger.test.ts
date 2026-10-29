@@ -36,16 +36,14 @@ describe('renaming and deleting vocabulary', () => {
     await c.post('/api/v1/cost-centers', { name: 'Iva', kind: 'Child' })
     await c.post('/api/v1/cost-centers', { name: 'Maya', kind: 'Child' })
     const shirt = await c.post('/api/v1/transactions', { amount: 10.79, merchant: 'Old Navy', category: 'Clothing', spent_for: [{ cost_center: 'Iva' }] })
-    await c.post('/api/v1/rules', { kind: 'set_spent_for', merchant: 'Old Navy', params: { spent_for: [{ cost_center: 'Iva' }] }, text: 'Old Navy is for Iva.' })
 
     const blocked = await c.delete('/api/v1/cost-centers?name=Iva')
     expect(blocked.status).toBe(409)
-    expect(blocked.body.error.message).toContain('1 purchase, 1 rule')
+    expect(blocked.body.error.message).toBe('"Iva" is still used by 1 purchase. Move or change those first, or rename it instead.')
 
     expect((await c.patch('/api/v1/cost-centers', { name: 'iva', new_name: 'Ivy' })).body).toEqual({ name: 'Ivy', kind: 'Child', categories: [] })
     expect((await c.patch('/api/v1/cost-centers', { name: 'Ivy', kind: 'Kid', categories: ['clothing', 'Health'] })).body).toEqual({ name: 'Ivy', kind: 'Kid', categories: ['Clothing', 'Health'] })
     expect((await c.get(`/api/v1/transactions/${shirt.body.transaction.id}`)).body.line_items[0].spent_for).toEqual([{ cost_center: 'Ivy', share: null }])
-    expect((await c.get('/api/v1/rules')).body.rules[0].params).toEqual({ spent_for: [{ cost_center: 'Ivy' }] })
     expect((await c.patch('/api/v1/cost-centers', { name: 'Ivy', new_name: 'maya' })).status).toBe(409)
 
     expect((await c.delete('/api/v1/cost-centers?name=Maya')).status).toBe(204)
@@ -55,7 +53,7 @@ describe('renaming and deleting vocabulary', () => {
   it('moves a category with its subcategories and watched groups, and deletes only an unused one', async () => {
     const c = client(h, (await newHousehold(h, 'Rename categories')).api_key)
     await c.post('/api/v1/categories', { path: 'Groceries/Alcohol' })
-    await c.post('/api/v1/rules', { kind: 'watch', params: { category: 'Groceries/Alcohol' }, text: 'Keep an eye on alcohol.' })
+    await c.post('/api/v1/watches', { category: 'groceries/alcohol' })
     const shop = await c.post('/api/v1/transactions', { amount: 30, merchant: 'Kroger', category: 'Groceries', checked_groups: ['Groceries/Alcohol'] })
 
     expect((await c.patch('/api/v1/categories', { path: 'groceries', new_path: 'Food' })).body).toEqual({ path: 'Food' })
@@ -64,10 +62,10 @@ describe('renaming and deleting vocabulary', () => {
     expect(paths).not.toContain('Groceries')
     const moved = (await c.get(`/api/v1/transactions/${shop.body.transaction.id}`)).body
     expect(moved).toMatchObject({ checked_groups: ['Food/Alcohol'], line_items: [{ category: 'Food' }] })
-    expect((await c.get('/api/v1/rules')).body.rules[0].params).toEqual({ category: 'Food/Alcohol' })
+    expect((await c.get('/api/v1/watches')).body.watches).toMatchObject([{ category: 'Food/Alcohol', group: 'Food/Alcohol' }])
 
     expect((await c.delete('/api/v1/categories?path=Food')).body.error.message).toContain('1 purchase, 1 subcategory')
-    expect((await c.delete('/api/v1/categories?path=Food/Alcohol')).body.error.message).toContain('1 rule')
+    expect((await c.delete('/api/v1/categories?path=Food/Alcohol')).body.error.message).toContain('1 watched group')
     expect((await c.patch('/api/v1/categories', { path: 'Food', new_path: 'Travel' })).status).toBe(409)
     expect((await c.delete('/api/v1/categories?path=Travel')).status).toBe(204)
   })
@@ -114,43 +112,30 @@ describe('repeats', () => {
   })
 })
 
-describe('rules', () => {
-  it('resolves the most specific rule and hides other members\' personal rules', async () => {
-    await sam.post('/api/v1/rules', { kind: 'set_category', merchant: 'Costco', params: { category: 'groceries' }, text: 'Costco is always groceries.' })
-    await sam.post('/api/v1/rules', { kind: 'set_spent_for', category: 'Car/Fuel', params: { spent_for: [{ cost_center: 'kia' }] }, text: 'Fuel is for the Kia.' })
-    const res = await sam.get('/api/v1/rules?merchant=costco')
-    expect(res.body.resolved.set_category).toMatchObject({ params: { category: 'Groceries' } })
-    expect(res.body.rules).toHaveLength(1)
-    const fuel = await sam.get('/api/v1/rules?category=Car/Fuel')
-    expect(fuel.body.resolved.set_spent_for.params.spent_for).toEqual([{ cost_center: 'Kia' }])
-  })
-
-  it('rejects bad params', async () => {
-    const res = await sam.post('/api/v1/rules', { kind: 'watch', params: {}, text: 'watch something' })
-    expect(res.body.error.code).toBe('invalid_rule_params')
-  })
-
-  it('deletes a rule', async () => {
-    const rule = await sam.post('/api/v1/rules', { kind: 'ask_breakdown', merchant: 'Target', text: 'Target is usually a mix.' })
-    expect((await sam.delete(`/api/v1/rules/${rule.body.id}`)).status).toBe(204)
-    expect((await sam.get('/api/v1/rules?merchant=Target')).body.rules).toEqual([])
+describe('watched groups', () => {
+  it('watches a category or an item once, and stops', async () => {
+    const eatingOut = await sam.post('/api/v1/watches', { category: 'eating out' })
+    expect(eatingOut.status).toBe(201)
+    expect(eatingOut.body).toMatchObject({ category: 'Eating out', item: null, group: 'Eating out' })
+    expect((await sam.post('/api/v1/watches', { category: 'Eating out' })).body.id).toBe(eatingOut.body.id)
+    expect((await sam.post('/api/v1/watches', { item: 'snacks' })).body).toMatchObject({ category: null, item: 'snacks' })
+    expect((await sam.post('/api/v1/watches', { category: 'Groceries', item: 'snacks' })).body.error.code).toBe('invalid_watch')
+    expect((await sam.delete(`/api/v1/watches/${eatingOut.body.id}`)).status).toBe(204)
+    expect((await sam.get('/api/v1/watches')).body.watches.map((w: { group: string }) => w.group)).toEqual(['snacks'])
   })
 })
 
 describe('notes', () => {
-  it('loads notes by link and hides expired ones unless asked', async () => {
-    const kia = await sam.post('/api/v1/notes', { text: 'We\'re selling the Kia in December.', cost_centers: ['Kia'], expires_on: '2099-12-31' })
+  it('lists the caller\'s notes and hides expired ones unless asked', async () => {
+    const kia = await sam.post('/api/v1/notes', { text: 'We\'re selling the Kia in December.', expires_on: '2099-12-31' })
     expect(kia.status).toBe(201)
-    await sam.post('/api/v1/notes', { text: 'Groceries were high, we hosted family.', categories: ['Groceries'], expires_on: '2020-01-31' })
-    expect((await sam.get('/api/v1/notes?cost_center=kia')).body.notes.map((n: { text: string }) => n.text)).toEqual(['We\'re selling the Kia in December.'])
-    expect((await sam.get('/api/v1/notes?category=Groceries')).body.notes).toEqual([])
-    expect((await sam.get('/api/v1/notes?category=Groceries&include_expired=true')).body.notes).toHaveLength(1)
+    await sam.post('/api/v1/notes', { text: 'Groceries were high, we hosted family.', expires_on: '2020-01-31' })
+    const texts = async (url: string) => (await sam.get(url)).body.notes.map((n: { text: string }) => n.text)
+    expect(await texts('/api/v1/notes')).toContain('We\'re selling the Kia in December.')
+    expect(await texts('/api/v1/notes')).not.toContain('Groceries were high, we hosted family.')
+    expect(await texts('/api/v1/notes?include_expired=true')).toContain('Groceries were high, we hosted family.')
     const updated = await sam.patch(`/api/v1/notes/${kia.body.id}`, { text: 'Selling the Kia in January.' })
     expect(updated.body.text).toBe('Selling the Kia in January.')
-  })
-
-  it('needs at least one link', async () => {
-    expect((await sam.post('/api/v1/notes', { text: 'floating' })).body.error.code).toBe('note_needs_link')
   })
 })
 
@@ -199,7 +184,7 @@ describe('OpenAPI', () => {
     const spec = (await h.app.inject({ method: 'GET', url: '/api/v1/openapi.json' })).json()
     expect(Object.keys(spec.paths)).toEqual(expect.arrayContaining([
       '/api/v1/transactions', '/api/v1/transactions/{id}', '/api/v1/transactions/{id}/sources', '/api/v1/transactions/{id}/merge',
-      '/api/v1/cost-centers', '/api/v1/categories', '/api/v1/rules', '/api/v1/rules/{id}', '/api/v1/notes', '/api/v1/notes/{id}',
+      '/api/v1/cost-centers', '/api/v1/categories', '/api/v1/watches', '/api/v1/watches/{id}', '/api/v1/notes', '/api/v1/notes/{id}',
       '/api/v1/repeats', '/api/v1/repeats/{id}', '/api/v1/updates', '/api/v1/updates/seen', '/api/v1/setup', '/api/v1/invites',
       '/api/v1/invites/{id}', '/api/v1/invites/accept', '/api/v1/api-keys', '/api/v1/api-keys/{id}', '/api/v1/expenses/summary',
     ]))

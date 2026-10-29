@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { RepeatTemplate } from '../../src/db/schema.js'
 import {
-  categoryRenamer, checkCategoryRename, checkCostCenterRename, costCenterRenamer, mentions, renamePath, renameRuleParams, renameTemplate, usageProblem,
+  categoryRenamer, checkCategoryRename, checkCostCenterRename, costCenterRenamer, mentions, renamePath, renameTemplate, usageProblem,
 } from '../../src/domain/renames.js'
 
 const paths = ['Car', 'Car/Fuel', 'Car/Fuel/Diesel', 'Groceries', 'Groceries/Alcohol', 'Other']
@@ -44,11 +44,6 @@ describe('renaming text references', () => {
     line_items: [{ amount: 100, category: 'Car/Fuel', spent_for: [{ cost_center: 'Iva', share: 0.5 }, { cost_center: 'Kia', share: 0.5 }] }],
   }
 
-  it('rewrites rule params', () => {
-    expect(renameRuleParams({ category: 'Car/Fuel' }, categoryRenamer('Car', 'Auto'))).toEqual({ category: 'Auto/Fuel' })
-    expect(renameRuleParams({ spent_for: [{ cost_center: 'iva', share: 1 }] }, costCenterRenamer('Iva', 'Ivy'))).toEqual({ spent_for: [{ cost_center: 'Ivy', share: 1 }] })
-  })
-
   it('rewrites repeat templates', () => {
     const renamed = renameTemplate(template, categoryRenamer('Car', 'Auto'))
     expect(renamed.category).toBe('Auto')
@@ -56,18 +51,18 @@ describe('renaming text references', () => {
     expect(renameTemplate(template, costCenterRenamer('Iva', 'Ivy')).line_items[0]!.spent_for).toEqual([{ cost_center: 'Ivy', share: 0.5 }, { cost_center: 'Kia', share: 0.5 }])
   })
 
-  it('tells whether params or a template mention a name', () => {
-    expect(mentions(costCenterRenamer('Iva', '\0'), { template })).toBe(true)
-    expect(mentions(costCenterRenamer('Maya', '\0'), { template })).toBe(false)
-    expect(mentions(categoryRenamer('Car/Fuel', '\0'), { params: { category: 'Car/Fuel/Diesel' } })).toBe(true)
+  it('tells whether a template mentions a name', () => {
+    expect(mentions(costCenterRenamer('Iva', '\0'), template)).toBe(true)
+    expect(mentions(costCenterRenamer('Maya', '\0'), template)).toBe(false)
+    expect(mentions(categoryRenamer('Car', '\0'), template)).toBe(true)
   })
 })
 
 describe('usageProblem', () => {
   it('lets an unused name go and lists what still uses one', () => {
-    expect(usageProblem('', 'Iva', { purchases: 0, rules: 0 })).toBeNull()
-    expect(usageProblem('Category ', 'Car', { purchases: 1, subcategories: 2, rules: 0 })?.message).toBe(
-      'Category "Car" is still used by 1 purchase, 2 subcategories. Move or change those first, or rename it instead.',
+    expect(usageProblem('', 'Iva', { purchases: 0, repeats: 0 })).toBeNull()
+    expect(usageProblem('Category ', 'Car', { purchases: 1, subcategories: 2, 'watched groups': 1 })?.message).toBe(
+      'Category "Car" is still used by 1 purchase, 2 subcategories, 1 watched group. Move or change those first, or rename it instead.',
     )
   })
 })

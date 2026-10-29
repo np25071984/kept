@@ -115,8 +115,7 @@ describe('two members of one household', () => {
   })
 
   it('leaves private purchases out of household totals but not the owner\'s', async () => {
-    await alex.post('/api/v1/rules', { kind: 'set_private', merchant: 'Sephora', text: 'Anything at Sephora is private.' })
-    const gift = await alex.post('/api/v1/transactions', { date: '2026-10-25', amount: 80, merchant: 'Sephora', category: 'Other' })
+    const gift = await alex.post('/api/v1/transactions', { date: '2026-10-25', amount: 80, merchant: 'Sephora', category: 'Other', private: true })
     expect(gift.body.transaction.private).toBe(true)
 
     const household = await sam.get('/api/v1/expenses/summary?from=2026-10-01&to=2026-10-31&scope=household')
@@ -129,6 +128,16 @@ describe('two members of one household', () => {
     expect(JSON.stringify(household.body)).not.toContain('Alex')
   })
 
+  it('keeps each member\'s notes and watched groups to themselves', async () => {
+    const note = await alex.post('/api/v1/notes', { text: 'Anything at Sephora is private.' })
+    const watch = await alex.post('/api/v1/watches', { item: 'makeup' })
+    expect((await sam.get('/api/v1/notes')).body.notes.map((n: { id: string }) => n.id)).not.toContain(note.body.id)
+    expect((await sam.patch(`/api/v1/notes/${note.body.id}`, { text: 'x' })).status).toBe(404)
+    expect((await sam.delete(`/api/v1/notes/${note.body.id}`)).status).toBe(404)
+    expect((await sam.get('/api/v1/watches')).body.watches.map((w: { id: string }) => w.id)).not.toContain(watch.body.id)
+    expect((await sam.delete(`/api/v1/watches/${watch.body.id}`)).status).toBe(404)
+  })
+
   it('splits shared cost centers in reports by their shares', async () => {
     await sam.post('/api/v1/transactions', { date: '2026-10-10', amount: 900, category: 'Car/Insurance', merchant: 'Geico', spent_for: [{ cost_center: 'Hyundai', share: 0.58 }, { cost_center: 'Kia' }] })
     const summary = await sam.get('/api/v1/expenses/summary?from=2026-10-01&to=2026-10-31&group_by=cost_center')
@@ -138,7 +147,7 @@ describe('two members of one household', () => {
   })
 
   it('reports watched-group coverage', async () => {
-    await sam.post('/api/v1/rules', { kind: 'watch', params: { category: 'Groceries/Alcohol' }, text: 'Keep an eye on alcohol.' })
+    await sam.post('/api/v1/watches', { category: 'Groceries/Alcohol' })
     await sam.post('/api/v1/transactions', { date: '2026-10-05', amount: 95, merchant: 'Whole Foods', category: 'Groceries', line_items: [{ amount: 20, category: 'Groceries/Alcohol', item: 'wine' }] })
     await sam.post('/api/v1/transactions', { date: '2026-10-06', amount: 50, merchant: 'Trader Joe\'s', category: 'Groceries' })
     const summary = await sam.get('/api/v1/expenses/summary?from=2026-10-01&to=2026-10-31')

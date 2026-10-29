@@ -58,24 +58,16 @@ export interface CostCenter {
   categories: string[]
 }
 
-export interface Rule {
+export interface Watch {
   id: string
-  kind: 'watch' | 'ask_breakdown' | 'set_category' | 'set_spent_for' | 'set_private'
-  personal: boolean
-  merchant: string | null
   category: string | null
-  account_ref: string | null
-  params: Record<string, unknown>
-  text: string
+  item: string | null
+  group: string
 }
 
 export interface Note {
   id: string
   text: string
-  personal: boolean
-  cost_centers: string[]
-  categories: string[]
-  merchants: string[]
   expires_on: string | null
   expired: boolean
   created_at: string

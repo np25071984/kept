@@ -2,7 +2,7 @@ import { sql } from 'kysely'
 import type { Tx } from '../db/db.js'
 import { similarNames } from '../domain/names.js'
 import {
-  categoryRenamer, checkCategoryRename, checkCostCenterRename, costCenterRenamer, mentions, renamePath, renameRuleParams, renameTemplate, usageProblem,
+  categoryRenamer, checkCategoryRename, checkCostCenterRename, costCenterRenamer, mentions, renamePath, renameTemplate, usageProblem,
   type Problem, type Renamer,
 } from '../domain/renames.js'
 import { isValidCategoryPath, parentPath } from '../domain/setup.js'
@@ -110,10 +110,6 @@ function fail(problem: Problem): never {
 }
 
 async function rewriteText(tx: Tx, renamer: Renamer, checkedGroups: boolean): Promise<void> {
-  for (const rule of await tx.selectFrom('rules').select(['id', 'params']).execute()) {
-    const params = renameRuleParams(rule.params, renamer)
-    if (JSON.stringify(params) !== JSON.stringify(rule.params)) await tx.updateTable('rules').set({ params: JSON.stringify(params) }).where('id', '=', rule.id).execute()
-  }
   for (const repeat of await tx.selectFrom('repeats').select(['id', 'template']).execute()) {
     const template = renameTemplate(repeat.template, renamer)
     if (JSON.stringify(template) !== JSON.stringify(repeat.template)) await tx.updateTable('repeats').set({ template: JSON.stringify(template) }).where('id', '=', repeat.id).execute()
@@ -126,11 +122,9 @@ async function rewriteText(tx: Tx, renamer: Renamer, checkedGroups: boolean): Pr
   }
 }
 
-// Rules and repeats whose params or template mention the name, for the delete check.
-async function textMentions(tx: Tx, renamer: Renamer): Promise<{ rules: Set<string>; repeats: number }> {
-  const rules = (await tx.selectFrom('rules').select(['id', 'params']).execute()).filter((rule) => mentions(renamer, { params: rule.params }))
-  const repeats = (await tx.selectFrom('repeats').select('template').execute()).filter((repeat) => mentions(renamer, { template: repeat.template }))
-  return { rules: new Set(rules.map((rule) => rule.id)), repeats: repeats.length }
+// Repeats whose template mentions the name, for the delete check.
+async function repeatsMentioning(tx: Tx, renamer: Renamer): Promise<number> {
+  return (await tx.selectFrom('repeats').select('template').execute()).filter((repeat) => mentions(renamer, repeat.template)).length
 }
 
 export async function renameCategory(tx: Tx, path: string, newPath: string): Promise<{ path: string }> {
@@ -157,15 +151,13 @@ export async function deleteCategory(tx: Tx, path: string): Promise<void> {
     .select((eb) => eb.fn.countAll<string>().as('count'))
     .where((eb) => eb.or([eb('main_category_id', '=', category.id), eb.exists(eb.selectFrom('line_items').select('id').whereRef('line_items.transaction_id', '=', 'transactions.id').where('line_items.category_id', '=', category.id))]))
     .executeTakeFirstOrThrow()
-  const linkedRules = await tx.selectFrom('rules').select('id').where('category_id', '=', category.id).execute()
-  const text = await textMentions(tx, categoryRenamer(category.path, '\0'))
-  const notes = await tx.selectFrom('note_categories').select((eb) => eb.fn.countAll<string>().as('count')).where('category_id', '=', category.id).executeTakeFirstOrThrow()
+  // Any member's watched groups count, without saying whose.
+  const watches = await tx.selectFrom('watches').select((eb) => eb.fn.countAll<string>().as('count')).where('category_id', '=', category.id).executeTakeFirstOrThrow()
   const problem = usageProblem('Category ', category.path, {
     purchases: Number(purchases.count),
     subcategories: categories.filter((c) => c.path.toLowerCase().startsWith(`${category.path.toLowerCase()}/`)).length,
-    rules: new Set([...linkedRules.map((rule) => rule.id), ...text.rules]).size,
-    notes: Number(notes.count),
-    repeats: text.repeats,
+    'watched groups': Number(watches.count),
+    repeats: await repeatsMentioning(tx, categoryRenamer(category.path, '\0')),
   })
   if (problem) fail(problem)
   await tx.deleteFrom('categories').where('id', '=', category.id).execute()
@@ -214,9 +206,7 @@ export async function deleteCostCenter(tx: Tx, name: string): Promise<void> {
     .select((eb) => eb.fn.count<string>('line_items.transaction_id').distinct().as('count'))
     .where('line_item_cost_centers.cost_center_id', '=', center.id)
     .executeTakeFirstOrThrow()
-  const text = await textMentions(tx, costCenterRenamer(center.name, '\0'))
-  const notes = await tx.selectFrom('note_cost_centers').select((eb) => eb.fn.countAll<string>().as('count')).where('cost_center_id', '=', center.id).executeTakeFirstOrThrow()
-  const problem = usageProblem('', center.name, { purchases: Number(purchases.count), rules: text.rules.size, notes: Number(notes.count), repeats: text.repeats })
+  const problem = usageProblem('', center.name, { purchases: Number(purchases.count), repeats: await repeatsMentioning(tx, costCenterRenamer(center.name, '\0')) })
   if (problem) fail(problem)
   await tx.deleteFrom('cost_centers').where('id', '=', center.id).execute()
 }

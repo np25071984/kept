@@ -1,5 +1,5 @@
 import { accessToken } from './auth.js'
-import type { ApiKey, Connection, CostCenter, Note, Rule, Setup, Transaction, Update } from './lib/types.js'
+import type { ApiKey, Connection, CostCenter, Note, Setup, Transaction, Update, Watch } from './lib/types.js'
 
 // The REST API (IMPLEMENTATION.md §3), with the signed-in member's token.
 
@@ -67,8 +67,9 @@ export const api = {
   updateCostCenter: (name: string, patch: { new_name?: string; kind?: string; categories?: string[] }) => call<CostCenter>('PATCH', '/api/v1/cost-centers', { name, ...patch }),
   deleteCostCenter: (name: string) => call<void>('DELETE', `/api/v1/cost-centers${query({ name })}`),
 
-  rules: () => call<{ rules: Rule[] }>('GET', '/api/v1/rules').then((r) => r.rules),
-  deleteRule: (id: string) => call<void>('DELETE', `/api/v1/rules/${id}`),
+  watches: () => call<{ watches: Watch[] }>('GET', '/api/v1/watches').then((r) => r.watches),
+  watch: (body: unknown) => call<Watch>('POST', '/api/v1/watches', body),
+  stopWatching: (id: string) => call<void>('DELETE', `/api/v1/watches/${id}`),
   notes: () => call<{ notes: Note[] }>('GET', '/api/v1/notes?include_expired=true').then((r) => r.notes),
   addNote: (body: unknown) => call<Note>('POST', '/api/v1/notes', body),
   updateNote: (id: string, body: unknown) => call<Note>('PATCH', `/api/v1/notes/${id}`, body),

@@ -21,7 +21,7 @@ const spentFor = z.array(z.object({
 const lineItem = z.object({
   amount,
   category: z.string().describe('An existing category path, e.g. "Car/Fuel".'),
-  item: z.string().nullish().describe('Free text to track, e.g. "nuts", "shoes".'),
+  item: z.string().nullish().describe('Free text to track, e.g. "snacks", "shoes".'),
   notes: z.string().nullish(),
   spent_for: spentFor.optional(),
 })
@@ -55,13 +55,14 @@ function query(params: Record<string, unknown>): string {
   return entries.length ? `?${new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString()}` : ''
 }
 
-// The playbook, the household's vocabulary and what to do first, in one call.
+// The playbook, the household's vocabulary, the user's notes and watched groups, and what to do first, in one call.
 export async function playbook(rest: Rest, now = new Date()) {
-  const [setup, categories, costCenters, rules] = await Promise.all([
+  const [setup, categories, costCenters, notes, watches] = await Promise.all([
     rest('GET', '/api/v1/setup'),
     rest('GET', '/api/v1/categories'),
     rest('GET', '/api/v1/cost-centers'),
-    rest('GET', '/api/v1/rules'),
+    rest('GET', '/api/v1/notes'),
+    rest('GET', '/api/v1/watches'),
   ])
   const s = setup.body as { household: { name: string; currency: string; next_step: string | null }; you: { introduced: boolean; role: string; timezone: string } }
   let startWith = 'Setup is done. Handle the user\'s request.'
@@ -75,7 +76,8 @@ export async function playbook(rest: Rest, now = new Date()) {
     setup: setup.body,
     categories: (categories.body as { categories: { path: string }[] }).categories.map((c) => c.path),
     cost_centers: (costCenters.body as { cost_centers: unknown[] }).cost_centers,
-    rules: (rules.body as { rules: unknown[] }).rules,
+    notes: (notes.body as { notes: unknown[] }).notes,
+    watching: (watches.body as { watches: unknown[] }).watches,
     playbook: PLAYBOOK,
   }
 }
@@ -83,7 +85,7 @@ export async function playbook(rest: Rest, now = new Date()) {
 export function registerTools(server: McpServer, rest: Rest) {
   server.registerTool('get_playbook', {
     title: 'Get the playbook',
-    description: 'Call this first in every conversation, before asking the user anything about money. Returns how to ask about and log expenses (follow it), what to do first (start_with: the first conversation when setup is unfinished), today\'s date, and the household\'s categories, cost centers and rules.',
+    description: 'Call this first in every conversation, before asking the user anything about money. Returns how to ask about and log expenses (follow it), what to do first (start_with: the first conversation when setup is unfinished), today\'s date, the household\'s categories and cost centers, and the user\'s notes and watched groups. Read the notes before asking anything.',
     annotations: read,
   }, async () => ({ content: [{ type: 'text', text: JSON.stringify(await playbook(rest)) }] }))
 
@@ -166,86 +168,70 @@ export function registerTools(server: McpServer, rest: Rest) {
 
   server.registerTool('rename_category', {
     title: 'Rename a category',
-    description: 'Fix a category\'s name or move it under another parent ("Gas" to "Car/Fuel"), after the user said yes to that change on its own. Purchases, rules, notes and repeats keep it; subcategories move with it.',
+    description: 'Fix a category\'s name or move it under another parent ("Gas" to "Car/Fuel"), after the user said yes to that change on its own. Purchases, watched groups and repeats keep it; subcategories move with it.',
     inputSchema: { path: z.string(), new_path: z.string() },
     annotations: write,
   }, async (args) => result(await rest('PATCH', '/api/v1/categories', args)))
 
   server.registerTool('delete_category', {
     title: 'Delete a category',
-    description: 'Delete a category nothing uses, after the user said yes. If purchases, subcategories, rules, notes or repeats still use it, Kept refuses and says which: offer to move them (edit_transaction, rename_category) or to rename instead.',
+    description: 'Delete a category nothing uses, after the user said yes. If purchases, subcategories, watched groups or repeats still use it, Kept refuses and says which: offer to move them (edit_transaction, rename_category) or to rename instead.',
     inputSchema: { path: z.string() },
     annotations: destroy,
   }, async ({ path }) => result(await rest('DELETE', `/api/v1/categories${query({ path })}`)))
 
   server.registerTool('rename_cost_center', {
     title: 'Rename a person or thing',
-    description: 'Fix the name of a person or thing ("Iva" to "Ivy"), after the user said yes to that change on its own. Purchases, rules, notes and repeats keep it.',
+    description: 'Fix the name of a person or thing ("Iva" to "Ivy"), after the user said yes to that change on its own. Purchases and repeats keep it.',
     inputSchema: { name: z.string(), new_name: z.string() },
     annotations: write,
   }, async (args) => result(await rest('PATCH', '/api/v1/cost-centers', args)))
 
   server.registerTool('delete_cost_center', {
     title: 'Delete a person or thing',
-    description: 'Delete a person or thing nothing uses, after the user said yes. If purchases, rules, notes or repeats still use it, Kept refuses and says which: offer to move them with edit_transaction, or to rename instead.',
+    description: 'Delete a person or thing nothing uses, after the user said yes. If purchases or repeats still use it, Kept refuses and says which: offer to move them with edit_transaction, or to rename instead.',
     inputSchema: { name: z.string() },
     annotations: destroy,
   }, async ({ name }) => result(await rest('DELETE', `/api/v1/cost-centers${query({ name })}`)))
 
-  server.registerTool('get_rules', {
-    title: 'Get rules',
-    description: 'Rules for this merchant, category or bill account, and the one that wins for each kind. Apply them before guessing from history.',
-    inputSchema: { merchant: z.string().optional(), category: z.string().optional(), account_ref: z.string().optional() },
-    annotations: read,
-  }, async (args) => result(await rest('GET', `/api/v1/rules${query(args)}`)))
-
-  server.registerTool('save_rule', {
-    title: 'Save a rule',
-    description: 'Save a rule the user agreed to, in their words. Kinds: watch (params.category or params.item), ask_breakdown, set_category (params.category), set_spent_for (params.spent_for), set_private (always personal). Never save silently.',
-    inputSchema: {
-      kind: z.enum(['watch', 'ask_breakdown', 'set_category', 'set_spent_for', 'set_private']),
-      merchant: z.string().nullish(), category: z.string().nullish().describe('Condition: applies within this category.'),
-      account_ref: z.string().nullish().describe('Condition: the account number on a bill.'),
-      params: z.record(z.string(), z.unknown()).optional(), text: z.string().describe('The rule in the user\'s words.'),
-      personal: z.boolean().optional().describe('Applies to this user only.'),
-    },
+  server.registerTool('watch_group', {
+    title: 'Watch a group',
+    description: 'Start asking about a group where it\'s bought, after the user asked ("keep an eye on alcohol", "track snacks"): a category, which may need add_category first, or an item bought across categories.',
+    inputSchema: { category: z.string().nullish(), item: z.string().nullish() },
     annotations: write,
-  }, async (args) => result(await rest('POST', '/api/v1/rules', args)))
+  }, async (args) => result(await rest('POST', '/api/v1/watches', args)))
 
-  server.registerTool('delete_rule', {
-    title: 'Delete a rule',
-    description: 'Remove a rule, e.g. "stop tracking nuts". Past purchases don\'t change.',
+  server.registerTool('stop_watching', {
+    title: 'Stop watching a group',
+    description: 'Stop asking about a watched group ("stop tracking snacks"), by the id from get_playbook\'s watching. Past purchases don\'t change.',
     inputSchema: { id },
     annotations: destroy,
-  }, async ({ id }) => result(await rest('DELETE', `/api/v1/rules/${id}`)))
+  }, async ({ id }) => result(await rest('DELETE', `/api/v1/watches/${id}`)))
 
   server.registerTool('get_notes', {
     title: 'Get notes',
-    description: 'What the household told you about a person or thing, category or merchant ("we\'re selling the Kia in December"). Load notes for what the conversation touches before guessing.',
-    inputSchema: { cost_center: z.string().optional(), category: z.string().optional(), merchant: z.string().optional(), q: z.string().optional(), include_expired: z.boolean().optional() },
+    description: 'The user\'s notes. get_playbook already returns the current ones; call this with include_expired for older context ("why were groceries high in March?").',
+    inputSchema: { include_expired: z.boolean().optional() },
     annotations: read,
   }, async (args) => result(await rest('GET', `/api/v1/notes${query(args)}`)))
 
   server.registerTool('save_note', {
     title: 'Save a note',
-    description: 'Remember context that affects how expenses are asked about or filed, after telling the user. Link it to at least one person or thing, category or merchant; give plans an expires_on.',
-    inputSchema: {
-      text: z.string(), personal: z.boolean().optional(), cost_centers: z.array(z.string()).optional(),
-      categories: z.array(z.string()).optional(), merchants: z.array(z.string()).optional(), expires_on: date.nullish(),
-    },
+    description: 'Remember something about the user\'s spending, in their words, after telling them what you\'ll remember: a habit ("Costco is always groceries"), a split, a store that\'s always private, or a plan ("we\'re selling the Kia in December", with expires_on). Never save silently.',
+    inputSchema: { text: z.string(), expires_on: date.nullish().describe('For plans and one-off context.') },
     annotations: write,
   }, async (args) => result(await rest('POST', '/api/v1/notes', args)))
 
   server.registerTool('update_note', {
     title: 'Update a note',
-    description: 'Change a note\'s text, links or expiry.',
-    inputSchema: { id, text: z.string().optional(), cost_centers: z.array(z.string()).optional(), categories: z.array(z.string()).optional(), merchants: z.array(z.string()).optional(), expires_on: date.nullish() },
+    description: 'Change a note\'s text or expiry, after the user agreed.',
+    inputSchema: { id, text: z.string().optional(), expires_on: date.nullish() },
     annotations: write,
   }, async ({ id, ...body }) => result(await rest('PATCH', `/api/v1/notes/${id}`, body)))
 
   server.registerTool('delete_note', {
     title: 'Delete a note',
-    description: 'Forget a note.',
+    description: 'Forget a note, after the user asked.',
     inputSchema: { id },
     annotations: destroy,
   }, async ({ id }) => result(await rest('DELETE', `/api/v1/notes/${id}`)))

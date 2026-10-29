@@ -6,7 +6,7 @@ Orientation for coding agents working in this repository. Read this first, then 
 
 Kept teaches the user's own AI assistant to track a household's expenses: what to ask, how to group the answers, and what to remember. The ledger stores the records, but the product is the agent's behavior. `docs/VISION.md` §1 says what it is. Five boundaries apply to every change:
 - Kept reads no banks, inboxes or receipts itself: the user's AI does, and Kept keeps what it learns (`VISION.md` §3.4). Kept stores what was read, never the files.
-- Nothing is written without the user's confirmation, and rules and notes are never saved silently (`VISION.md` §3.1, §4.A).
+- Nothing is written without the user's confirmation, and notes are never saved silently (`VISION.md` §3.1, §4.A).
 - The server decides who is calling: `spent_by` comes from the login, every read is filtered on the server, and no member sees another member's purchases (`VISION.md` §4.A, `IMPLEMENTATION.md` §4).
 - Business logic, matching and authorization live in the REST API; the MCP server only describes and forwards (`IMPLEMENTATION.md` §1).
 - Every assistant must work with tools alone; server instructions, resources and prompts are extras (`IMPLEMENTATION.md` §5.3).
@@ -39,7 +39,7 @@ When a request is ambiguous, a detail is missing, or it can be read more than on
 
 ## Code and tests
 
-New code puts what it decides (which category a rule picks, whether a charge matches a purchase, when a repeat falls next) in functions that take values and return values, with no database, network, clock or framework object in them, and unit-tests them in the same change. Code touched for another reason gets the same treatment. The wiring around them stays thin, covered by a few end-to-end flows instead of mocks.
+New code puts what it decides (which watched groups a purchase checked, whether a charge matches a purchase, when a repeat falls next) in functions that take values and return values, with no database, network, clock or framework object in them, and unit-tests them in the same change. Code touched for another reason gets the same treatment. The wiring around them stays thin, covered by a few end-to-end flows instead of mocks.
 
 A file past about 600 lines is a split candidate: when adding to one, move the touched feature out first. This is not a blocker, and an API client or a parser can stay long.
 

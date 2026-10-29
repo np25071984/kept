@@ -83,7 +83,7 @@ ${cancel(uid)}`)
 export function consentPage(uid: string, clientName: string): string {
   return layout('Allow access', `
 <h1>Allow ${escape(clientName)}?</h1>
-<p>${escape(clientName)} will be able to log and edit your purchases, read your spending and household totals, and change the household's categories, rules and notes, as you.</p>
+<p>${escape(clientName)} will be able to log and edit your purchases, read your spending and household totals, change the household's categories, and keep your notes and watched groups, as you.</p>
 <form method="post" action="/oauth/interaction/${escape(uid)}/consent"><button type="submit">Allow</button></form>
 ${cancel(uid)}`)
 }

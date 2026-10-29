@@ -129,39 +129,22 @@ export interface Database {
     created_at: Generated<Date>
     seen_at: Timestamp | null
   }
-  rules: {
+  watches: {
     id: Generated<string>
     household_id: string
-    kind: string
-    user_id: string | null
-    merchant: string | null
+    user_id: string
     category_id: string | null
-    account_ref: string | null
-    params: Json<Record<string, unknown>>
-    text: string
-    created_by: string
+    item: string | null
     created_at: Generated<Date>
   }
   notes: {
     id: Generated<string>
     household_id: string
     text: string
-    user_id: string | null
-    merchants: Generated<string[]>
+    user_id: string
     expires_on: string | null
-    created_by: string
     created_at: Generated<Date>
     updated_at: Generated<Date>
-  }
-  note_cost_centers: {
-    household_id: string
-    note_id: string
-    cost_center_id: string
-  }
-  note_categories: {
-    household_id: string
-    note_id: string
-    category_id: string
   }
   oauth_models: {
     name: string

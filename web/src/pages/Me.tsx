@@ -2,9 +2,9 @@ import { useState, type FormEvent } from 'react'
 import { api } from '../api.js'
 import type { ApiKey, Connection } from '../lib/types.js'
 import { useAction, useLoad, useSession } from '../session.js'
-import { NotesSection, RulesSection } from './RulesAndNotes.js'
+import { NotesSection, WatchingSection } from './Memory.js'
 
-// The member's own settings: connecting assistants, API keys, personal rules and notes (VISION.md §4.C, "Me").
+// The member's own settings: connecting assistants, API keys, watched groups and notes (VISION.md §4.C, "Me").
 export function MePage() {
   const { setup } = useSession()
   return (
@@ -16,8 +16,8 @@ export function MePage() {
       <ConnectAssistant />
       <Connections />
       <ApiKeys />
-      <RulesSection personal />
-      <NotesSection personal />
+      <WatchingSection />
+      <NotesSection />
     </>
   )
 }

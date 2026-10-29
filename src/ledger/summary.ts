@@ -1,11 +1,11 @@
 import type { Tx } from '../db/db.js'
-import { computeCoverage, type CoverageTransaction, type WatchedGroup } from '../domain/coverage.js'
+import { computeCoverage, type CoverageTransaction } from '../domain/coverage.js'
 import { daysInMonth, isLocalDate, parts, todayIn } from '../domain/dates.js'
 import { fromCents, numericToCents } from '../domain/money.js'
 import { summarize, type GroupBy, type Period, type SummaryLine } from '../domain/summary.js'
 import type { Caller } from './caller.js'
 import { invalid } from './errors.js'
-import { loadRules } from './rules.js'
+import { watchedGroups } from './watches.js'
 
 export interface SummaryQuery {
   from?: string
@@ -56,12 +56,7 @@ export async function getSummary(tx: Tx, caller: Caller, query: SummaryQuery, no
     entry.lines.push({ amount: numericToCents(row.amount), category: row.path, item: row.item })
     byTransaction.set(row.transaction_id, entry)
   }
-  const groups = (await loadRules(tx, caller)).flatMap((rule): WatchedGroup[] => {
-    if (rule.kind !== 'watch') return []
-    const { category, item } = rule.params as { category?: string; item?: string }
-    return category ? [{ kind: 'category', path: category }] : item ? [{ kind: 'item', item }] : []
-  })
-  const unique = [...new Map(groups.map((g) => [(g.kind === 'category' ? g.path : g.item).toLowerCase(), g])).values()]
+  const groups = await watchedGroups(tx, caller)
 
   return {
     from,
@@ -71,7 +66,7 @@ export async function getSummary(tx: Tx, caller: Caller, query: SummaryQuery, no
     period,
     currency: caller.currency,
     totals: summarize(lines, groupBy, period).map((row) => ({ ...row, amount: fromCents(row.amount) })),
-    watched: unique.map((group) => {
+    watched: groups.map((group) => {
       const coverage = computeCoverage(group, [...byTransaction.values()])
       return { ...coverage, total: fromCents(coverage.total), estimate: coverage.estimate == null ? null : fromCents(coverage.estimate) }
     }),

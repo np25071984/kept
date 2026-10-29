@@ -67,19 +67,12 @@ describe('household vocabulary', () => {
     ])
   })
 
-  it('says where a rule applies', async () => {
-    const { ruleScope, ruleKindLabel } = await import('../../web/src/lib/vocabulary.js')
-    const rule = { id: 'r', kind: 'set_spent_for' as const, personal: false, merchant: 'Costco', category: 'Groceries', account_ref: null, params: {}, text: '' }
-    expect(ruleScope(rule)).toBe('Costco · Groceries')
-    expect(ruleScope({ ...rule, merchant: null, category: null })).toBe('Everywhere')
-    expect(ruleKindLabel(rule)).toBe('Who or what for')
-  })
-
-  it('needs a note to say when it matters', async () => {
-    const { emptyNote, noteBody, noteProblem } = await import('../../web/src/lib/vocabulary.js')
-    expect(noteProblem({ ...emptyNote, text: 'Oil change every 5,000 miles' })).toContain('Link the note')
-    const form = { ...emptyNote, text: ' Oil change every 5,000 miles ', cost_centers: ['Kia'], merchants: 'Jiffy Lube, , Valvoline' }
-    expect(noteProblem(form)).toBeNull()
-    expect(noteBody(form, false)).toEqual({ text: 'Oil change every 5,000 miles', personal: false, cost_centers: ['Kia'], categories: [], merchants: ['Jiffy Lube', 'Valvoline'], expires_on: null })
+  it('builds note and watch bodies', async () => {
+    const { emptyNote, noteBody, watchBody } = await import('../../web/src/lib/vocabulary.js')
+    expect(noteBody({ ...emptyNote, text: '  ' })).toBeNull()
+    expect(noteBody({ text: ' Costco is always groceries ', expires_on: '' })).toEqual({ text: 'Costco is always groceries', expires_on: null })
+    expect(watchBody({ category: 'Groceries/Alcohol', item: 'ignored' })).toEqual({ category: 'Groceries/Alcohol' })
+    expect(watchBody({ category: '', item: ' snacks ' })).toEqual({ item: 'snacks' })
+    expect(watchBody({ category: '', item: '' })).toBeNull()
   })
 })
