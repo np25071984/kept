@@ -263,5 +263,3 @@ svg.i { flex-shrink: 0; }
 .langmenu .menu button { text-align: left; border: 0; background: none; padding: 7px 10px; border-radius: 6px; font: inherit; color: var(--fg); cursor: pointer; }
 .langmenu .menu button:hover { background: var(--bg); }
 .langmenu .menu button[aria-checked="true"] { color: var(--accent); font-weight: 600; }
-.langmenu .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
-.langmenu .menu .auto { color: var(--muted); font-size: 13px; }
