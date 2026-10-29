@@ -387,14 +387,14 @@ The ledger always stores the real total once. The per–cost center numbers are 
 
 A note is something a member has taught their agent, in their own words, so it doesn't have to be asked or explained again. Notes live in the ledger, not in any one assistant's memory, so every assistant the member connects knows them. They are personal: no other member sees them, and when both partners want their agents to know "we're selling the Kia in December," each tells their own. The household shares its vocabulary (categories and people & things), not its habits.
 
-| What the user says                                            | What the agent does with it                                           | Expires   |
-| ------------------------------------------------------------- | --------------------------------------------------------------------- | --------- |
-| "Costco is always groceries."                                 | Skips the category question at Costco.                                |           |
-| "Target is usually a mix."                                    | Asks "anything else in there?" instead of assuming one category.      |           |
-| "The Hyundai is $520 of the Geico insurance."                 | Splits later Geico bills 58/42 and says so in the confirmation.       |           |
-| "Anything at Sephora is private."                             | Logs Sephora purchases as private.                                    |           |
-| "We're selling the Kia in December."                          | Stops offering the Kia for fuel and insurance after December.         | Dec 31    |
-| "Groceries are high this month, we hosted family."            | Mentions it when the user asks why groceries went up.                 | Month end |
+| What the user says                                   | What the agent does with it                                       |
+| ---------------------------------------------------- | ----------------------------------------------------------------- |
+| "Costco is always groceries."                        | Skips the category question at Costco.                            |
+| "Target is usually a mix."                           | Asks "anything else in there?" instead of assuming one category.  |
+| "The Hyundai is $520 of the Geico insurance."        | Splits later Geico bills 58/42 and says so in the confirmation.   |
+| "Anything at Sephora is private."                    | Logs Sephora purchases as private.                                |
+| "We're selling the Kia in December."                 | Stops offering the Kia for fuel and insurance after December.     |
+| "Groceries are high this month, we hosted family."   | Mentions it when the user asks why groceries went up in that month. |
 
 How notes work:
 
@@ -403,7 +403,7 @@ How notes work:
 - **Made in conversation.** When the user corrects the agent the same way twice, the agent offers a note: "Want me to remember that Costco is always groceries?"
 - **Never saved silently.** The agent says what it will remember: "I'll remember the Kia is being sold in December."
 - **Only about money.** Notes cover how expenses are asked about, filed or explained, nothing else, and never what the ledger can calculate ("we usually spend $600 on groceries").
-- **Plans expire.** Plans and one-off explanations get an end date. Expired notes stop being loaded but stay visible, so "why were groceries high in March?" still has an answer.
+- **Time is written as a date.** The agent saves "this month" as "October 2026", so a note keeps its meaning. When a note's time has passed, the agent offers to forget it: "Your note says the Kia was being sold in December. Should I forget it?"
 - **Visible and editable.** "What do you remember about the Kia?" lists the matching notes, and the member can change or delete any of them on the web.
 
 #### Caps

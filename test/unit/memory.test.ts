@@ -1,14 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { computeCoverage, uniqueGroups } from '../../src/domain/coverage.js'
-import { isExpired, watchInput } from '../../src/domain/memory.js'
+import { watchInput } from '../../src/domain/memory.js'
 
-describe('notes and watched groups', () => {
-  it('expires a note the day after its date', () => {
-    expect(isExpired('2026-10-28', '2026-10-29')).toBe(true)
-    expect(isExpired('2026-10-29', '2026-10-29')).toBe(false)
-    expect(isExpired(null, '2026-10-29')).toBe(false)
-  })
-
+describe('watched groups', () => {
   it('watches a category or an item, not both', () => {
     expect(watchInput({ category: ' Groceries/Alcohol ' })).toEqual({ category: 'Groceries/Alcohol' })
     expect(watchInput({ item: 'snacks', category: null })).toEqual({ item: 'snacks' })

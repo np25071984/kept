@@ -1,10 +1,6 @@
 import type { Problem } from './renames.js'
 
-// A member's notes and watched groups (VISION.md §4.A, "Notes"; §3.3).
-
-export function isExpired(expiresOn: string | null, today: string): boolean {
-  return expiresOn != null && expiresOn < today
-}
+// A member's watched groups (VISION.md §3.3).
 
 export type WatchInput = { category: string } | { item: string }
 

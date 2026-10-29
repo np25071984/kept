@@ -208,24 +208,17 @@ export function registerTools(server: McpServer, rest: Rest) {
     annotations: destroy,
   }, async ({ id }) => result(await rest('DELETE', `/api/v1/watches/${id}`)))
 
-  server.registerTool('get_notes', {
-    title: 'Get notes',
-    description: 'The user\'s notes. get_playbook already returns the current ones; call this with include_expired for older context ("why were groceries high in March?").',
-    inputSchema: { include_expired: z.boolean().optional() },
-    annotations: read,
-  }, async (args) => result(await rest('GET', `/api/v1/notes${query(args)}`)))
-
   server.registerTool('save_note', {
     title: 'Save a note',
-    description: 'Remember something about the user\'s spending, in their words, after telling them what you\'ll remember: a habit ("Costco is always groceries"), a split, a store that\'s always private, or a plan ("we\'re selling the Kia in December", with expires_on). Never save silently.',
-    inputSchema: { text: z.string(), expires_on: date.nullish().describe('For plans and one-off context.') },
+    description: 'Remember something about the user\'s spending, in their words, after telling them what you\'ll remember: a habit ("Costco is always groceries"), a split, a store that\'s always private, or a plan. Write any time as a date ("We\'re selling the Kia in December 2026"), never "next month". Never save silently.',
+    inputSchema: { text: z.string() },
     annotations: write,
   }, async (args) => result(await rest('POST', '/api/v1/notes', args)))
 
   server.registerTool('update_note', {
     title: 'Update a note',
-    description: 'Change a note\'s text or expiry, after the user agreed.',
-    inputSchema: { id, text: z.string().optional(), expires_on: date.nullish() },
+    description: 'Change a note\'s text, after the user agreed.',
+    inputSchema: { id, text: z.string() },
     annotations: write,
   }, async ({ id, ...body }) => result(await rest('PATCH', `/api/v1/notes/${id}`, body)))
 

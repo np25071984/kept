@@ -88,10 +88,7 @@ export const WatchBody = Type.Object({
   item: Type.Optional(Nullable(Type.String({ description: 'An item bought across categories, e.g. "snacks".' }))),
 })
 
-export const NoteQuery = Type.Object({ include_expired: Type.Optional(Type.Boolean()) })
-const expiresOn = Type.Optional(Nullable(LocalDate))
-export const NoteBody = Type.Object({ text: Type.String({ minLength: 1 }), expires_on: expiresOn })
-export const NotePatch = Type.Object({ text: Type.Optional(Type.String({ minLength: 1 })), expires_on: expiresOn })
+export const NoteBody = Type.Object({ text: Type.String({ minLength: 1, description: 'In the user\'s words, with any time as a date: "We\'re selling the Kia in December 2026."' }) })
 
 const Frequency = Type.Union([Type.Literal('weekly'), Type.Literal('monthly'), Type.Literal('yearly')])
 export const RepeatBody = Type.Object({

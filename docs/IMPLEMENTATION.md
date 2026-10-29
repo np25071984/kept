@@ -216,7 +216,6 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `id`         | UUID      | Yes      |                                                                  |
 | `user_id`    | UUID      | Yes      | Set from the authenticated identity.                             |
 | `text`       | Text      | Yes      | In the user's words, e.g. "Costco is always groceries."          |
-| `expires_on` | Date      | No       | After this date the note is no longer loaded, but stays visible. |
 | `created_at` | Timestamp | Yes      |                                                                  |
 
 ## 3. REST API
@@ -242,9 +241,9 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `GET`    | `/api/v1/watches`           | List the caller's watched groups.                                                                 |
 | `POST`   | `/api/v1/watches`           | Watch a category or an item. Watching one already watched returns it.                             |
 | `DELETE` | `/api/v1/watches/{id}`      | Stop watching, e.g. "stop tracking snacks".                                                       |
-| `GET`    | `/api/v1/notes`             | List the caller's notes, newest first. Expired notes only on request.                             |
+| `GET`    | `/api/v1/notes`             | List the caller's notes, newest first.                                                            |
 | `POST`   | `/api/v1/notes`             | Save a note.                                                                                      |
-| `PATCH`  | `/api/v1/notes/{id}`        | Change a note's text or expiry.                                                                   |
+| `PATCH`  | `/api/v1/notes/{id}`        | Change a note's text.                                                                             |
 | `DELETE` | `/api/v1/notes/{id}`        | Delete a note.                                                                                    |
 | `POST`   | `/api/v1/transactions/{id}/sources` | Attach a source (what the agent read from a photo, document or email) to one of the caller's transactions, e.g. a receipt added later. |
 | `POST`   | `/api/v1/transactions/{id}/merge` | Merge another of the caller's transactions into this one, keeping both sets of sources.     |
@@ -365,9 +364,8 @@ The MCP server is stateless Streamable HTTP at `POST /mcp`, in the same process 
 | `list_cost_centers`   | `GET /api/v1/cost-centers`     | Cost centers, optionally filtered by category.                            |
 | `watch_group`         | `POST /api/v1/watches`         | Start watching a category or item, after the user asked.                  |
 | `stop_watching`       | `DELETE /api/v1/watches/{id}`  | Stop watching a group.                                                    |
-| `get_notes`           | `GET /api/v1/notes`            | The user's notes, expired ones included on request.                       |
 | `save_note`           | `POST /api/v1/notes`           | Remember something the user said, after telling them.                     |
-| `update_note`         | `PATCH /api/v1/notes/{id}`     | Change a note's text or expiry.                                           |
+| `update_note`         | `PATCH /api/v1/notes/{id}`     | Change a note's text.                                                     |
 | `delete_note`         | `DELETE /api/v1/notes/{id}`    | Forget a note.                                                            |
 | `add_source`          | `POST /api/v1/transactions/{id}/sources` | Attach what the agent read from a photo, document or email to an existing transaction, e.g. a receipt added later. |
 | `merge_transactions`  | `POST /api/v1/transactions/{id}/merge` | Merge a duplicate after the user agrees they're the same purchase. |

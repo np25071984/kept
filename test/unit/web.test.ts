@@ -68,9 +68,9 @@ describe('household vocabulary', () => {
   })
 
   it('builds note and watch bodies', async () => {
-    const { emptyNote, noteBody, watchBody } = await import('../../web/src/lib/vocabulary.js')
-    expect(noteBody({ ...emptyNote, text: '  ' })).toBeNull()
-    expect(noteBody({ text: ' Costco is always groceries ', expires_on: '' })).toEqual({ text: 'Costco is always groceries', expires_on: null })
+    const { noteBody, watchBody } = await import('../../web/src/lib/vocabulary.js')
+    expect(noteBody('  ')).toBeNull()
+    expect(noteBody(' Costco is always groceries ')).toEqual({ text: 'Costco is always groceries' })
     expect(watchBody({ category: 'Groceries/Alcohol', item: 'ignored' })).toEqual({ category: 'Groceries/Alcohol' })
     expect(watchBody({ category: '', item: ' snacks ' })).toEqual({ item: 'snacks' })
     expect(watchBody({ category: '', item: '' })).toBeNull()

@@ -126,16 +126,14 @@ describe('watched groups', () => {
 })
 
 describe('notes', () => {
-  it('lists the caller\'s notes and hides expired ones unless asked', async () => {
-    const kia = await sam.post('/api/v1/notes', { text: 'We\'re selling the Kia in December.', expires_on: '2099-12-31' })
+  it('saves, lists newest first, changes and deletes the caller\'s notes', async () => {
+    const kia = await sam.post('/api/v1/notes', { text: ' We\'re selling the Kia in December 2026. ' })
     expect(kia.status).toBe(201)
-    await sam.post('/api/v1/notes', { text: 'Groceries were high, we hosted family.', expires_on: '2020-01-31' })
-    const texts = async (url: string) => (await sam.get(url)).body.notes.map((n: { text: string }) => n.text)
-    expect(await texts('/api/v1/notes')).toContain('We\'re selling the Kia in December.')
-    expect(await texts('/api/v1/notes')).not.toContain('Groceries were high, we hosted family.')
-    expect(await texts('/api/v1/notes?include_expired=true')).toContain('Groceries were high, we hosted family.')
-    const updated = await sam.patch(`/api/v1/notes/${kia.body.id}`, { text: 'Selling the Kia in January.' })
-    expect(updated.body.text).toBe('Selling the Kia in January.')
+    expect(kia.body.text).toBe('We\'re selling the Kia in December 2026.')
+    await sam.post('/api/v1/notes', { text: 'Costco is always groceries.' })
+    expect((await sam.get('/api/v1/notes')).body.notes.map((n: { text: string }) => n.text).slice(0, 2)).toEqual(['Costco is always groceries.', 'We\'re selling the Kia in December 2026.'])
+    expect((await sam.patch(`/api/v1/notes/${kia.body.id}`, { text: 'Selling the Kia in January 2027.' })).body.text).toBe('Selling the Kia in January 2027.')
+    expect((await sam.delete(`/api/v1/notes/${kia.body.id}`)).status).toBe(204)
   })
 })
 

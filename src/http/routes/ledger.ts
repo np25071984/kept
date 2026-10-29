@@ -6,7 +6,7 @@ import { addCategory, addCostCenter, deleteCategory, deleteCostCenter, listCateg
 import { addWatch, deleteWatch, listWatches } from '../../ledger/watches.js'
 import type { App, RouteDeps } from '../app.js'
 import {
-  CategoryBody, CategoryQuery, CategoryRename, CostCenterBody, CostCenterName, CostCenterQuery, CostCenterPatch, IdParams, NoteBody, NotePatch, NoteQuery, RepeatBody, RepeatPatch,
+  CategoryBody, CategoryQuery, CategoryRename, CostCenterBody, CostCenterName, CostCenterQuery, CostCenterPatch, IdParams, NoteBody, RepeatBody, RepeatPatch,
   SeenBody, SummaryQuery, UpdatesQuery, WatchBody,
 } from '../schemas.js'
 
@@ -77,19 +77,19 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.get('/api/v1/notes', {
-    schema: { tags: ['memory'], summary: 'The caller\'s notes, newest first. Expired notes only on request.', querystring: NoteQuery },
-  }, async (request) => ({ notes: await run(request, (tx, caller) => getNotes(tx, caller, request.query.include_expired)) }))
+    schema: { tags: ['memory'], summary: 'The caller\'s notes, newest first.' },
+  }, async (request) => ({ notes: await run(request, (tx, caller) => getNotes(tx, caller)) }))
 
   app.post('/api/v1/notes', {
     schema: { tags: ['memory'], summary: 'Save a note the user agreed to.', body: NoteBody },
   }, async (request, reply) => {
     reply.status(201)
-    return run(request, (tx, caller) => saveNote(tx, caller, request.body))
+    return run(request, (tx, caller) => saveNote(tx, caller, request.body.text))
   })
 
   app.patch('/api/v1/notes/:id', {
-    schema: { tags: ['memory'], summary: 'Change a note\'s text or expiry.', params: IdParams, body: NotePatch },
-  }, async (request) => run(request, (tx, caller) => updateNote(tx, caller, request.params.id, request.body)))
+    schema: { tags: ['memory'], summary: 'Change a note\'s text.', params: IdParams, body: NoteBody },
+  }, async (request) => run(request, (tx, caller) => updateNote(tx, caller, request.params.id, request.body.text)))
 
   app.delete('/api/v1/notes/:id', {
     schema: { tags: ['memory'], summary: 'Delete a note.', params: IdParams },

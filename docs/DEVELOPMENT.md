@@ -67,7 +67,7 @@ Update with `git pull && docker compose up -d --build`.
 
 ## Layout
 
-- `src/domain`: pure functions for everything the ledger decides (lines and shares, matching, watched groups and coverage, note expiry, repeat dates, summaries), unit-tested in `test/unit`.
+- `src/domain`: pure functions for everything the ledger decides (lines and shares, matching, watched groups and coverage, repeat dates, summaries), unit-tested in `test/unit`.
 - `src/ledger`: database reads and writes for each feature, run inside a household-scoped transaction.
 - `src/mcp`: the MCP server, its tools and the playbook text.
 - `src/oauth`: the OAuth2 authorization server, sign-in by emailed code, and the sign-in and consent pages.

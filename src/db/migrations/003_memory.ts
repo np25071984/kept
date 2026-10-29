@@ -1,7 +1,8 @@
 import { sql, type Kysely } from 'kysely'
 
 // Rules give way to personal notes and watched groups (VISION.md §4.A, "Notes", "Watched Groups"). A watch rule becomes a
-// watched group, any other rule a note in its own words; anything household-wide goes to every member.
+// watched group, any other rule a note in its own words; anything household-wide goes to every member. A note's end date
+// moves into its text.
 export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`
     CREATE TABLE watches (
@@ -37,9 +38,10 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     FROM notes n JOIN users u ON u.household_id = n.household_id
     WHERE n.user_id IS NULL;
     DELETE FROM notes WHERE user_id IS NULL;
+    UPDATE notes SET text = text || ' (until ' || to_char(expires_on, 'FMMonth FMDD, YYYY') || ')' WHERE expires_on IS NOT NULL;
 
     DROP TABLE rules, note_cost_centers, note_categories;
-    ALTER TABLE notes ALTER COLUMN user_id SET NOT NULL, DROP COLUMN merchants, DROP COLUMN created_by;
+    ALTER TABLE notes ALTER COLUMN user_id SET NOT NULL, DROP COLUMN merchants, DROP COLUMN created_by, DROP COLUMN expires_on;
   `.execute(db)
 }
 

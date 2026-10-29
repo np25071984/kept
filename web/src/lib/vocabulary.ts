@@ -1,5 +1,3 @@
-import type { Note } from './types.js'
-
 // Categories as a tree, and the note and watch forms (VISION.md §4.C, "Household" and "Me").
 
 export interface TreeRow {
@@ -25,20 +23,8 @@ export function categoryTree(paths: string[]): TreeRow[] {
   })
 }
 
-export interface NoteForm {
-  text: string
-  expires_on: string
-}
-
-export const emptyNote: NoteForm = { text: '', expires_on: '' }
-
-export function formFromNote(note: Note): NoteForm {
-  return { text: note.text, expires_on: note.expires_on ?? '' }
-}
-
-export function noteBody(form: NoteForm): { text: string; expires_on: string | null } | null {
-  const text = form.text.trim()
-  return text ? { text, expires_on: form.expires_on || null } : null
+export function noteBody(text: string): { text: string } | null {
+  return text.trim() ? { text: text.trim() } : null
 }
 
 // A category picked from the list, or an item typed in.

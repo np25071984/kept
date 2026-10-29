@@ -70,7 +70,7 @@ export const api = {
   watches: () => call<{ watches: Watch[] }>('GET', '/api/v1/watches').then((r) => r.watches),
   watch: (body: unknown) => call<Watch>('POST', '/api/v1/watches', body),
   stopWatching: (id: string) => call<void>('DELETE', `/api/v1/watches/${id}`),
-  notes: () => call<{ notes: Note[] }>('GET', '/api/v1/notes?include_expired=true').then((r) => r.notes),
+  notes: () => call<{ notes: Note[] }>('GET', '/api/v1/notes').then((r) => r.notes),
   addNote: (body: unknown) => call<Note>('POST', '/api/v1/notes', body),
   updateNote: (id: string, body: unknown) => call<Note>('PATCH', `/api/v1/notes/${id}`, body),
   deleteNote: (id: string) => call<void>('DELETE', `/api/v1/notes/${id}`),

@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { api } from '../api.js'
-import { formatDate } from '../lib/money.js'
 import type { Note, Watch } from '../lib/types.js'
-import { emptyNote, formFromNote, noteBody, watchBody, type NoteForm, type WatchForm } from '../lib/vocabulary.js'
+import { noteBody, watchBody, type WatchForm } from '../lib/vocabulary.js'
 import { useAction, useLoad, useSession } from '../session.js'
 
 // What the member's assistants remember: watched groups and notes, seen by nobody else (VISION.md §4.A, "Notes"; §3.3).
@@ -78,7 +77,7 @@ export function NotesSection() {
         <h2>Notes</h2>
         {!adding && <button onClick={() => setAdding(true)}>Add a note</button>}
       </div>
-      <p className="muted small">What your assistants remember about your spending. They read every current note before asking anything.</p>
+      <p className="muted small">What your assistants remember about your spending, in your words. They read every note before asking anything.</p>
       {notes.error && <p className="error">{notes.error}</p>}
       {adding && <NoteEditor onDone={(saved) => { setAdding(false); if (saved) notes.reload() }} />}
       {notes.data && notes.data.length === 0 && !adding && <p className="muted">No notes yet.</p>}
@@ -94,10 +93,10 @@ function NoteRow({ note, onChanged }: { note: Note; onChanged: () => void }) {
   const { busy, error, act } = useAction()
   if (mode === 'edit') return <li className="list-row"><NoteEditor note={note} onDone={(saved) => { setMode('view'); if (saved) onChanged() }} /></li>
   return (
-    <li className={`list-row${note.expired ? ' faded' : ''}`}>
+    <li className="list-row">
       <div className="grow">
         <div>{note.text}</div>
-        {note.expires_on && <div className="tags"><span className="tag">{note.expired ? 'Expired' : 'Until'} {formatDate(note.expires_on)}</span></div>}
+        <div className="muted small">Saved {new Date(note.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
         {error && <p className="error">{error}</p>}
       </div>
       {mode === 'delete' ? (
@@ -116,16 +115,15 @@ function NoteRow({ note, onChanged }: { note: Note; onChanged: () => void }) {
 }
 
 function NoteEditor({ note, onDone }: { note?: Note; onDone: (saved: boolean) => void }) {
-  const [form, setForm] = useState<NoteForm>(note ? formFromNote(note) : emptyNote)
+  const [text, setText] = useState(note?.text ?? '')
   const { busy, error, act } = useAction()
-  const body = noteBody(form)
+  const body = noteBody(text)
   const save = async () => {
     if (body && await act(() => (note ? api.updateNote(note.id, body) : api.addNote(body)))) onDone(true)
   }
   return (
     <form className="panel editor grow" onSubmit={(e) => { e.preventDefault(); void save() }}>
-      <label>Note<textarea rows={2} value={form.text} onChange={(e) => setForm({ ...form, text: e.target.value })} placeholder="Costco is always groceries" /></label>
-      <label>Until (optional)<input type="date" value={form.expires_on} onChange={(e) => setForm({ ...form, expires_on: e.target.value })} /></label>
+      <label>Note<textarea rows={2} value={text} onChange={(e) => setText(e.target.value)} placeholder="Costco is always groceries" /></label>
       {error && <p className="error">{error}</p>}
       <div className="row tight">
         <button type="submit" className="primary" disabled={busy || !body}>Save note</button>

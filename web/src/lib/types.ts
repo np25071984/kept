@@ -68,8 +68,6 @@ export interface Watch {
 export interface Note {
   id: string
   text: string
-  expires_on: string | null
-  expired: boolean
   created_at: string
 }
 

@@ -142,7 +142,6 @@ export interface Database {
     household_id: string
     text: string
     user_id: string
-    expires_on: string | null
     created_at: Generated<Date>
     updated_at: Generated<Date>
   }
