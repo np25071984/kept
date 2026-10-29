@@ -52,6 +52,22 @@ export interface Setup {
   you: { name: string; email: string; role: 'owner' | 'member' }
 }
 
+export interface Member {
+  id: string
+  name: string
+  email: string
+  role: 'owner' | 'member'
+  you: boolean
+  joined_at: string
+}
+
+export interface Invite {
+  id: string
+  email: string
+  sent_at: string
+  expires_at: string
+}
+
 export interface CostCenter {
   name: string
   kind: string

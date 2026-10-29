@@ -1,5 +1,5 @@
 import { accessToken } from './auth.js'
-import type { ApiKey, Connection, CostCenter, Note, Setup, Transaction, Update, Watch } from './lib/types.js'
+import type { ApiKey, Connection, CostCenter, Invite, Member, Note, Setup, Transaction, Update, Watch } from './lib/types.js'
 
 // The REST API (IMPLEMENTATION.md §3), with the signed-in member's token.
 
@@ -52,6 +52,11 @@ export const api = {
   setup: () => call<Setup>('GET', '/api/v1/setup'),
   updateSetup: (patch: { name?: string; currency?: string; timezone?: string }) => call<Setup>('PATCH', '/api/v1/setup', patch),
   updateMe: (patch: { name?: string }) => call<Setup>('PATCH', '/api/v1/me', patch),
+  members: () => call<{ members: Member[]; invites: Invite[] }>('GET', '/api/v1/members'),
+  setRole: (id: string, role: 'owner' | 'member') => call('PATCH', `/api/v1/members/${id}`, { role }),
+  removeMember: (id: string) => call<void>('DELETE', `/api/v1/members/${id}`),
+  invite: (email: string) => call('POST', '/api/v1/invites', { email }),
+  cancelInvite: (id: string) => call<void>('DELETE', `/api/v1/invites/${id}`),
   transactions: (filters: TransactionFilters) => call<{ transactions: Transaction[] }>('GET', `/api/v1/transactions${query({ ...filters, limit: '500' })}`).then((r) => r.transactions),
   transaction: (id: string) => call<Transaction>('GET', `/api/v1/transactions/${id}`),
   updateTransaction: (id: string, patch: unknown) => call<Transaction>('PATCH', `/api/v1/transactions/${id}`, patch),
