@@ -43,7 +43,7 @@ describe('renaming and deleting vocabulary', () => {
     expect(blocked.body.error.message).toContain('1 purchase, 1 rule')
 
     expect((await c.patch('/api/v1/cost-centers', { name: 'iva', new_name: 'Ivy' })).body).toEqual({ name: 'Ivy', kind: 'Child', categories: [] })
-    expect((await c.patch('/api/v1/cost-centers', { name: 'Ivy', kind: 'Kid', categories: ['clothing', 'Kids'] })).body).toEqual({ name: 'Ivy', kind: 'Kid', categories: ['Clothing', 'Kids'] })
+    expect((await c.patch('/api/v1/cost-centers', { name: 'Ivy', kind: 'Kid', categories: ['clothing', 'Health'] })).body).toEqual({ name: 'Ivy', kind: 'Kid', categories: ['Clothing', 'Health'] })
     expect((await c.get(`/api/v1/transactions/${shirt.body.transaction.id}`)).body.line_items[0].spent_for).toEqual([{ cost_center: 'Ivy', share: null }])
     expect((await c.get('/api/v1/rules')).body.rules[0].params).toEqual({ spent_for: [{ cost_center: 'Ivy' }] })
     expect((await c.patch('/api/v1/cost-centers', { name: 'Ivy', new_name: 'maya' })).status).toBe(409)
@@ -160,7 +160,7 @@ describe('setup and members', () => {
     const setup = await fresh.get('/api/v1/setup')
     expect(setup.body).toMatchObject({ household: { next_step: 'basics', currency: 'USD' }, you: { introduced: false, role: 'owner' } })
     const categories = (await fresh.get('/api/v1/categories')).body.categories.map((c: { path: string }) => c.path)
-    expect(categories).toEqual(['Car', 'Clothing', 'Eating out', 'Groceries', 'Health', 'Housing', 'Kids', 'Other', 'Travel'])
+    expect(categories).toEqual(['Car', 'Clothing', 'Eating out', 'Groceries', 'Health', 'Housing', 'Other', 'Travel'])
 
     const patched = await fresh.patch('/api/v1/setup', { currency: 'EUR', timezone: 'Europe/Berlin', steps: { basics: 'done', categories: 'later' }, introduced: true })
     expect(patched.body).toMatchObject({ household: { currency: 'EUR', next_step: 'cost_centers' }, you: { introduced: true, timezone: 'Europe/Berlin' } })

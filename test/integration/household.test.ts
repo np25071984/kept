@@ -21,7 +21,7 @@ describe('two members of one household', () => {
     await sam.post('/api/v1/categories', { path: 'Groceries/Alcohol' })
     await sam.post('/api/v1/cost-centers', { name: 'Hyundai', kind: 'Car', categories: ['Car'] })
     await sam.post('/api/v1/cost-centers', { name: 'Kia', kind: 'Car', categories: ['Car'] })
-    await sam.post('/api/v1/cost-centers', { name: 'Zoe', kind: 'Child', categories: ['Kids', 'Clothing'] })
+    await sam.post('/api/v1/cost-centers', { name: 'Zoe', kind: 'Child', categories: ['Health', 'Clothing'] })
 
     const invite = await sam.post('/api/v1/invites', { email: 'alex@example.com' })
     expect(invite.status).toBe(201)

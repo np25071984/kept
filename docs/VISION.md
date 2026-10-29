@@ -341,7 +341,7 @@ flowchart TD
 >
 > **User:** "Two cars, a Hyundai and a Kia. Two kids, Zoe and Maya."
 >
-> **AI:** "I've started you with Groceries, Eating out, Car, Housing, Kids, Health, Clothing, Travel and Other. Anything big that doesn't fit, like school or a vacation fund? Or decide later."
+> **AI:** "I've started you with Groceries, Eating out, Car, Housing, Health, Clothing, Travel and Other. Anything big that doesn't fit, like school or a vacation fund? Or decide later."
 >
 > **User:** "Later."
 >
@@ -354,7 +354,7 @@ flowchart TD
 - **Every step can be skipped or left for later.** "Later" keeps the starting categories, and new ones are added when a purchase first needs one, after asking. A skipped cost center is asked about when it first matters: "Is this fuel for a car you want to track separately?"
 - **One question at a time, and interruptible.** If the user stops, the next conversation picks up at the first unanswered step and doesn't repeat the introduction.
 - **Nothing is saved before the summary is confirmed,** as with every other write.
-- **The starting categories are the same for every household:** Groceries, Eating out, Car, Housing, Kids, Health, Clothing, Travel and Other. The interview adds to them and links them to cost centers (Car to both cars, Kids to Zoe and Maya).
+- **The starting categories are the same for every household:** Groceries, Eating out, Car, Housing, Health, Clothing, Travel and Other. There is no Kids category: a child is one of the people & things, and what a child costs is everything spent for them, across categories. The interview adds to them and links them to cost centers (Car to both cars, Kids to Zoe and Maya).
 - **Repeating bills aren't asked about.** They come up when one is logged ([Repeating Spending](#35-repeating-spending-phone-rent-subscriptions)).
 - **Invites come from Kept.** Only an owner can invite. Kept emails the invited person; they add Kept to their own assistant and sign in with that email, which joins them to the household, and their assistant runs the new-member path above.
 - **A new member doesn't set up the household again.** Their agent introduces Kept, names the shared cost centers and categories, and asks whether anything should be logged as private.
