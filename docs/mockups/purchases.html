@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My purchases · Kept mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html" style="text-decoration:none">Kept</a>
+  <nav><a href="purchases.html" class="active">My purchases</a><a href="updates.html">Updates <span class="badge">2</span></a><a href="repeats.html">Repeats</a><a href="my-spending.html">My spending</a><a href="household-spending.html">Household spending</a><a href="household.html">Household</a><a href="me.html">Me</a></nav>
+  <span class="me">Sam · <a href="sign-in.html" class="small">Sign out</a></span>
+</div></header>
+<main class="page"><div class="layout"><div><div class="page-head"><h1>My purchases</h1><p class="muted">48 purchases · $5,625.60</p></div>
+<form class="filters">
+  <label>From<input type="date" value="2026-09-01"></label>
+  <label>To<input type="date"></label>
+  <label>Search<input placeholder="Merchant or item"></label>
+  <label>Category<select><option>Any</option></select></label>
+  <label>For<select><option>Anyone or anything</option></select></label>
+  <label>Source<select><option>Any</option><option>Told in chat</option><option>Receipt</option><option>Email</option><option>Statement</option><option>Repeat</option></select></label>
+  <label>Privacy<select><option>All</option><option>Only private</option><option>Shared</option></select></label>
+</form>
+<ul class="list"><li class="group"><span>October 2026</span><span class="num">$2,645.20</span></li><li><a href="purchase.html" class="purchase-row" style="text-decoration:none;color:inherit"><span class="date">Wed, Oct 28</span><span><strong>Speedway</strong><span class="tags" style="margin-top:4px"><span class="tag">Car/Fuel</span><span class="tag for">Hyundai</span><span class="tag src">chat</span></span></span><span class="amount">$55.20</span></a></li><li><a href="purchase.html" class="purchase-row" style="text-decoration:none;color:inherit"><span class="date">Tue, Oct 27</span><span><strong>Verizon</strong><span class="tags" style="margin-top:4px"><span class="tag">Housing/Phone</span><span class="tag src">repeat</span><span class="tag src">email</span></span></span><span class="amount">$55.00</span></a></li><li><a href="purchase.html" class="purchase-row" style="text-decoration:none;color:inherit"><span class="date">Sun, Oct 25</span><span><strong>Target</strong><span class=muted> · shoes</span><span class="tags" style="margin-top:4px"><span class="tag">Groceries</span><span class="tag">Clothing</span><span class="tag for">Zoe</span><span class="tag src">chat</span><span class="tag src">statement</span></span></span><span class="amount">$41.12</span></a></li><li><a href="purchase.html" class="purchase-row" style="text-decoration:none;color:inherit"><span class="date">Sat, Oct 24</span><span><strong>Bloom &amp; Co</strong><span class=muted> · flowers</span><span class="tags" style="margin-top:4px"><span class="tag">Other</span><span class="tag private">Private</span><span class="tag src">chat</span></span></span><span class="amount">$64.00</span></a></li><li><a href="purchase.html" class="purchase-row" style="text-decoration:none;color:inherit"><span class="date">Fri, Oct 23</span><span><strong>Trader Joe's</strong><span class="tags" style="margin-top:4px"><span class="tag">Groceries</span><span class="tag src">receipt</span></span></span><span class="amount">$86.40</span></a></li><li><a href="purchase.html" class="purchase-row" style="text-decoration:none;color:inherit"><span class="date">Tue, Oct 20</span><span><strong>Geico</strong><span class="tags" style="margin-top:4px"><span class="tag">Car/Insurance</span><span class="tag for">Hyundai 58%</span><span class="tag for">Kia</span><span class="tag src">email</span></span></span><span class="amount">$148.00</span></a></li><li class="group"><span>September 2026</span><span class="num">$2,980.40</span></li><li><a href="purchase.html" class="purchase-row" style="text-decoration:none;color:inherit"><span class="date">Tue, Sep 29</span><span><strong>Chipotle</strong><span class="tags" style="margin-top:4px"><span class="tag">Eating out</span><span class="tag src">chat</span></span></span><span class="amount">$32.40</span></a></li><li><a href="purchase.html" class="purchase-row" style="text-decoration:none;color:inherit"><span class="date">Sat, Sep 26</span><span><strong>Petco</strong><span class=muted> · food</span><span class="tags" style="margin-top:4px"><span class="tag">Other</span><span class="tag for">Rex</span><span class="tag src">statement</span></span></span><span class="amount">$46.00</span></a></li></ul>
+<div class="row" style="justify-content:center"><button>Load older purchases</button></div></div><aside class="notes"><h2>Design notes</h2><ul><li>Grouped by month with the month's total; the count and total at the top cover every match, not just what's loaded.</li><li>Paging: 50 at a time, "Load older" fetches the next page by date cursor (new <code>before</code> parameter); filters live in the URL.</li><li>Dashed tags are sources; a purchase confirmed by a statement shows both <em>chat</em> and <em>statement</em>.</li><li>Search covers merchant and item names in one box.</li><li>New API filters: <code>source</code>, <code>private</code>, <code>q</code>, <code>before</code>.</li></ul></aside></div></main>
+</body>
+</html>

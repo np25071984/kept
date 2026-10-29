@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A purchase · Kept mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html" style="text-decoration:none">Kept</a>
+  <nav><a href="purchases.html" class="active">My purchases</a><a href="updates.html">Updates <span class="badge">2</span></a><a href="repeats.html">Repeats</a><a href="my-spending.html">My spending</a><a href="household-spending.html">Household spending</a><a href="household.html">Household</a><a href="me.html">Me</a></nav>
+  <span class="me">Sam · <a href="sign-in.html" class="small">Sign out</a></span>
+</div></header>
+<main class="page"><div class="layout"><div><p><a href="purchases.html">← My purchases</a></p>
+<div class="card">
+  <div class="row" style="justify-content:space-between;align-items:flex-start">
+    <div><h1>Target</h1><p class="muted">Sun, Oct 25, 2026 · logged by chat, confirmed by statement</p></div>
+    <div style="text-align:right"><div class="num" style="font-size:26px;font-weight:700">$41.12</div></div>
+  </div>
+  <table class="lines">
+    <tr><th>Category</th><th>Item</th><th>For</th><th class="num">Amount</th></tr>
+    <tr><td>Clothing</td><td>shoes</td><td>Zoe</td><td class="num">$22.00</td></tr>
+    <tr><td>Groceries <span class="muted small">(rest)</span></td><td></td><td></td><td class="num">$19.12</td></tr>
+  </table>
+  <p class="small muted" style="margin-top:8px">Checked for alcohol and nuts: none.</p>
+  <h2 style="margin-top:20px">Sources</h2>
+  <ul class="list">
+    <li><div class="grow"><strong>Told in chat</strong> <span class="muted small">· Oct 25, 6:12 PM</span><div class="small muted">"$40 at Target, shoes for Zoe were 22"</div></div></li>
+    <li><div class="grow"><strong>Card statement</strong> <span class="muted small">· Oct 28, 9:03 AM</span><div class="small">Amount $41.12 · descriptor TARGET #1234 BROOKLYN NY · Visa 4242</div><div class="small muted">Changed the amount from $40.00 to $41.12.</div></div></li>
+  </ul>
+</div>
+<div class="row" style="margin-top:16px"><a class="button primary" href="purchase-edit.html">Edit</a><button>Make private</button><button>Make it repeat…</button><button>Same as another purchase…</button><button class="danger">Delete</button></div>
+<div class="card" style="margin-top:16px">
+  <h2>Make it repeat</h2>
+  <p class="muted small">Kept logs the next one on its date and tells you; a real bill or charge later replaces the amount.</p>
+  <div class="grid"><label>Every<select><option>Month</option><option>Week</option><option>Year</option></select></label><label>Next on<input type="date" value="2026-11-25"></label><label>Until (optional)<input type="date"></label></div>
+  <div class="row" style="margin-top:12px"><button class="primary">Repeat monthly</button><button>Cancel</button></div>
+</div></div><aside class="notes"><h2>Design notes</h2><ul><li>Each source says what it read and what it changed, so a surprising amount is explained (<code>VISION.md</code> §3.4).</li><li>"Make it repeat" is the panel shown below the actions; it calls <code>POST /api/v1/repeats</code>.</li><li>Delete and merge ask in place; there are no browser dialogs.</li><li>A private purchase shows a Private tag by the amount and "Share with the household" instead of "Make private".</li></ul></aside></div></main>
+</body>
+</html>

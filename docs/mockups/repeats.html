@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Repeats · Kept mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html" style="text-decoration:none">Kept</a>
+  <nav><a href="purchases.html">My purchases</a><a href="updates.html">Updates <span class="badge">2</span></a><a href="repeats.html" class="active">Repeats</a><a href="my-spending.html">My spending</a><a href="household-spending.html">Household spending</a><a href="household.html">Household</a><a href="me.html">Me</a></nav>
+  <span class="me">Sam · <a href="sign-in.html" class="small">Sign out</a></span>
+</div></header>
+<main class="page"><div class="layout"><div><div class="page-head"><h1>Repeats</h1><p class="muted">Next 30 days: $1,295.00</p></div>
+<ul class="list"><li><div class="grow"><strong>Verizon</strong> <span class="muted small">· Monthly on the 27th</span><div class="tags" style="margin-top:4px"><span class="tag">Housing/Phone</span></div><div class="small muted">Last $55.00 on Oct 27</div></div><div style="text-align:right"><div class="amount">$55.00</div><div class="small muted">Next Nov 27</div></div><div class="row"><button class="link">Pause</button><button class="link">Edit</button><button class="link">Stop</button></div></li><li><div class="grow"><strong>Landlord</strong> <span class="muted small">· Monthly on the 1st</span><div class="tags" style="margin-top:4px"><span class="tag">Housing/Rent</span><span class="tag for">House</span></div><div class="small muted">Last $1,240.00 on Oct 1</div></div><div style="text-align:right"><div class="amount">$1,240.00</div><div class="small muted">Next Nov 1</div></div><div class="row"><button class="link">Pause</button><button class="link">Edit</button><button class="link">Stop</button></div></li><li><div class="grow"><strong>Geico</strong> <span class="muted small">· Every 6 months</span><div class="tags" style="margin-top:4px"><span class="tag">Car/Insurance</span><span class="tag for">Hyundai 58% · Kia</span></div><div class="small muted">Last $900.00 on Oct 20</div></div><div style="text-align:right"><div class="amount">$900.00</div><div class="small muted">Next Apr 20, 2027</div></div><div class="row"><button class="link">Pause</button><button class="link">Edit</button><button class="link">Stop</button></div></li><li><div class="grow"><strong>Netflix</strong> <span class="muted small">· Monthly on the 9th</span><div class="tags" style="margin-top:4px"><span class="tag">Other</span><span class="tag">Paused</span></div><div class="small muted">Last $15.49 on Sep 9</div></div><div style="text-align:right"><div class="amount">$15.49</div><div class="small muted">Paused</div></div><div class="row"><button class="link">Resume</button><button class="link">Edit</button><button class="link">Stop</button></div></li></ul>
+<div class="card" style="margin-top:16px"><h2>Edit Geico</h2>
+  <div class="grid" style="margin-top:8px"><label>Amount<input value="900.00"></label><label>Every<select><option>6 months</option></select></label><label>Next on<input type="date" value="2027-04-20"></label><label>Until (optional)<input type="date"></label></div>
+  <p class="small muted" style="margin-top:8px">Changes apply from the next one; purchases already logged stay as they are.</p>
+  <div class="row"><button class="primary">Save</button><button>Cancel</button></div></div></div><aside class="notes"><h2>Design notes</h2><ul><li>New page over the existing <code>/api/v1/repeats</code> endpoints; repeats are made from a purchase ("Make it repeat") or by telling the assistant.</li><li>Sorted by next date; paused ones last. "Next 30 days" sums the active ones due in that window.</li><li>Stop asks in place: "Stop repeating Verizon? Purchases already logged stay."</li><li>The amount follows the latest real bill, so "Last" shows where it came from.</li></ul></aside></div></main>
+</body>
+</html>

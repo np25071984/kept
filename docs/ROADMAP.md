@@ -27,9 +27,11 @@ Looking back, fixing and managing (`VISION.md` §4.C). Started before Phase 3's 
 - [x] Updates and My purchases pages, with editing, privacy and merging.
 - [ ] Household creation, and owners inviting and removing members.
 - [ ] Repeats page.
-- [ ] Paging for My purchases past the newest 500, and filters for source and private.
+- [ ] Paging for My purchases, and filters for source, privacy and a merchant-or-item search.
+- [ ] Profile on the Me page (name, time zone) and household settings (name, currency).
 - [x] Household and Me pages: shared vocabulary, rules and notes, connecting an assistant, API keys.
-- [ ] A design document for spending graphs, then the My spending and Household spending pages.
+- [x] Mockups of every page, the spending graphs included (`docs/mockups/`).
+- [ ] My spending and Household spending pages, as `docs/mockups/my-spending.html` and `household-spending.html` show.
 
 **Gate:** every correction an agent conversation can make can also be made in the web UI.
 

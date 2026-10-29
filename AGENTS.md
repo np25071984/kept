@@ -22,6 +22,7 @@ Kept teaches the user's own AI assistant to track a household's expenses: what t
 - `docs/IMPLEMENTATION.md`: how Kept is built: architecture, data model, REST API, security and the MCP server. Name a file or function only as a pointer.
 - `docs/ROADMAP.md`: remaining tasks and their order, without arguing scope.
 - `docs/DEVELOPMENT.md`: running Kept and its tests locally, deploying it, and the source layout.
+- `docs/mockups/`: static HTML of every web UI page, with design notes for what a picture can't show. The web UI is built to match them; a design change starts there.
 - `AGENTS.md`: orientation and conventions only.
 
 When `VISION.md` changes a position, scan the other documents for restatements of the old position and fix each one or replace it with a pointer.

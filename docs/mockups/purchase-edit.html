@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editing a purchase · Kept mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html" style="text-decoration:none">Kept</a>
+  <nav><a href="purchases.html" class="active">My purchases</a><a href="updates.html">Updates <span class="badge">2</span></a><a href="repeats.html">Repeats</a><a href="my-spending.html">My spending</a><a href="household-spending.html">Household spending</a><a href="household.html">Household</a><a href="me.html">Me</a></nav>
+  <span class="me">Sam · <a href="sign-in.html" class="small">Sign out</a></span>
+</div></header>
+<main class="page"><div class="layout"><div><p><a href="purchase.html">← Target</a></p>
+<form class="card" style="display:grid;gap:12px">
+  <div class="grid"><label>Merchant<input value="Target"></label><label>Date<input type="date" value="2026-10-25"></label><label>Amount (USD)<input value="41.12"></label></div>
+  <label>Notes<input placeholder="Optional"></label>
+  <h2 style="margin-top:8px">Line items</h2>
+  <p class="muted small">Price only the parts that matter; the rest of the amount goes to the main category.</p>
+  <fieldset style="border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:10px;margin:0">
+    <div class="grid"><label>Amount<input value="22.00"></label><label>Category<select><option>Clothing</option></select></label><label>Item<input value="shoes"></label></div>
+    <div class="row"><span class="small muted">For</span><span class="chip">Zoe <input placeholder="even">% <button type="button" class="link">×</button></span><select style="width:auto"><option>Add…</option></select></div>
+    <button type="button" class="link" style="justify-self:start">Remove line</button>
+  </fieldset>
+  <button type="button" style="justify-self:start">Add a line item</button>
+  <fieldset style="border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:10px;margin:0;background:var(--bg)">
+    <legend class="small muted">Main category · $19.12 left for it</legend>
+    <label>Category<select><option>Groceries</option></select></label>
+    <div class="row"><span class="small muted">For</span><select style="width:auto"><option>Nobody in particular</option></select></div>
+  </fieldset>
+  <label class="check"><input type="checkbox"> Private: leave it out of household totals</label>
+  <div class="row"><button class="primary">Save</button><button type="button">Cancel</button></div>
+</form></div><aside class="notes"><h2>Design notes</h2><ul><li>Built; kept as is. Validation runs before sending and lists every problem at once.</li><li>Shares are percentages; empty means "split the rest evenly".</li><li>Saving records each edited field as user-edited, so later receipts and statements don't overwrite it.</li></ul></aside></div></main>
+</body>
+</html>

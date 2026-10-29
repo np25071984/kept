@@ -508,4 +508,4 @@ Every member signs in with their own account and sees:
 | **Household**          | Shared cost centers and categories, household-wide rules and notes. Owners also invite and remove members. |
 | **Me**                 | Personal rules and notes, and connections: connect an assistant over MCP and manage API keys. |
 
-Spending graphs (what to show, how to compare periods, how to show watched-group [coverage](#coverage)) are a large feature and will get their own design document.
+Every page, the spending graphs included (what to show, how to compare periods, how to show watched-group [coverage](#coverage)), is drawn in `docs/mockups/`.
