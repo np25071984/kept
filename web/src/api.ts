@@ -1,5 +1,5 @@
 import { accessToken } from './auth.js'
-import type { CostCenter, Setup, Transaction, Update } from './lib/types.js'
+import type { ApiKey, Connection, CostCenter, Note, Rule, Setup, Transaction, Update } from './lib/types.js'
 
 // The REST API (IMPLEMENTATION.md §3), with the signed-in member's token.
 
@@ -59,4 +59,25 @@ export const api = {
   costCenters: () => call<{ cost_centers: CostCenter[] }>('GET', '/api/v1/cost-centers').then((r) => r.cost_centers),
   updates: (all = false) => call<{ updates: Update[] }>('GET', `/api/v1/updates${all ? '?all=true' : ''}`).then((r) => r.updates),
   markSeen: (ids: string[]) => call<{ marked: number }>('POST', '/api/v1/updates/seen', { ids }),
+
+  addCategory: (path: string) => call('POST', '/api/v1/categories', { path }),
+  renameCategory: (path: string, newPath: string) => call('PATCH', '/api/v1/categories', { path, new_path: newPath }),
+  deleteCategory: (path: string) => call<void>('DELETE', `/api/v1/categories${query({ path })}`),
+  addCostCenter: (body: { name: string; kind: string; categories: string[] }) => call<CostCenter>('POST', '/api/v1/cost-centers', body),
+  updateCostCenter: (name: string, patch: { new_name?: string; kind?: string; categories?: string[] }) => call<CostCenter>('PATCH', '/api/v1/cost-centers', { name, ...patch }),
+  deleteCostCenter: (name: string) => call<void>('DELETE', `/api/v1/cost-centers${query({ name })}`),
+
+  rules: () => call<{ rules: Rule[] }>('GET', '/api/v1/rules').then((r) => r.rules),
+  deleteRule: (id: string) => call<void>('DELETE', `/api/v1/rules/${id}`),
+  notes: () => call<{ notes: Note[] }>('GET', '/api/v1/notes?include_expired=true').then((r) => r.notes),
+  addNote: (body: unknown) => call<Note>('POST', '/api/v1/notes', body),
+  updateNote: (id: string, body: unknown) => call<Note>('PATCH', `/api/v1/notes/${id}`, body),
+  deleteNote: (id: string) => call<void>('DELETE', `/api/v1/notes/${id}`),
+
+  apiKeys: () => call<{ api_keys: ApiKey[] }>('GET', '/api/v1/api-keys').then((r) => r.api_keys),
+  createApiKey: (name: string) => call<{ id: string; key: string }>('POST', '/api/v1/api-keys', { name }),
+  revokeApiKey: (id: string) => call<void>('DELETE', `/api/v1/api-keys/${id}`),
+  connections: () => call<{ connections: Connection[] }>('GET', '/api/v1/connections').then((r) => r.connections),
+  disconnect: (clientId: string) => call<void>('DELETE', `/api/v1/connections/${encodeURIComponent(clientId)}`),
+  createClient: (name: string, redirectUri: string) => call<{ client_id: string; client_secret: string }>('POST', '/api/v1/connections/clients', { name, redirect_uri: redirectUri }),
 }

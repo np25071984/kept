@@ -3,10 +3,10 @@ import { createRepeat, listRepeats, stopRepeat, updateRepeat } from '../../ledge
 import { deleteRule, getRules, saveRule } from '../../ledger/rules.js'
 import { getSummary } from '../../ledger/summary.js'
 import { getUpdates, markSeen } from '../../ledger/updates.js'
-import { addCategory, addCostCenter, deleteCategory, deleteCostCenter, listCategories, listCostCenters, renameCategory, renameCostCenter } from '../../ledger/vocabulary.js'
+import { addCategory, addCostCenter, deleteCategory, deleteCostCenter, listCategories, listCostCenters, renameCategory, updateCostCenter } from '../../ledger/vocabulary.js'
 import type { App, RouteDeps } from '../app.js'
 import {
-  CategoryBody, CategoryQuery, CategoryRename, CostCenterBody, CostCenterName, CostCenterQuery, CostCenterRename, IdParams, NoteBody, NotePatch, NoteQuery, RepeatBody, RepeatPatch, RuleBody, RuleQuery,
+  CategoryBody, CategoryQuery, CategoryRename, CostCenterBody, CostCenterName, CostCenterQuery, CostCenterPatch, IdParams, NoteBody, NotePatch, NoteQuery, RepeatBody, RepeatPatch, RuleBody, RuleQuery,
   SeenBody, SummaryQuery, UpdatesQuery,
 } from '../schemas.js'
 
@@ -45,8 +45,11 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.patch('/api/v1/cost-centers', {
-    schema: { tags: ['vocabulary'], summary: 'Rename a cost center. Purchases, rules, notes and repeats keep pointing at it.', body: CostCenterRename },
-  }, async (request) => run(request, (tx) => renameCostCenter(tx, request.body.name, request.body.new_name)))
+    schema: { tags: ['vocabulary'], summary: 'Rename a cost center, change its kind or the categories it is linked to. Purchases, rules, notes and repeats keep pointing at it.', body: CostCenterPatch },
+  }, async (request) => {
+    const { name, ...patch } = request.body
+    return run(request, (tx, caller) => updateCostCenter(tx, caller, name, patch))
+  })
 
   app.delete('/api/v1/cost-centers', {
     schema: { tags: ['vocabulary'], summary: 'Delete a cost center nothing uses: no purchases, rules, notes or repeats.', querystring: CostCenterName },

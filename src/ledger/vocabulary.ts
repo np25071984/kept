@@ -171,16 +171,38 @@ export async function deleteCategory(tx: Tx, path: string): Promise<void> {
   await tx.deleteFrom('categories').where('id', '=', category.id).execute()
 }
 
-export async function renameCostCenter(tx: Tx, name: string, newName: string): Promise<{ name: string }> {
+export interface CostCenterPatch {
+  new_name?: string
+  kind?: string
+  categories?: string[]
+}
+
+// Renames a cost center, changes its kind, or replaces the categories it is linked to.
+export async function updateCostCenter(tx: Tx, caller: Caller, name: string, patch: CostCenterPatch): Promise<CostCenterView> {
   const from = name.trim()
-  const to = newName.trim()
   const centers = await tx.selectFrom('cost_centers').select(['id', 'name']).execute()
-  const problem = checkCostCenterRename(from, to, centers.map((c) => c.name))
-  if (problem) fail(problem)
-  const center = centers.find((c) => c.name.toLowerCase() === from.toLowerCase())!
-  await tx.updateTable('cost_centers').set({ name: to }).where('id', '=', center.id).execute()
-  await rewriteText(tx, costCenterRenamer(center.name, to), false)
-  return { name: to }
+  const center = centers.find((c) => c.name.toLowerCase() === from.toLowerCase())
+  if (!center) throw invalid('unknown_cost_center', `There is no cost center "${from}".`)
+  let current = center.name
+  if (patch.new_name !== undefined) {
+    const to = patch.new_name.trim()
+    const problem = checkCostCenterRename(from, to, centers.map((c) => c.name))
+    if (problem) fail(problem)
+    await tx.updateTable('cost_centers').set({ name: to }).where('id', '=', center.id).execute()
+    await rewriteText(tx, costCenterRenamer(center.name, to), false)
+    current = to
+  }
+  if (patch.kind !== undefined) {
+    if (!patch.kind.trim()) throw invalid('invalid_cost_center', 'A cost center needs a kind, such as Car or Child.')
+    await tx.updateTable('cost_centers').set({ kind: patch.kind.trim() }).where('id', '=', center.id).execute()
+  }
+  if (patch.categories !== undefined) {
+    const vocabulary = await loadVocabulary(tx)
+    const ids = [...new Set(patch.categories.map((path) => vocabulary.categoryId(path)))]
+    await tx.deleteFrom('cost_center_categories').where('cost_center_id', '=', center.id).execute()
+    if (ids.length) await tx.insertInto('cost_center_categories').values(ids.map((category_id) => ({ household_id: caller.household_id, cost_center_id: center.id, category_id }))).execute()
+  }
+  return (await listCostCenters(tx)).find((c) => c.name === current)!
 }
 
 export async function deleteCostCenter(tx: Tx, name: string): Promise<void> {

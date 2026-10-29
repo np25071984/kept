@@ -51,7 +51,7 @@ docker compose up -d --build
 docker compose exec kept node dist/cli/create-household.js --name "The Smiths" --owner Sam --email sam@example.com --timezone America/New_York
 ```
 
-The server applies migrations each time it starts. Gemini needs a client created for it, with the redirect URI its "Connect to an MCP server" dialog shows; it takes the printed ID and secret:
+The server applies migrations each time it starts. Gemini needs a client created for it, with the redirect URI its "Connect to an MCP server" dialog shows. Each member does this on the web UI's Me page, or an administrator runs:
 
 ```sh
 docker compose exec kept node dist/cli/create-client.js --id gemini --name Gemini --redirect-uri https://oauth-redirect.googleusercontent.com/r/…

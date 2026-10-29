@@ -10,6 +10,7 @@ export interface Session {
   costCenters: CostCenter[]
   unseen: number
   refreshUnseen: () => void
+  refreshVocabulary: () => void
 }
 
 export const SessionContext = createContext<Session | null>(null)

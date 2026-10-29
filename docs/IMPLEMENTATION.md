@@ -239,12 +239,15 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `DELETE` | `/api/v1/transactions/{id}` | Delete one of the caller's transactions.                                                          |
 | `GET`  | `/api/v1/cost-centers`        | List the household's cost centers (cars, homes, kids, pets), optionally filtered by category.     |
 | `POST`   | `/api/v1/cost-centers`      | Add a cost center for the household.                                                              |
-| `PATCH`  | `/api/v1/cost-centers`      | Rename a cost center: `{"name", "new_name"}`.                                                     |
+| `PATCH`  | `/api/v1/cost-centers`      | Rename a cost center, change its kind or replace its linked categories: `{"name", "new_name"?, "kind"?, "categories"?}`. |
 | `DELETE` | `/api/v1/cost-centers?name=` | Delete a cost center nothing uses.                                                               |
 | `GET`    | `/api/v1/categories`        | List the household's categories and subcategories.                                                |
 | `POST`   | `/api/v1/categories`        | Add a category or subcategory for the household.                                                  |
 | `PATCH`  | `/api/v1/categories`        | Rename or move a category with its subcategories: `{"path", "new_path"}`.                         |
 | `DELETE` | `/api/v1/categories?path=`  | Delete a category nothing uses.                                                                   |
+| `GET`    | `/api/v1/connections`       | The caller's connected assistants and web sign-ins, one per client, with when each was last used. |
+| `DELETE` | `/api/v1/connections/{client_id}` | Disconnect one: its grants and tokens are deleted, so it has to sign in again.              |
+| `POST`   | `/api/v1/connections/clients` | Create a client ID and secret for an assistant that asks for them, with its redirect URI. The secret is shown once. |
 | `GET`    | `/api/v1/rules`             | List household rules, optionally filtered to those matching a merchant, category and the current user. |
 | `POST`   | `/api/v1/rules`             | Save a rule (track an item, set a default category or split, mark a store as mixed).              |
 | `DELETE` | `/api/v1/rules/{id}`        | Remove a rule, e.g. "stop tracking nuts".                                                         |
@@ -456,7 +459,8 @@ sequenceDiagram
 - **Tokens:** PKCE with S256 is required. Access tokens are opaque, bound to `<PUBLIC_URL>/mcp` and scope `kept`; a request with no scope gets `kept`. Refresh tokens rotate and don't end with the browser session, so the assistant stays connected.
 - **Metadata:** `/.well-known/oauth-authorization-server` serves the OAuth part of the OpenID document at `/.well-known/openid-configuration`: the `code` flow only, scope `kept`, and `protected_resources` pointing back to `/mcp`.
 - **The web UI** signs in as the built-in public client `kept-web` with PKCE, redirecting to `<PUBLIC_URL>/app/callback`. It skips the consent page, and asks with `prompt=login`, so every sign-in takes an emailed code and signing out on a shared computer holds. The refresh token stays in `localStorage` and the access token in memory; refreshes run under a Web Lock, because two tabs rotating one refresh token would revoke it.
-- **Clients created ahead of time:** Gemini asks for a client ID and secret instead of registering. `create-client` stores one with Gemini's redirect URI, which its dialog shows under "Copy redirect URI" and which contains the host name.
+- **Clients created ahead of time:** Gemini asks for a client ID and secret instead of registering. Its redirect URI, shown under "Copy redirect URI" in its dialog, contains the member's Google account and Kept's host name, so each member creates their own client on the web UI's Me page (`POST /api/v1/connections/clients`); `create-client` does the same from the command line.
+- **Connections** are a member's grants grouped by client. Disconnecting deletes the grants and their tokens.
 - **State** (clients, grants, sessions, codes, tokens) lives in `oauth_models`, and sign-in codes in `sign_in_codes`, hashed. Neither belongs to a household, so neither has row-level security. `SECURITY DEFINER` functions find a user or an open invite by email and a user's household before the household is known.
 
 ## 6. Stack and Deployment

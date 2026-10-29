@@ -42,7 +42,8 @@ describe('renaming and deleting vocabulary', () => {
     expect(blocked.status).toBe(409)
     expect(blocked.body.error.message).toContain('1 purchase, 1 rule')
 
-    expect((await c.patch('/api/v1/cost-centers', { name: 'iva', new_name: 'Ivy' })).body).toEqual({ name: 'Ivy' })
+    expect((await c.patch('/api/v1/cost-centers', { name: 'iva', new_name: 'Ivy' })).body).toEqual({ name: 'Ivy', kind: 'Child', categories: [] })
+    expect((await c.patch('/api/v1/cost-centers', { name: 'Ivy', kind: 'Kid', categories: ['clothing', 'Kids'] })).body).toEqual({ name: 'Ivy', kind: 'Kid', categories: ['Clothing', 'Kids'] })
     expect((await c.get(`/api/v1/transactions/${shirt.body.transaction.id}`)).body.line_items[0].spent_for).toEqual([{ cost_center: 'Ivy', share: null }])
     expect((await c.get('/api/v1/rules')).body.rules[0].params).toEqual({ spent_for: [{ cost_center: 'Ivy' }] })
     expect((await c.patch('/api/v1/cost-centers', { name: 'Ivy', new_name: 'maya' })).status).toBe(409)

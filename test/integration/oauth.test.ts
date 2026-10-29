@@ -193,6 +193,32 @@ describe('OAuth2 for MCP clients', () => {
     expect(setup).toMatchObject({ household: { name: 'The Smiths' }, you: { role: 'member', timezone: 'Europe/London', introduced: false } })
   })
 
+  it('lists the member\'s connected assistants and disconnects one', async () => {
+    const tokens = await authorize(ownerEmail)
+    const auth = { authorization: `Bearer ${ownerKey}` }
+    const listed = await (await fetch(`${base}/api/v1/connections`, { headers: auth })).json()
+    expect(listed.connections).toContainEqual(expect.objectContaining({ client_id: tokens.clientId, name: 'Test Assistant', web: false }))
+
+    expect((await fetch(`${base}/api/v1/connections/${tokens.clientId}`, { method: 'DELETE', headers: auth })).status).toBe(204)
+    expect((await fetch(`${base}/api/v1/setup`, { headers: { authorization: `Bearer ${tokens.access_token}` } })).status).toBe(401)
+    const refresh = await fetch(tokens.tokenEndpoint, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: tokens.refresh_token, client_id: tokens.clientId }) })
+    expect(refresh.status).toBe(400)
+    expect((await fetch(`${base}/api/v1/connections/${tokens.clientId}`, { method: 'DELETE', headers: auth })).status).toBe(404)
+  })
+
+  it('creates a client ID and secret for an assistant that asks for them', async () => {
+    const auth = { authorization: `Bearer ${ownerKey}`, 'content-type': 'application/json' }
+    const redirect = 'https://oauth-redirect.googleusercontent.com/r/user_bound_custom-mcp-1-example'
+    expect((await fetch(`${base}/api/v1/connections/clients`, { method: 'POST', headers: auth, body: JSON.stringify({ name: 'Gemini', redirect_uri: 'http://x' }) })).status).toBe(422)
+    const created = await (await fetch(`${base}/api/v1/connections/clients`, { method: 'POST', headers: auth, body: JSON.stringify({ name: 'Gemini', redirect_uri: redirect }) })).json()
+    expect(created).toMatchObject({ client_id: expect.stringMatching(/^gemini-[0-9a-f]{12}$/), client_secret: expect.any(String) })
+
+    const authorizeWith = (redirectUri: string) =>
+      fetch(`${base}/oauth/authorize?${new URLSearchParams({ client_id: created.client_id, response_type: 'code', redirect_uri: redirectUri, scope: 'kept', code_challenge: 'a'.repeat(43), code_challenge_method: 'S256' })}`, { redirect: 'manual' })
+    expect((await authorizeWith(redirect)).headers.get('location')).toContain('/oauth/interaction/')
+    expect((await authorizeWith('https://elsewhere.example/cb')).status).toBe(400)
+  })
+
   it('signs a member in to the web UI without a consent page, and serves the app', async () => {
     const callbackUrl = `${base}/app/callback`
     const verifier = randomBytes(32).toString('base64url')

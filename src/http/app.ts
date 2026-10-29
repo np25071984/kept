@@ -11,6 +11,7 @@ import { oauthRoutes, protectedResourceMetadataUrl } from '../oauth/routes.js'
 import { householdRoutes } from './routes/household.js'
 import { ledgerRoutes } from './routes/ledger.js'
 import { transactionRoutes } from './routes/transactions.js'
+import { connectionRoutes } from './routes/connections.js'
 import { webRoutes } from './web.js'
 import { mcpRoutes } from '../mcp/server.js'
 
@@ -99,6 +100,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   transactionRoutes(app, routeDeps)
   ledgerRoutes(app, routeDeps)
   householdRoutes(app, routeDeps)
+  connectionRoutes(app, { db: deps.db, oauth })
   mcpRoutes(app)
   oauthRoutes(app, { db: deps.db, mailer: deps.mailer, oauth })
   await webRoutes(app, deps.webRoot)

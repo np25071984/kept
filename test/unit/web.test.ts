@@ -58,3 +58,28 @@ describe('PKCE', () => {
     expect(await challengeFor(verifier)).toBe(createHash('sha256').update(verifier).digest('base64url'))
   })
 })
+
+describe('household vocabulary', () => {
+  it('lists categories under their parents', async () => {
+    const { categoryTree } = await import('../../web/src/lib/vocabulary.js')
+    expect(categoryTree(['Groceries', 'Car/Fuel', 'Car', 'Car/Fuel/Diesel', 'car wash']).map((row) => `${'-'.repeat(row.depth)}${row.name}`)).toEqual([
+      'Car', '-Fuel', '--Diesel', 'car wash', 'Groceries',
+    ])
+  })
+
+  it('says where a rule applies', async () => {
+    const { ruleScope, ruleKindLabel } = await import('../../web/src/lib/vocabulary.js')
+    const rule = { id: 'r', kind: 'set_spent_for' as const, personal: false, merchant: 'Costco', category: 'Groceries', account_ref: null, params: {}, text: '' }
+    expect(ruleScope(rule)).toBe('Costco · Groceries')
+    expect(ruleScope({ ...rule, merchant: null, category: null })).toBe('Everywhere')
+    expect(ruleKindLabel(rule)).toBe('Who or what for')
+  })
+
+  it('needs a note to say when it matters', async () => {
+    const { emptyNote, noteBody, noteProblem } = await import('../../web/src/lib/vocabulary.js')
+    expect(noteProblem({ ...emptyNote, text: 'Oil change every 5,000 miles' })).toContain('Link the note')
+    const form = { ...emptyNote, text: ' Oil change every 5,000 miles ', cost_centers: ['Kia'], merchants: 'Jiffy Lube, , Valvoline' }
+    expect(noteProblem(form)).toBeNull()
+    expect(noteBody(form, false)).toEqual({ text: 'Oil change every 5,000 miles', personal: false, cost_centers: ['Kia'], categories: [], merchants: ['Jiffy Lube', 'Valvoline'], expires_on: null })
+  })
+})

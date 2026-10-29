@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, NavLink, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { api } from './api.js'
 import { completeSignIn, hasSession, signIn, signOut } from './auth.js'
+import { HouseholdPage } from './pages/Household.js'
+import { MePage } from './pages/Me.js'
 import { PurchasePage } from './pages/Purchase.js'
 import { PurchasesPage } from './pages/Purchases.js'
 import { UpdatesPage } from './pages/Updates.js'
@@ -17,6 +19,8 @@ export function App() {
           <Route path="purchases" element={<PurchasesPage />} />
           <Route path="purchases/:id" element={<PurchasePage />} />
           <Route path="updates" element={<UpdatesPage />} />
+          <Route path="household" element={<HouseholdPage />} />
+          <Route path="me" element={<MePage />} />
           <Route path="*" element={<p className="empty">There's nothing here.</p>} />
         </Route>
       </Routes>
@@ -80,9 +84,10 @@ function SignedIn({ onSignOut }: { onSignOut: () => void }) {
   const refreshUnseen = useCallback(() => setUnseenVersion((v) => v + 1), [])
 
   if (base.error) return <Centered><p className="error">{base.error}</p><button onClick={base.reload}>Try again</button></Centered>
+  // A reload keeps the last data on screen, so editing the vocabulary doesn't flash the whole app.
   if (!base.data) return <Centered><p className="muted">Loading…</p></Centered>
   const [setup, categories, costCenters] = base.data
-  const session: Session = { setup, categories, costCenters, unseen: updates.data?.length ?? 0, refreshUnseen }
+  const session: Session = { setup, categories, costCenters, unseen: updates.data?.length ?? 0, refreshUnseen, refreshVocabulary: base.reload }
   return (
     <SessionContext.Provider value={session}>
       <header className="topbar">
@@ -93,6 +98,8 @@ function SignedIn({ onSignOut }: { onSignOut: () => void }) {
             <NavLink to="/updates">
               Updates{session.unseen > 0 && <span className="badge" aria-label={`${session.unseen} new`}>{session.unseen}</span>}
             </NavLink>
+            <NavLink to="/household">Household</NavLink>
+            <NavLink to="/me">Me</NavLink>
           </nav>
           <div className="me">
             <span title={setup.you.email}>{setup.you.name}</span>
