@@ -6,22 +6,6 @@ Last updated: 2026-10-28.
 
 The remaining work toward the product `VISION.md` describes, in order. Each task points at the section holding its design: `VISION.md` for what it does, `IMPLEMENTATION.md` for how it is built. Each phase ends with a gate that must pass before the next phase starts. A phase whose every box is checked is deleted.
 
-## Phase 2 — MCP Server
-
-The playbook, delivered to any assistant.
-
-- [x] Kept's own OAuth2 authorization server on `oidc-provider`, mounted in Fastify: authorization code with PKCE, dynamic client registration, refresh tokens, discovery metadata; one login per household member (`IMPLEMENTATION.md` §4, §6).
-- [x] Every tool in `IMPLEMENTATION.md` §5.1 as a thin call to the REST API, including `get_playbook`.
-- [x] Write the playbook: the question rules from `VISION.md` §3 as server instructions, and the same text returned by `get_playbook`, including the first conversation for a new household and a new member (`VISION.md` §3.6). Review the wording once real assistants run it (Phase 3).
-- [x] Tool descriptions that work without server instructions: when to call `get_playbook`, and that `log_transaction` comes only after confirmation (`IMPLEMENTATION.md` §5.3).
-- [x] Resources for the household's vocabulary and the prompts `setup_household`, `log_expense` and `catch_up` (`IMPLEMENTATION.md` §5.2).
-- [x] Send email through Resend for sign-in codes and invites (`IMPLEMENTATION.md` §6).
-- [x] Docker Compose deployment with Caddy: `Dockerfile` and `deploy/` (`IMPLEMENTATION.md` §6).
-- [x] Deploy on the VPS and create the first household (`DEVELOPMENT.md`).
-- [x] Give the server a domain and set `KEPT_HOST` (`IMPLEMENTATION.md` §6).
-
-**Gate:** Kept connects as a custom app in Gemini on the web, and the conversation in `VISION.md` §3.1 runs end to end from the Gemini phone app.
-
 ## Phase 3 — Integration & Testing
 
 Real use, across assistants.
