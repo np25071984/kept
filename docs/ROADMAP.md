@@ -27,7 +27,7 @@ Looking back, fixing and managing (`VISION.md` §4.C). Started before Phase 3's 
 - [x] Updates and My purchases pages, with editing, privacy and merging.
 - [ ] One sign-in for everyone: a verified email with no account and no invite is offered to create a household, on the web and in assistants (`VISION.md` §3.6). Owners invite and remove members.
 - [ ] Recurring page (repeats), with "Make it recurring" on a purchase.
-- [ ] My purchases as `docs/mockups/purchases.html` shows: paging, a merchant-or-item search, and a Filters panel (period, source, several categories with three-state subcategories, several people & things, privacy) with chips for what's on.
+- [ ] My purchases as `docs/mockups/purchases.html` shows: paging, a merchant-or-item search, and a Filters panel (period, privacy, several categories with three-state subcategories, several people & things) with chips for what's on.
 - [ ] Navigation as the mockups show: My purchases, Recurring and a Reports menu (Mine, Household) in the header, the bell, and a user menu with Preferences, Settings and Sign out (`VISION.md` §4.C).
 - [ ] Profile in Settings (name, time zone) and the household's name and currency.
 - [x] Notes replace rules: personal notes loaded in full at the start, watched groups on their own, a new member asked what to watch (`VISION.md` §4.A, "Notes").
