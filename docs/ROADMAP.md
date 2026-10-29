@@ -28,14 +28,14 @@ Looking back, fixing and managing (`VISION.md` §4.C). Started before Phase 3's 
 - [ ] One sign-in for everyone: a verified email with no account and no invite is offered to create a household, on the web and in assistants (`VISION.md` §3.6). Owners invite and remove members.
 - [ ] Recurring page (repeats), with "Make it recurring" on a purchase.
 - [ ] Paging for My purchases, and filters for source, privacy and a merchant-or-item search.
-- [ ] Navigation as the mockups show: My purchases, Recurring and Spending in the header, the bell, and a user menu with Preferences, Settings and Sign out (`VISION.md` §4.C).
+- [ ] Navigation as the mockups show: My purchases, Recurring and a Reports menu (Mine, Household) in the header, the bell, and a user menu with Preferences, Settings and Sign out (`VISION.md` §4.C).
 - [ ] Profile in Settings (name, time zone) and the household's name and currency.
 - [x] Notes replace rules: personal notes loaded in full at the start, watched groups on their own, a new member asked what to watch (`VISION.md` §4.A, "Notes").
 - [ ] Notifications: Kept's open questions (possible duplicates, a cap passed, a recurring charge missing from a statement, an API key unused for a year) behind the bell and asked in chat one per conversation; recurring purchases logged on their date are announced in chat only (`VISION.md` §4.B, §4.C).
-- [ ] Caps: storage, API, tools, the playbook's reminders, the Preferences section and the Spending line (`VISION.md` §4.A, "Caps").
+- [ ] Caps: storage, API, tools, the playbook's reminders, the Preferences section and the line in Reports · Mine (`VISION.md` §4.A, "Caps").
 - [x] Household and Me pages: shared vocabulary, watched groups and notes, connecting an assistant, API keys.
 - [x] Mockups of every page, the spending graphs included (`docs/mockups/`).
-- [ ] Spending page with its Mine and Household tabs, as `docs/mockups/spending.html` and `spending-household.html` show.
+- [ ] Reports, Mine and Household, as `docs/mockups/reports.html` and `reports-household.html` show, and the per-month chart on My purchases.
 
 **Gate:** every correction an agent conversation can make can also be made in the web UI.
 
@@ -43,5 +43,5 @@ Looking back, fixing and managing (`VISION.md` §4.C). Started before Phase 3's 
 
 - [ ] Landing page at `/`, as `docs/mockups/landing.html` shows, and a privacy policy linked from it and the sign-in pages. Before sign-up opens to other households.
 - [ ] Animated chat on the landing page, showing how Kept works: conversations take turns (a typed purchase, a spoken one, a receipt photo), each message appearing in order with a typing indicator before the assistant's replies. With reduced motion, the finished conversations show without animation.
-- [ ] Screenshots of the spending graphs on the landing page, from both Spending tabs with sample data. After those pages are built.
+- [ ] Screenshots of the spending graphs on the landing page, from both reports with sample data. After those pages are built.
 - [ ] Siri through App Intents in a native iOS app (`VISION.md` §4.B, "Other clients"). Not before Phase 3's gate.

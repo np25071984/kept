@@ -52,7 +52,7 @@ label.check input { width: auto; }
 .topbar nav a.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .badge { background: var(--accent); color: var(--accent-fg); border-radius: 999px; font-size: 12px; padding: 0 7px; font-weight: 600; }
 .me { color: var(--muted); font-size: 14px; }
-@media (max-width: 720px) { .topbar nav { order: 3; flex-basis: 100%; overflow-x: auto; flex-wrap: nowrap; } }
+@media (max-width: 720px) { .topbar nav { order: 3; flex-basis: 100%; flex-wrap: nowrap; } }
 
 .page { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
 .page-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
@@ -188,3 +188,11 @@ details.table-view summary { cursor: pointer; color: var(--accent); }
 .row-link:hover { background: var(--bg); }
 a.tag { position: relative; z-index: 1; text-decoration: none; }
 a.tag:hover { border-color: var(--accent); color: var(--accent); }
+.navmenu { position: relative; }
+.navmenu summary { list-style: none; cursor: pointer; white-space: nowrap; padding: 6px 10px; border-radius: 8px; font-size: 14px; }
+.navmenu summary::-webkit-details-marker { display: none; }
+.navmenu.active summary { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.navmenu .menu { position: absolute; left: 0; top: calc(100% + 4px); z-index: 10; min-width: 160px; display: grid; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.12); }
+.navmenu .menu a { padding: 7px 10px; border-radius: 6px; }
+.navmenu .menu a.on { color: var(--accent); font-weight: 600; }
+.chart .bar.on { fill: var(--accent); }

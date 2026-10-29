@@ -412,7 +412,7 @@ A cap is a personal soft reminder: "I don't want to spend more than $1,000 on gr
 
 - **It reminds, it never blocks.** Purchases over a cap are logged like any other.
 - **The agent mentions it when it matters.** Once a purchase that counts toward a cap takes it past 80%, the confirmation says so: "Log $64 at Trader Joe's? That's $860 of your $1,000 groceries cap this month." Crossing it gets one line: "That puts groceries $40 over your cap for October." Below 80% it says nothing.
-- **Set in conversation or on the web.** "Cap eating out at $250 a month" is saved after the user confirms, like a note. "Drop my groceries cap" removes one, and the web lists every cap with Edit and Remove. Preferences lists each cap's progress, and Spending shows the ones past 80%.
+- **Set in conversation or on the web.** "Cap eating out at $250 a month" is saved after the user confirms, like a note. "Drop my groceries cap" removes one, and the web lists every cap with Edit and Remove. Preferences lists each cap's progress, and Reports · Mine shows the ones past 80%.
 
 #### Households, Accounts and Privacy
 
@@ -484,13 +484,13 @@ Any client needs a model that can read images, so the user can send a receipt ph
 
 The web UI is where each member reviews and fixes what the agent logged, and sees where the money goes. Logging itself stays in the chat; the UI is for looking back, correcting and managing the household.
 
-Every member signs in with their own account. The header holds the pages for looking back (My purchases, Recurring, Spending); a bell opens the open questions; the user menu holds what is set up once:
+Every member signs in with their own account. The header holds the pages for looking back: My purchases, Recurring, and Reports, a menu with Mine and Household; a bell opens the open questions; the user menu holds what is set up once:
 
 | Page                   | What it shows                                                                                       |
 | ---------------------- | --------------------------------------------------------------------------------------------------- |
-| **My purchases**       | The member's own purchase history, private ones included and marked. Search and filter by date, merchant, category, cost center, item and source. Open a purchase to see its line items, shares and sources (what was read from a receipt, email or bank charge), edit it, mark it private or delete it. |
+| **My purchases**       | The member's own purchase history, private ones included and marked. Search and filter by date, merchant, category, cost center, item and source. Open a purchase to see its line items, shares and sources (what was read from a receipt, email or bank charge), edit it, mark it private or delete it. Above the list, the member's spending per month for the last 12 months; clicking a month filters the list. |
 | **Recurring**          | The member's recurring bills and subscriptions (repeats) with next date and amount. Pause, edit or stop them. Any purchase can be made recurring from its detail view. |
-| **Spending**           | Graphs in two tabs. Mine: the member's own spending, private purchases included, with their watched groups and the caps past 80%. Household: every member's non-private purchases, by category, cost center and item, never by member. |
+| **Reports**            | Two reports, picked from the header. Mine: the member's own spending, private purchases included, with their watched groups and the caps past 80%. Household: every member's non-private purchases, by category, cost center and item, never by member, with the household's per-month trend. |
 | **Notifications**      | Behind the bell: Kept's open questions, with their answers as buttons (see [The AI Integration Layer](#b-the-ai-integration-layer)). The bell's count is the number unanswered. |
 | **Preferences**        | In the user menu: the member's watched groups and caps. |
 | **Settings**           | In the user menu, in tabs. Profile. Household: members (owners invite and remove them), categories, people & things, and the household's name and currency. Assistants & keys: connect an assistant over MCP and manage API keys. Assistant notes: the member's notes. |
