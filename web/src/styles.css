@@ -57,7 +57,7 @@ label.check input { width: auto; }
 .purchases.stale { opacity: 0.6; }
 .purchases li + li { border-top: 1px solid var(--line); }
 .purchase-row { display: grid; grid-template-columns: 130px 1fr auto; gap: 12px; padding: 12px 16px; text-decoration: none; color: inherit; align-items: start; }
-.purchase-row:hover { background: var(--accent-soft); }
+
 .purchase-row .date { color: var(--muted); font-size: 14px; }
 .purchase-row .amount { font-variant-numeric: tabular-nums; font-weight: 600; }
 .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
@@ -179,3 +179,40 @@ code { font-size: 13px; }
 .search-field { position: relative; display: block; }
 .search-field svg { position: absolute; left: 10px; top: 50%; margin-top: -8px; color: var(--muted); pointer-events: none; }
 .search-field input { padding-left: 34px; }
+
+/* My purchases: search, Filters panel and chips (docs/mockups/purchases.html). */
+.filterbar { display: flex; gap: 8px; align-items: center; }
+.filtermenu { position: relative; }
+.filtermenu summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); white-space: nowrap; }
+.filtermenu summary::-webkit-details-marker { display: none; }
+.filtermenu.on summary { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.filterpanel { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: 380px; max-width: calc(100vw - 32px); display: grid; gap: 14px; padding: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 32px rgb(0 0 0 / 0.16); }
+.filterpanel h3 { font-size: 13px; color: var(--muted); font-weight: 600; margin: 0 0 4px; }
+.filterpanel .checks { display: grid; gap: 2px; max-height: 190px; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; padding: 6px; }
+.filterpanel .checks label { padding: 3px 6px; }
+.filterpanel .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.filterpanel .foot { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); padding-top: 12px; }
+.filterpanel .sheet-head { display: none; justify-content: space-between; align-items: center; }
+.filterpanel .sheet-head h2 { margin: 0; }
+@media (max-width: 560px) {
+  .filterpanel { position: fixed; left: 0; right: 0; bottom: 0; top: auto; width: auto; max-width: none; max-height: 85vh; overflow-y: auto; border-radius: 16px 16px 0 0; box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.4); }
+  .filterpanel .sheet-head { display: flex; }
+  .filterpanel .foot { position: sticky; bottom: -16px; background: var(--surface); padding-bottom: 4px; }
+}
+.fchips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 10px 0 16px; }
+.fchip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: 13px; font-weight: 600; }
+.fchip button { border: 0; background: none; color: inherit; padding: 0 4px; display: inline-grid; place-items: center; cursor: pointer; }
+.fchips .link { margin-left: auto; font-size: 13px; }
+.filterbar + .purchases, .filterbar + .error, .filterbar + .empty { margin-top: 16px; }
+.purchases li.group { display: flex; justify-content: space-between; padding: 6px 16px; font-size: 13px; color: var(--muted); background: var(--bg); }
+.row-link { position: relative; }
+.row-link:hover { background: var(--accent-soft); }
+.row-link .stretched { color: inherit; text-decoration: none; }
+.row-link .stretched::after { content: ""; position: absolute; inset: 0; }
+a.tag { position: relative; z-index: 1; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; }
+.tag.src { border-style: dashed; }
+@media (max-width: 720px) {
+  .topbar-inner { gap: 8px 12px; }
+  .topbar nav { order: 3; flex-basis: 100%; }
+  .topbar .right { margin-left: auto; }
+}

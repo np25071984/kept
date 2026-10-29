@@ -1,6 +1,7 @@
 import {
-  addSource, createTransactions, deleteTransaction, getTransaction, listTransactions, mergeTransactions, patchTransaction,
+  addSource, createTransactions, deleteTransaction, getTransaction, mergeTransactions, patchTransaction,
 } from '../../ledger/transactions.js'
+import { listPurchases } from '../../ledger/purchaseList.js'
 import type { App, RouteDeps } from '../app.js'
 import { IdParams, MergeBody, SourceBody, TransactionPatch, TransactionQuery, TransactionsBody } from '../schemas.js'
 
@@ -22,8 +23,8 @@ export function transactionRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.get('/api/v1/transactions', {
-    schema: { tags, summary: 'The caller\'s own transactions, newest first. Never returns other members\' purchases.', querystring: TransactionQuery },
-  }, async (request) => ({ transactions: await run(request, (tx, caller) => listTransactions(tx, caller, request.query)) }))
+    schema: { tags, summary: 'The caller\'s own transactions, newest first, with the count and total of everything that matches. Never returns other members\' purchases.', querystring: TransactionQuery },
+  }, async (request) => run(request, (tx, caller) => listPurchases(tx, caller, request.query)))
 
   app.get('/api/v1/transactions/:id', {
     schema: { tags, summary: 'One of the caller\'s transactions.', params: IdParams },

@@ -112,6 +112,31 @@ describe('repeats', () => {
   })
 })
 
+describe('listing purchases', () => {
+  it('filters by several categories and people, searches, pages, and totals everything that matches', async () => {
+    const c = client(h, (await newHousehold(h, 'Lists')).api_key)
+    await c.post('/api/v1/categories', { path: 'Groceries/Alcohol' })
+    await c.post('/api/v1/cost-centers', { name: 'Kia', kind: 'Car' })
+    await c.post('/api/v1/transactions', { date: '2026-10-01', amount: 40, merchant: 'Shell', category: 'Car', spent_for: [{ cost_center: 'Kia' }] })
+    await c.post('/api/v1/transactions', { date: '2026-10-02', amount: 30, merchant: 'Kroger', category: 'Groceries', line_items: [{ amount: 12, category: 'Groceries/Alcohol', item: 'wine' }] })
+    await c.post('/api/v1/transactions', { date: '2026-10-03', amount: 20, merchant: 'Sephora', category: 'Other', private: true })
+    const list = async (q: string) => (await c.get(`/api/v1/transactions?${q}`)).body
+    const merchants = async (q: string) => (await list(q)).transactions.map((t: { merchant: string }) => t.merchant)
+
+    expect(await list('')).toMatchObject({ count: 3, total: 90 })
+    expect(await merchants('category=Car')).toEqual(['Shell'])
+    expect(await merchants('category=Car&category=Groceries')).toEqual(['Kroger', 'Shell'])
+    expect(await merchants('category_only=Groceries/Alcohol')).toEqual(['Kroger'])
+    expect(await merchants('cost_center=kia')).toEqual(['Shell'])
+    expect(await merchants('no_cost_center=true')).toEqual(['Sephora', 'Kroger'])
+    expect(await merchants('q=wine')).toEqual(['Kroger'])
+    expect(await merchants('private=true')).toEqual(['Sephora'])
+    const page = await list('limit=2&offset=2')
+    expect(page).toMatchObject({ count: 3, total: 90 })
+    expect(page.transactions.map((t: { merchant: string }) => t.merchant)).toEqual(['Shell'])
+  })
+})
+
 describe('watched groups', () => {
   it('watches a category or an item once, and stops', async () => {
     const eatingOut = await sam.post('/api/v1/watches', { category: 'eating out' })

@@ -336,7 +336,7 @@ export async function getTransaction(tx: Tx, caller: Caller, id: string): Promis
 }
 
 // Only the caller's own transactions, whatever the household (VISION.md §4.A, "Households, Accounts and Privacy").
-async function loadViews(tx: Tx, caller: Caller, ids: string[]): Promise<TransactionView[]> {
+export async function loadViews(tx: Tx, caller: Caller, ids: string[]): Promise<TransactionView[]> {
   if (ids.length === 0) return []
   const rows = await tx
     .selectFrom('transactions')
@@ -393,53 +393,6 @@ async function loadViews(tx: Tx, caller: Caller, ids: string[]): Promise<Transac
         .map((s) => ({ id: s.id, kind: s.kind, received_at: new Date(s.received_at).toISOString(), extracted: s.extracted })),
     }))
     .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
-}
-
-export interface ListFilters {
-  from?: string
-  to?: string
-  merchant?: string
-  category?: string
-  cost_center?: string
-  item?: string
-  limit?: number
-}
-
-export async function listTransactions(tx: Tx, caller: Caller, filters: ListFilters): Promise<TransactionView[]> {
-  let query = tx.selectFrom('transactions').select('transactions.id').where('transactions.spent_by', '=', caller.user_id)
-  if (filters.from) query = query.where('transactions.date', '>=', filters.from)
-  if (filters.to) query = query.where('transactions.date', '<=', filters.to)
-  if (filters.merchant) query = query.where('transactions.merchant', 'ilike', `%${filters.merchant}%`)
-  if (filters.category || filters.cost_center || filters.item) {
-    const category = filters.category
-    const costCenter = filters.cost_center
-    const item = filters.item
-    query = query.where((eb) =>
-      eb.exists(
-        eb
-          .selectFrom('line_items')
-          .innerJoin('categories', 'categories.id', 'line_items.category_id')
-          .select('line_items.id')
-          .whereRef('line_items.transaction_id', '=', 'transactions.id')
-          .$if(category != null, (q) => q.where((e) => e.or([e(e.fn('lower', ['categories.path']), '=', category!.toLowerCase()), e(e.fn('lower', ['categories.path']), 'like', `${category!.toLowerCase()}/%`)])))
-          .$if(item != null, (q) => q.where((e) => e(e.fn('lower', ['line_items.item']), '=', item!.toLowerCase())))
-          .$if(costCenter != null, (q) =>
-            q.where((e) =>
-              e.exists(
-                e
-                  .selectFrom('line_item_cost_centers')
-                  .innerJoin('cost_centers', 'cost_centers.id', 'line_item_cost_centers.cost_center_id')
-                  .select('line_item_cost_centers.line_item_id')
-                  .whereRef('line_item_cost_centers.line_item_id', '=', 'line_items.id')
-                  .where((x) => x(x.fn('lower', ['cost_centers.name']), '=', costCenter!.toLowerCase())),
-              ),
-            ),
-          ),
-      ),
-    )
-  }
-  const rows = await query.orderBy('transactions.date', 'desc').orderBy('transactions.created_at', 'desc').limit(Math.min(filters.limit ?? 50, 500)).execute()
-  return loadViews(tx, caller, rows.map((r) => r.id))
 }
 
 export interface TransactionPatch {

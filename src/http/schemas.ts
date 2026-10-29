@@ -60,10 +60,15 @@ export const TransactionQuery = Type.Object({
   from: Type.Optional(LocalDate),
   to: Type.Optional(LocalDate),
   merchant: Type.Optional(Type.String()),
-  category: Type.Optional(Type.String()),
-  cost_center: Type.Optional(Type.String()),
   item: Type.Optional(Type.String()),
+  q: Type.Optional(Type.String({ description: 'Merchant or item, contains.' })),
+  private: Type.Optional(Type.Boolean()),
+  category: Type.Optional(Type.Array(Type.String(), { description: 'Repeat for several; each includes its subcategories.' })),
+  category_only: Type.Optional(Type.Array(Type.String(), { description: 'Categories without their subcategories.' })),
+  cost_center: Type.Optional(Type.Array(Type.String(), { description: 'Repeat for several.' })),
+  no_cost_center: Type.Optional(Type.Boolean({ description: 'Also purchases with a line for nobody in particular.' })),
   limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 500 })),
+  offset: Type.Optional(Type.Integer({ minimum: 0 })),
 })
 
 export const CategoryBody = Type.Object({ path: Type.String({ minLength: 1 }) })
