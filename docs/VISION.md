@@ -496,4 +496,6 @@ Every member signs in with their own account. The header holds the pages for loo
 | **Preferences**        | In the user menu: the member's watched groups, with this month's amount and coverage, and caps, with their progress. |
 | **Settings**           | In the user menu, in tabs. Profile. Household: members (owners invite and remove them), categories, people & things, and General: the household's name, currency and time zone. Assistants & keys: connect an assistant over MCP and manage API keys. Assistant notes: the member's notes. |
 
+The web UI, the sign-in pages and Kept's emails are in English or Russian. Language is personal: it starts from the browser's and each member can change it, so partners can each read Kept in their own. Dates and amounts follow the language. What the household typed (categories, people & things, notes) stays as typed, and the starting categories are created in the owner's language. The agent answers in whatever language the user writes in.
+
 Every page, the spending graphs included (what to show, how to compare periods, how to show watched-group [coverage](#coverage)), is drawn in `docs/mockups/`.
