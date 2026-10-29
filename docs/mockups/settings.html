@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings · Profile · Kept mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html" style="text-decoration:none">Kept</a>
+  <nav><a href="purchases.html">My purchases</a><a href="repeats.html">Repeats</a><a href="spending.html">Spending</a></nav>
+  <div class="right"><a class="bell" href="notifications.html" aria-label="Notifications: 4 waiting"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="badge">4</span></a><details class="usermenu active"><summary>Sam ▾</summary><div class="menu"><a href="preferences.html">Preferences</a><a href="settings.html">Settings</a><hr><a href="auth.html">Sign out</a></div></details></div>
+</div></header>
+<main class="page"><div class="layout"><div><div class="page-head"><h1>Settings</h1></div><div class="segmented tabs" style="margin-bottom:20px"><a href="settings.html" class="on">Profile</a><a href="settings-household.html" class="">Household</a><a href="settings-assistants.html" class="">Assistants &amp; keys</a><a href="settings-notes.html" class="">Assistant notes</a></div><p class="muted small">sam@example.com · Owner of The Smiths</p><div class="card grid"><label>Name<input value="Sam"></label><label>Time zone<select><option>America/New_York</option></select><span class="small muted">Repeats come due at midnight here.</span></label></div>
+<div class="row" style="margin-top:12px"><button class="primary">Save</button></div></div><aside class="notes"><h2>Design notes</h2><ul><li>Settings opens from the user menu, on Profile. Tabs: Profile, Household (with its own row: Members, Categories, People &amp; things, Name &amp; currency), Assistants &amp; keys, Assistant notes. The tab is in the URL.</li><li>Name and time zone through <code>PATCH /api/v1/setup</code> plus a new name field.</li></ul></aside></div></main>
+</body>
+</html>

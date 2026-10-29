@@ -306,7 +306,7 @@ A month later, the next time the user talks to the agent:
 #### What happens on the date
 
 - **The transaction is created and counted.** It appears in the history like any other, marked as repeated, with a link to its repeat.
-- **It is announced.** The ledger records an update ("Registered repeating phone expense, $50"). The agent reads updates at the start of the next conversation and mentions them in one line. The web UI shows them too. An assistant can't start a conversation on its own, so the announcement arrives when the user next talks to it; a messaging bot can deliver it the same day.
+- **It is announced.** The ledger records an update ("Registered repeating phone expense, $50"). The agent reads updates at the start of the next conversation and mentions them in one line. In the web UI the purchase is marked as repeated. An assistant can't start a conversation on its own, so the announcement arrives when the user next talks to it; a messaging bot can deliver it the same day.
 - **The real charge still matches it.** When the agent later logs the bank charge, email or bill for the phone, it is [matched](#one-purchase-many-sources) to the repeated transaction instead of creating a duplicate. If the amount differs, the real amount wins.
 - **A repeat always uses the most recent real amount.** If electricity was $132 last month, next month's repeat is created at $132 and corrected when the bill arrives. A price change on a fixed bill works the same way: once the phone bill comes in at $55, the next repeat is $55. The agent mentions it instead of asking: "Phone was $55 this time, I'll use that going forward."
 
@@ -412,7 +412,7 @@ A cap is a personal soft reminder: "I don't want to spend more than $1,000 on gr
 
 - **It reminds, it never blocks.** Purchases over a cap are logged like any other.
 - **The agent mentions it when it matters.** Once a purchase that counts toward a cap takes it past 80%, the confirmation says so: "Log $64 at Trader Joe's? That's $860 of your $1,000 groceries cap this month." Crossing it gets one line: "That puts groceries $40 over your cap for October." Below 80% it says nothing.
-- **Set in conversation or on the web.** "Cap eating out at $250 a month" is saved after the user confirms, like a note. "Drop my groceries cap" removes one, and the web lists every cap with Edit and Remove. Me lists each cap's progress, and My spending shows the ones past 80%.
+- **Set in conversation or on the web.** "Cap eating out at $250 a month" is saved after the user confirms, like a note. "Drop my groceries cap" removes one, and the web lists every cap with Edit and Remove. Preferences lists each cap's progress, and Spending shows the ones past 80%.
 
 #### Households, Accounts and Privacy
 
@@ -465,7 +465,8 @@ Kept delivers the playbook, not just the data, so every assistant behaves the sa
 | The household's vocabulary  | Categories, cost centers, the member's notes and watched groups, in context before the first question. |
 | Setting up                  | The first conversation for a new household or a new member ([First Conversation](#36-first-conversation-setting-up)). |
 | Logging an expense          | The capture → infer → clarify → confirm flow.                                                            |
-| Catching up                 | Announces updates and asks about possible duplicates.                                                    |
+| Catching up                 | Announces updates in one line each.                                                                      |
+| Open questions              | What Kept needs the user to decide: a possible duplicate, a cap passed, a repeated charge missing from a statement, an API key unused for a year. At most one per conversation, after the user's request is done, and none when the user is in a hurry. A "no" or "later" is an answer, so the question doesn't come back soon. The web UI lists the same questions under Notifications. |
 
 [`IMPLEMENTATION.md` §5.2](IMPLEMENTATION.md#52-teaching-the-agent) says which MCP mechanism carries each one.
 
@@ -483,16 +484,15 @@ Any client needs a model that can read images, so the user can send a receipt ph
 
 The web UI is where each member reviews and fixes what the agent logged, and sees where the money goes. Logging itself stays in the chat; the UI is for looking back, correcting and managing the household.
 
-Every member signs in with their own account and sees:
+Every member signs in with their own account. The header holds the pages for looking back; a bell opens the open questions; the user menu holds what is set up once:
 
 | Page                   | What it shows                                                                                       |
 | ---------------------- | --------------------------------------------------------------------------------------------------- |
-| **Updates**            | What the ledger did on its own ("Registered repeating phone expense, $50"), plus possible duplicates to merge or keep apart. |
-| **Repeats**            | The member's repeats with next date and amount. Pause, edit or stop them. Any purchase can be made to repeat from its detail view. |
 | **My purchases**       | The member's own purchase history, private ones included and marked. Search and filter by date, merchant, category, cost center, item and source. Open a purchase to see its line items, shares and sources (what was read from a receipt, email or bank charge), edit it, mark it private or delete it. |
-| **My spending**        | Graphs of the member's own spending, private purchases included, with their watched groups and the caps past 80%. |
-| **Household spending** | Graphs of the household's spending: every member's non-private purchases, by category, cost center and item. |
-| **Household**          | Shared cost centers and categories, in tabs. Owners also invite and remove members and set the household's name and currency. |
-| **Me**                 | Profile, the member's watched groups, caps and notes, and connections: connect an assistant over MCP and manage API keys. |
+| **Repeats**            | The member's repeats with next date and amount. Pause, edit or stop them. Any purchase can be made to repeat from its detail view. |
+| **Spending**           | Graphs in two tabs. Mine: the member's own spending, private purchases included, with their watched groups and the caps past 80%. Household: every member's non-private purchases, by category, cost center and item, never by member. |
+| **Notifications**      | Behind the bell: Kept's open questions, with their answers as buttons (see [The AI Integration Layer](#b-the-ai-integration-layer)). The bell's count is the number unanswered. |
+| **Preferences**        | In the user menu: the member's watched groups and caps. |
+| **Settings**           | In the user menu, in tabs. Profile. Household: members (owners invite and remove them), categories, people & things, and the household's name and currency. Assistants & keys: connect an assistant over MCP and manage API keys. Assistant notes: the member's notes. |
 
 Every page, the spending graphs included (what to show, how to compare periods, how to show watched-group [coverage](#coverage)), is drawn in `docs/mockups/`.

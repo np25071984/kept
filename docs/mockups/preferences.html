@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preferences · Kept mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html" style="text-decoration:none">Kept</a>
+  <nav><a href="purchases.html">My purchases</a><a href="repeats.html">Repeats</a><a href="spending.html">Spending</a></nav>
+  <div class="right"><a class="bell" href="notifications.html" aria-label="Notifications: 4 waiting"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="badge">4</span></a><details class="usermenu active"><summary>Sam ▾</summary><div class="menu"><a href="preferences.html">Preferences</a><a href="settings.html">Settings</a><hr><a href="auth.html">Sign out</a></div></details></div>
+</div></header>
+<main class="page"><div class="layout"><div><div class="page-head"><h1>Preferences</h1></div><p class="muted small">What your assistant watches for and reminds you about. Only you see these; set them here or tell your assistant.</p>
+<section class="section"><div class="section-head"><h2>Watching</h2><button>Watch something</button></div>
+<ul class="list"><li><div class="grow">Alcohol<div class="small muted">Category Groceries/Alcohol · asked about at grocery stores and restaurants</div></div><button class="link">Stop watching</button></li>
+<li><div class="grow">Snacks<div class="small muted">Item · asked about at grocery stores and gas stations</div></div><button class="link">Stop watching</button></li></ul></section>
+<section class="section" id="caps"><div class="section-head"><h2>Caps</h2><button>Set a cap</button></div>
+<p class="muted small">Soft reminders: nothing is blocked. Your assistant mentions a cap once a purchase takes it past 80%.</p><div class="card"><div style="margin-bottom:10px"><div class="row" style="justify-content:space-between"><span>Groceries <span class="muted small">· per month</span></span><span class="num small">$486.30 of $1,000.00</span></div><div class="coverage" title="49%"><span style="width:49%"></span></div><div class="row" style="justify-content:space-between"><span class="small muted">49% · $513.70 left</span><span><button class="link">Edit</button><button class="link">Remove</button></span></div></div><div style="margin-bottom:10px"><div class="row" style="justify-content:space-between"><span>Eating out <span class="muted small">· per month</span></span><span class="num small">$214.80 of $250.00</span></div><div class="coverage" title="86%"><span style="width:86%"></span></div><div class="row" style="justify-content:space-between"><span class="small muted">86% · $35.20 left · <strong>close</strong></span><span><button class="link">Edit</button><button class="link">Remove</button></span></div></div><div style="margin-bottom:10px"><div class="row" style="justify-content:space-between"><span>Kia <span class="muted small">· per year</span></span><span class="num small">$148.20 of $1,200.00</span></div><div class="coverage" title="12%"><span style="width:12%"></span></div><div class="row" style="justify-content:space-between"><span class="small muted">12% · $1,051.80 left</span><span><button class="link">Edit</button><button class="link">Remove</button></span></div></div>
+<div class="grid" style="margin-top:12px"><label>For<select><option>Travel</option></select></label><label>Up to<input placeholder="$500"></label><label>Per<select><option>Month</option><option>Year</option></select></label></div>
+<div class="row" style="margin-top:8px"><button class="primary">Save cap</button><button>Cancel</button></div></div></section></div><aside class="notes"><h2>Design notes</h2><ul><li>Opened from the user menu. Personal (<code>VISION.md</code> §3.3; §4.A "Caps").</li><li>"Watch something" picks a category or names an item; "Stop watching" removes it, and purchases already logged keep their checked groups.</li><li>Caps are set here or in chat. Progress counts your own purchases, private ones included; "close" appears from 80%. The form shows after "Set a cap" and, filled in, after "Edit". "Remove" deletes the cap at once.</li></ul></aside></div></main>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notifications · Kept mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html" style="text-decoration:none">Kept</a>
+  <nav><a href="purchases.html">My purchases</a><a href="repeats.html">Repeats</a><a href="spending.html">Spending</a></nav>
+  <div class="right"><a class="bell active" href="notifications.html" aria-label="Notifications: 4 waiting"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="badge">4</span></a><details class="usermenu"><summary>Sam ▾</summary><div class="menu"><a href="preferences.html">Preferences</a><a href="settings.html">Settings</a><hr><a href="auth.html">Sign out</a></div></details></div>
+</div></header>
+<main class="page"><div class="layout"><div><div class="page-head"><h1>Notifications</h1><label class="check"><input type="checkbox"> Show answered</label></div>
+<p class="muted small">Questions Kept has for you. Your assistant asks the same ones in chat, one at a time; answering in either place clears them here.</p>
+<ul class="list" style="border:0;background:none;display:grid;gap:12px">
+  <li class="card" style="display:block"><p><strong>Possible duplicate.</strong> Is the $70.50 at SHELL OIL 5741 on Oct 28 the $60.00 at Shell logged that day? <span class="muted small">Oct 28</span></p>
+    <div class="pair"><a class="mini" href="purchase.html" style="text-decoration:none;color:inherit"><span class="muted small">Logged first</span><strong>$60.00</strong><span>Shell</span><span class="muted small">Wed, Oct 28 · Car/Fuel · Kia · chat</span></a>
+    <a class="mini" href="purchase.html" style="text-decoration:none;color:inherit"><span class="muted small">Logged later</span><strong>$70.50</strong><span>SHELL OIL 5741</span><span class="muted small">Wed, Oct 28 · Car/Fuel · statement</span></a></div>
+    <div class="row" style="margin-top:12px"><button class="primary">Same purchase: merge</button><button>Different purchases</button></div></li>
+  <li class="card" style="display:block"><p><strong>Cap passed.</strong> Eating out is at $400.00 of your $250.00 cap for October, 60% over. <span class="muted small">Oct 26</span></p>
+    <div class="row"><a class="button" href="preferences.html#caps">Change the cap</a><button>Remove the cap</button><button>Keep it</button></div></li>
+  <li class="card" style="display:block"><p><strong>Missing charge?</strong> No Spotify charge on your October statement. Did you cancel it? <span class="muted small">Oct 25</span></p>
+    <div class="row"><button>Cancelled: stop the repeat</button><button>Still paying</button></div></li>
+  <li class="card" style="display:block"><p><strong>Unused key.</strong> "Laptop script" hasn't been used since October 2025. <span class="muted small">Oct 20</span></p>
+    <div class="row"><button class="danger">Revoke it</button><button>Keep it</button></div></li>
+</ul></div><aside class="notes"><h2>Design notes</h2><ul><li>Opened from the bell; its badge counts unanswered questions, so a number always means "something needs you".</li><li>Only questions with an answer: possible duplicates, a cap passed, a repeated charge missing from a statement, an API key unused for a year. Repeats logged on their date are news, not questions: the assistant mentions them in chat, and the purchase is marked in My purchases.</li><li>Merging keeps the purchase logged first and adds the later one's sources to it.</li><li>The assistant asks at most one per conversation, after the user's request is done (<code>VISION.md</code> §4.B).</li></ul></aside></div></main>
+</body>
+</html>

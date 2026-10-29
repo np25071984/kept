@@ -168,3 +168,17 @@ details.table-view summary { cursor: pointer; color: var(--accent); }
 .features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 720px) { .features { grid-template-columns: 1fr; } }
 .footer { border-top: 1px solid var(--line); margin-top: 32px; padding-top: 16px; display: flex; flex-wrap: wrap; gap: 16px; }
+.topbar .right { display: flex; align-items: center; gap: 8px; }
+.bell { position: relative; display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; color: var(--fg); }
+.bell.active { background: var(--accent-soft); color: var(--accent); }
+.bell .badge { position: absolute; top: -2px; right: -4px; }
+.usermenu { position: relative; font-size: 14px; }
+.usermenu summary { list-style: none; cursor: pointer; padding: 6px 10px; border-radius: 8px; }
+.usermenu summary::-webkit-details-marker { display: none; }
+.usermenu.active summary { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.usermenu .menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 10; min-width: 180px; display: grid; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.12); }
+.usermenu .menu a { padding: 7px 10px; border-radius: 6px; text-decoration: none; color: var(--fg); }
+.usermenu .menu a:hover { background: var(--bg); }
+.usermenu .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+.subtabs { margin: -8px 0 20px; }
+.subtabs a { font-size: 13px; padding: 4px 10px; }
