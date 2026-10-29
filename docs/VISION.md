@@ -412,7 +412,7 @@ A cap is a personal soft reminder: "I don't want to spend more than $1,000 on gr
 
 - **It reminds, it never blocks.** Purchases over a cap are logged like any other.
 - **The agent mentions it when it matters.** Once a purchase that counts toward a cap takes it past 80%, the confirmation says so: "Log $64 at Trader Joe's? That's $860 of your $1,000 groceries cap this month." Crossing it gets one line: "That puts groceries $40 over your cap for October." Below 80% it says nothing.
-- **Set in conversation or on the web.** "Cap eating out at $250 a month" is saved after the user confirms, like a note. Me lists each cap's progress, and My spending shows the ones past 80%.
+- **Set in conversation or on the web.** "Cap eating out at $250 a month" is saved after the user confirms, like a note. "Drop my groceries cap" removes one, and the web lists every cap with Edit and Remove. Me lists each cap's progress, and My spending shows the ones past 80%.
 
 #### Households, Accounts and Privacy
 
