@@ -203,3 +203,13 @@ a.tag:hover { border-color: var(--accent); color: var(--accent); }
 .folder-tabs a:hover { color: var(--fg); }
 .folder-tabs a.on { background: var(--surface); color: var(--fg); font-weight: 600; padding-bottom: 9px; margin-bottom: -1px; box-shadow: inset 0 3px 0 var(--accent); }
 .folder-body { border-top-left-radius: 12px; }
+.multi { position: relative; }
+.multi summary { list-style: none; cursor: pointer; padding: 7px 28px 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
+.multi summary::-webkit-details-marker { display: none; }
+.multi summary::after { content: "▾"; position: absolute; right: 10px; color: var(--muted); }
+.multi .panel { position: absolute; left: 0; top: calc(100% + 4px); z-index: 10; min-width: 220px; max-height: 320px; overflow-y: auto; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.12); display: grid; gap: 2px; }
+.multi .panel label { flex-direction: row; align-items: center; gap: 8px; color: var(--fg); font-size: 14px; padding: 4px 6px; border-radius: 6px; }
+.multi .panel label:hover { background: var(--bg); }
+.multi .panel label input { width: auto; }
+.multi .panel .sub { padding-left: 28px; }
+.multi .panel .clear { justify-self: start; margin-top: 4px; }
