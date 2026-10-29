@@ -182,3 +182,9 @@ details.table-view summary { cursor: pointer; color: var(--accent); }
 .usermenu .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 .subtabs { margin: -8px 0 20px; }
 .subtabs a { font-size: 13px; padding: 4px 10px; }
+.row-link { position: relative; }
+.row-link .stretched { color: inherit; text-decoration: none; }
+.row-link .stretched::after { content: ""; position: absolute; inset: 0; }
+.row-link:hover { background: var(--bg); }
+a.tag { position: relative; z-index: 1; text-decoration: none; }
+a.tag:hover { border-color: var(--accent); color: var(--accent); }
