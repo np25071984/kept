@@ -465,7 +465,7 @@ Kept delivers the playbook, not just the data, so every assistant behaves the sa
 | The household's vocabulary  | Categories, cost centers, the member's notes and watched groups, in context before the first question. |
 | Setting up                  | The first conversation for a new household or a new member ([First Conversation](#36-first-conversation-setting-up)). |
 | Logging an expense          | The capture → infer → clarify → confirm flow.                                                            |
-| Catching up                 | Announces updates, asks about uncategorized transactions and possible duplicates.                       |
+| Catching up                 | Announces updates and asks about possible duplicates.                                                    |
 
 [`IMPLEMENTATION.md` §5.2](IMPLEMENTATION.md#52-teaching-the-agent) says which MCP mechanism carries each one.
 
@@ -487,7 +487,7 @@ Every member signs in with their own account and sees:
 
 | Page                   | What it shows                                                                                       |
 | ---------------------- | --------------------------------------------------------------------------------------------------- |
-| **Updates**            | What the ledger did on its own ("Registered repeating phone expense, $50"), plus uncategorized transactions and possible duplicates to fix or merge. |
+| **Updates**            | What the ledger did on its own ("Registered repeating phone expense, $50"), plus possible duplicates to merge or keep apart. |
 | **Repeats**            | The member's repeats with next date and amount. Pause, edit or stop them. Any purchase can be made to repeat from its detail view. |
 | **My purchases**       | The member's own purchase history, private ones included and marked. Search and filter by date, merchant, category, cost center, item and source. Open a purchase to see its line items, shares and sources (what was read from a receipt, email or bank charge), edit it, mark it private or delete it. |
 | **My spending**        | Graphs of the member's own spending, private purchases included, with their watched groups and the caps past 80%. |
