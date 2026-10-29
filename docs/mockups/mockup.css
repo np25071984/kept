@@ -143,3 +143,12 @@ details.table-view summary { cursor: pointer; color: var(--accent); }
   .hbar { grid-template-columns: minmax(70px, 110px) 1fr 70px; font-size: 13px; }
   .page-head { flex-direction: column; align-items: flex-start; }
 }
+.hero { padding: 24px 0 8px; }
+.hero h1 { font-size: 30px; line-height: 1.2; margin-bottom: 10px; }
+.chat { display: grid; gap: 8px; }
+.bubble { max-width: 85%; padding: 8px 12px; border-radius: 14px; font-size: 14px; }
+.bubble.user { justify-self: end; background: var(--accent); color: var(--accent-fg); border-bottom-right-radius: 4px; }
+.bubble.ai { justify-self: start; background: var(--bg); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+.features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 720px) { .features { grid-template-columns: 1fr; } }
+.footer { border-top: 1px solid var(--line); margin-top: 32px; padding-top: 16px; display: flex; flex-wrap: wrap; gap: 16px; }

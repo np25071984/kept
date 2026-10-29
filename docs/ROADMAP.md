@@ -1,6 +1,6 @@
 # Kept: Roadmap
 
-Last updated: 2026-10-28.
+Last updated: 2026-10-29.
 
 ## How to read this document
 
@@ -39,4 +39,5 @@ Looking back, fixing and managing (`VISION.md` §4.C). Started before Phase 3's 
 
 ## Later
 
+- [ ] Landing page at `/`, as `docs/mockups/landing.html` shows, and a privacy policy linked from it and the sign-in pages. Before sign-up opens to other households.
 - [ ] Siri through App Intents in a native iOS app (`VISION.md` §4.B, "Other clients"). Not before Phase 3's gate.

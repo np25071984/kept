@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Landing · Kept mockup</title>
+<link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner">
+  <a class="brand" href="index.html" style="text-decoration:none">Kept</a>
+  <nav><a href="#how">How it works</a><a href="#privacy">Privacy</a><a href="#connect">Connect</a></nav>
+  <span class="me"><a href="sign-in.html">Sign in</a></span>
+</div></header>
+<main class="page"><div class="layout"><div>
+
+<section class="hero section">
+  <h1>Tell your assistant what you spent. Kept keeps the books.</h1>
+  <p class="muted">Kept teaches the AI you already use to track your household's spending: what to ask, how to file it, and what to remember. No forms, no bank logins.</p>
+  <div class="row" style="margin:16px 0"><a class="button primary" href="#connect">Connect your assistant</a><a class="button" href="sign-in.html">Sign in</a></div>
+</section>
+
+<section class="card section">
+  <div class="chat" aria-label="Example conversation">
+    <div class="bubble user">$60 gas at Shell</div>
+    <div class="bubble ai">For the Kia, like your last fill-up?</div>
+    <div class="bubble user">Yes</div>
+    <div class="bubble ai">Logged $60.00 to Car/Fuel for the Kia.</div>
+    <div class="bubble user">How much did the Kia cost us this year?</div>
+    <div class="bubble ai">$2,140: fuel $910, insurance $940, repairs $290.</div>
+  </div>
+</section>
+
+<section class="section" id="how">
+  <h2 style="margin-bottom:12px">How it works</h2>
+  <div class="features">
+    <div class="card"><h3>Say it, snap it, forward it</h3><p class="small muted">A sentence, a receipt photo, an order email or a bank statement. Your assistant reads it; Kept files it once, even when it arrives three ways.</p></div>
+    <div class="card"><h3>One question, a good guess</h3><p class="small muted">"Groceries, like last Saturday?" Kept tells your assistant when to ask, when to stay quiet, and always to confirm before saving.</p></div>
+    <div class="card"><h3>See where it goes</h3><p class="small muted">Per car, per kid, per month. Ask in the chat, or review and fix everything on the web.</p></div>
+  </div>
+</section>
+
+<section class="section" id="privacy">
+  <h2 style="margin-bottom:12px">Your data</h2>
+  <ul class="list">
+    <li><div class="grow"><strong>Kept never connects to your bank or inbox.</strong><div class="small muted">Your assistant reads what you show it; Kept keeps what was logged, not the files.</div></div></li>
+    <li><div class="grow"><strong>Your purchases are yours.</strong><div class="small muted">Others in your household see shared totals, never your list. Private purchases stay out of totals too.</div></div></li>
+    <li><div class="grow"><strong>Works with the assistant you choose.</strong><div class="small muted">Claude, ChatGPT or Gemini. Switch any time; your history and notes come with you.</div></div></li>
+  </ul>
+  <p class="small" style="margin-top:8px"><a href="#">Privacy policy</a></p>
+</section>
+
+<section class="card section" id="connect">
+  <h2>Connect your assistant</h2>
+  <p>Add Kept as a custom connector with this address, then sign in with your email. Your first chat sets up your household in about two minutes.</p>
+  <div class="copyable"><code>https://kept-ledger.com/mcp</code><button>Copy</button></div>
+  <div class="segmented" style="margin:12px 0"><a href="#" class="on">Claude</a><a href="#">ChatGPT</a><a href="#">Gemini</a></div>
+  <ol class="small" style="margin:0;padding-left:20px"><li>claude.ai → Settings → Connectors → Add custom connector.</li><li>Paste the address, then Connect and sign in.</li><li>In a new chat, say "Set up Kept".</li></ol>
+</section>
+
+<footer class="footer small muted"><span>Kept</span><a href="#">Privacy policy</a><a href="mailto:support@kept-ledger.com">support@kept-ledger.com</a></footer>
+
+</div><aside class="notes"><h2>Design notes</h2><ul><li>Served at <code>/</code> for anyone signed out; a signed-in visitor goes straight to My purchases.</li><li>Answers three questions before asking for an email: what Kept is, how to connect, what happens to the data (<code>VISION.md</code> §3.4, §4.A "Households, Accounts and Privacy").</li><li>The chat is the product, so the example conversation sits where a screenshot would. Its lines follow the playbook: best guess as a yes/no question, confirm, one-line result.</li><li>"Connect your assistant" is the same block as Me → Assistants &amp; keys; the tabs switch the steps per assistant.</li><li>Static HTML, no tracking or cookies. The privacy policy is its own page, linked from here and from the sign-in pages.</li><li>Not live until sign-up opens to other households (<code>ROADMAP.md</code>, Later).</li></ul></aside></div></main>
+</body>
+</html>
