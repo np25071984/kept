@@ -35,7 +35,7 @@ Looking back, fixing and managing (`VISION.md` §4.C). Started before Phase 3's 
 - [ ] Caps: storage, API, tools, the playbook's reminders, the Preferences section and the line in Reports · Mine (`VISION.md` §4.A, "Caps").
 - [x] Household and Me pages: shared vocabulary, watched groups and notes, connecting an assistant, API keys.
 - [x] Mockups of every page, the spending graphs included (`docs/mockups/`).
-- [ ] Reports, Mine and Household, as `docs/mockups/reports.html` and `reports-household.html` show, and the per-month chart on My purchases.
+- [ ] Reports, Mine and Household, as `docs/mockups/reports.html` and `reports-household.html` show.
 
 **Gate:** every correction an agent conversation can make can also be made in the web UI.
 
