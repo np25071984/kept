@@ -196,3 +196,8 @@ a.tag:hover { border-color: var(--accent); color: var(--accent); }
 .navmenu .menu a { padding: 7px 10px; border-radius: 6px; }
 .navmenu .menu a.on { color: var(--accent); font-weight: 600; }
 .chart .bar.on { fill: var(--accent); }
+.folder-tabs { display: flex; gap: 4px; padding-left: 12px; position: relative; z-index: 1; margin-bottom: -1px; overflow-x: auto; }
+.folder-tabs a { padding: 8px 14px; font-size: 14px; text-decoration: none; color: var(--muted); white-space: nowrap; background: var(--bg); border: 1px solid var(--line); border-bottom: 0; border-radius: 10px 10px 0 0; }
+.folder-tabs a:hover { color: var(--fg); }
+.folder-tabs a.on { background: var(--surface); color: var(--fg); font-weight: 600; padding-bottom: 9px; margin-bottom: -1px; box-shadow: inset 0 3px 0 var(--accent); }
+.folder-body { border-top-left-radius: 12px; }
