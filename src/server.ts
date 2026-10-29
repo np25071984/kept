@@ -2,11 +2,13 @@ import { createDb } from './db/db.js'
 import { loadConfig } from './config.js'
 import { buildApp } from './http/app.js'
 import { runDueRepeats } from './ledger/repeats.js'
-import { logMailer } from './mailer.js'
+import { logMailer } from './mail/log.js'
+import { resendMailer } from './mail/resend.js'
 
 const config = loadConfig()
 const db = createDb(config.databaseUrl)
-const app = await buildApp({ db, mailer: logMailer(), publicUrl: config.publicUrl, logger: true })
+const mailer = config.resendApiKey ? resendMailer({ apiKey: config.resendApiKey, from: config.mailFrom }) : logMailer()
+const app = await buildApp({ db, mailer, publicUrl: config.publicUrl, logger: true })
 
 // Repeats come due at midnight in each owner's time zone, so the scheduler runs often and creates whatever is due.
 async function tick() {

@@ -18,7 +18,7 @@ npm run dev:web          # the web UI at http://localhost:5173/app/, passing API
 
 The server also serves the last `npm run build` of the web UI at http://localhost:3000/app/. Sign-in codes for the web UI appear in the server log.
 
-`create-household` prints the owner's API key once. Send it as `Authorization: Bearer kept_…`. Invite links are logged by the server instead of emailed.
+`create-household` prints the owner's API key once. Send it as `Authorization: Bearer kept_…`. Without `RESEND_API_KEY`, sign-in codes and invites are written to the server log instead of emailed.
 
 ## Trying the MCP server
 
@@ -57,7 +57,7 @@ The server applies migrations each time it starts. Gemini needs a client created
 docker compose exec kept node dist/cli/create-client.js --id gemini --name Gemini --redirect-uri https://oauth-redirect.googleusercontent.com/r/…
 ```
 
-Connect an assistant to `https://KEPT_HOST/mcp`. Until email is sent, read sign-in codes and invite links from the log:
+Connect an assistant to `https://KEPT_HOST/mcp`. With `RESEND_API_KEY` set in `.env` (the domain verified in Resend), sign-in codes and invites are emailed; without it, read them from the log:
 
 ```sh
 docker compose logs kept | grep -E "Sign-in code|Invite"
@@ -71,6 +71,7 @@ Update with `git pull && docker compose up -d --build`.
 - `src/ledger`: database reads and writes for each feature, run inside a household-scoped transaction.
 - `src/mcp`: the MCP server, its tools and the playbook text.
 - `src/oauth`: the OAuth2 authorization server, sign-in by emailed code, and the sign-in and consent pages.
+- `src/mail`: the emails Kept sends, and the mailers that send them through Resend or write them to the log.
 - `src/http`: Fastify routes and their TypeBox schemas, which also generate the OpenAPI spec, and serving the web UI.
 - `src/db`: the Kysely connection, the schema types and migrations.
 - `web`: the web UI, a React app; `web/src/lib` holds its pure functions, unit-tested in `test/unit/web.test.ts`.

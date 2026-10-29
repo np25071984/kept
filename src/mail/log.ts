@@ -1,6 +1,6 @@
-import type { Mailer } from './ledger/households.js'
+import type { Mailer } from '../ledger/households.js'
 
-// Logs invite links instead of sending them; no email provider is set up yet (docs/ROADMAP.md).
+// Writes emails to the log instead of sending them, when no email provider is configured (DEVELOPMENT.md).
 export function logMailer(log: (message: string) => void = console.log): Mailer {
   return {
     async sendInvite({ to, connect, inviter, household }) {

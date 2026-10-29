@@ -4,6 +4,9 @@ export interface Config {
   port: number
   publicUrl: string
   schedulerIntervalMs: number
+  // Without a Resend key, emails are written to the log.
+  resendApiKey: string | null
+  mailFrom: string
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -18,5 +21,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     port: Number(env.PORT ?? 3000),
     publicUrl: env.PUBLIC_URL ?? `http://localhost:${env.PORT ?? 3000}`,
     schedulerIntervalMs: Number(env.SCHEDULER_INTERVAL_MS ?? 15 * 60_000),
+    resendApiKey: env.RESEND_API_KEY || null,
+    mailFrom: env.MAIL_FROM || `Kept <noreply@${new URL(env.PUBLIC_URL ?? 'http://localhost').hostname}>`,
   }
 }

@@ -1,6 +1,6 @@
 import { buildApp } from '../http/app.js'
 import { createDb } from '../db/db.js'
-import { logMailer } from '../mailer.js'
+import { logMailer } from '../mail/log.js'
 
 // Prints the OpenAPI spec without a database; the server also serves it at /api/v1/openapi.json.
 const db = createDb('postgres://unused@localhost/unused')

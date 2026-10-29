@@ -15,7 +15,7 @@ The playbook, delivered to any assistant.
 - [x] Write the playbook: the question rules from `VISION.md` §3 as server instructions, and the same text returned by `get_playbook`, including the first conversation for a new household and a new member (`VISION.md` §3.6). Review the wording once real assistants run it (Phase 3).
 - [x] Tool descriptions that work without server instructions: when to call `get_playbook`, and that `log_transaction` comes only after confirmation (`IMPLEMENTATION.md` §5.3).
 - [x] Resources for the household's vocabulary and the prompts `setup_household`, `log_expense` and `catch_up` (`IMPLEMENTATION.md` §5.2).
-- [ ] Send email: pick a provider and replace the logging `Mailer` for sign-in codes and invites (`IMPLEMENTATION.md` §5.4, §6).
+- [x] Send email through Resend for sign-in codes and invites (`IMPLEMENTATION.md` §6).
 - [x] Docker Compose deployment with Caddy: `Dockerfile` and `deploy/` (`IMPLEMENTATION.md` §6).
 - [x] Deploy on the VPS and create the first household (`DEVELOPMENT.md`).
 - [x] Give the server a domain and set `KEPT_HOST` (`IMPLEMENTATION.md` §6).

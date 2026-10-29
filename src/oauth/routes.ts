@@ -128,7 +128,12 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
       const email = (request.body?.email ?? '').trim()
       if (!/^[^@\s]+@[^@\s]+$/.test(email)) return html(reply, emailPage(interaction.uid, await clientName(interaction.params.client_id), 'Enter a valid email.'), 400)
       const link = (code: string) => `${deps.oauth.issuer}/oauth/interaction/${interaction.uid}/code?code=${code}`
-      await sendCode(deps.db, deps.mailer, interaction.uid, email, link)
+      try {
+        await sendCode(deps.db, deps.mailer, interaction.uid, email, link)
+      } catch (error) {
+        request.log.error(error, 'sign-in code not sent')
+        return html(reply, emailPage(interaction.uid, await clientName(interaction.params.client_id), 'We couldn\'t send the code just now. Try again in a minute.'), 503)
+      }
       return html(reply, codePage(interaction.uid, email))
     })
 
