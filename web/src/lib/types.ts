@@ -68,6 +68,12 @@ export interface Recurring {
   last: { amount: number; date: string } | null
 }
 
+export type Question =
+  | { id: string; kind: 'duplicate'; created_at: string; first: Transaction; later: Transaction }
+  | { id: string; kind: 'cap'; created_at: string; cap: { id: string; name: string; amount: number; spent: number; period: 'month' | 'year' } }
+  | { id: string; kind: 'missing_charge'; created_at: string; text: string; repeat_id: string }
+  | { id: string; kind: 'unused_key'; created_at: string; key: { id: string; name: string; last_used_at: string | null } }
+
 export interface Cap {
   id: string
   category: string | null

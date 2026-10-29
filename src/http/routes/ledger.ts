@@ -5,10 +5,11 @@ import { getUpdates, markSeen } from '../../ledger/updates.js'
 import { addCategory, addCostCenter, deleteCategory, deleteCostCenter, listCategories, listCostCenters, renameCategory, updateCostCenter } from '../../ledger/vocabulary.js'
 import { addWatch, deleteWatch, listWatches } from '../../ledger/watches.js'
 import { addCap, deleteCap, listCaps, updateCap } from '../../ledger/caps.js'
+import { answerQuestion, flagMissingCharge, listQuestions } from '../../ledger/questions.js'
 import type { App, RouteDeps } from '../app.js'
 import {
   CategoryBody, CategoryQuery, CategoryRename, CostCenterBody, CostCenterName, CostCenterPatch, IdParams, NoteBody, RepeatBody, RepeatPatch,
-  SeenBody, SummaryQuery, UpdatesQuery, WatchBody, CapBody, CapPatch,
+  SeenBody, SummaryQuery, UpdatesQuery, WatchBody, CapBody, CapPatch, QuestionParams, AnswerBody, MissingBody,
 } from '../schemas.js'
 
 export function ledgerRoutes(app: App, { run }: RouteDeps) {
@@ -75,6 +76,24 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   }, async (request, reply) => {
     await run(request, (tx, caller) => deleteWatch(tx, caller, request.params.id))
     return reply.status(204).send()
+  })
+
+  app.get('/api/v1/questions', {
+    schema: { tags: ['questions'], summary: 'Kept\'s open questions for the caller, most important first: possible duplicates, caps passed, recurring charges missing from a statement, API keys unused for a year.' },
+  }, async (request) => ({ questions: await run(request, (tx, caller) => listQuestions(tx, caller)) }))
+
+  app.post('/api/v1/questions/:id/answer', {
+    schema: { tags: ['questions'], summary: 'Answer a question; the answers each kind takes are in the body\'s description.', params: QuestionParams, body: AnswerBody },
+  }, async (request, reply) => {
+    await run(request, (tx, caller) => answerQuestion(tx, caller, request.params.id, request.body.answer))
+    return reply.status(204).send()
+  })
+
+  app.post('/api/v1/repeats/:id/missing', {
+    schema: { tags: ['repeats'], summary: 'Record that a statement lacked this recurring charge, as an open question.', params: IdParams, body: MissingBody },
+  }, async (request, reply) => {
+    reply.status(201)
+    return run(request, (tx, caller) => flagMissingCharge(tx, caller, request.params.id, request.body.period))
   })
 
   app.get('/api/v1/caps', {

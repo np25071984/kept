@@ -37,8 +37,8 @@ describe('MCP server', () => {
     expect(client.getInstructions()).toContain('Call get_playbook before the first question about money')
     const tools = (await client.listTools()).tools.map((t) => t.name).sort()
     expect(tools).toEqual([
-      'add_category', 'add_cost_center', 'add_source', 'change_cap', 'delete_category', 'delete_cost_center', 'delete_note', 'delete_transaction',
-      'edit_transaction', 'get_playbook', 'get_summary', 'get_updates', 'invite_member', 'list_cost_centers', 'list_repeats',
+      'add_category', 'add_cost_center', 'add_source', 'answer_question', 'change_cap', 'delete_category', 'delete_cost_center', 'delete_note', 'delete_transaction',
+      'edit_transaction', 'flag_missing_charge', 'get_playbook', 'get_summary', 'get_updates', 'invite_member', 'list_cost_centers', 'list_repeats',
       'list_transactions', 'log_transaction', 'merge_transactions', 'remove_cap', 'rename_category', 'rename_cost_center', 'save_note', 'set_cap', 'set_repeat',
       'stop_repeat', 'stop_watching', 'update_note', 'update_repeat', 'update_setup', 'watch_group',
     ])

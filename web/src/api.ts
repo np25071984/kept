@@ -1,5 +1,5 @@
 import { accessToken } from './auth.js'
-import type { ApiKey, Cap, Connection, CostCenter, Invite, Member, Note, Recurring, Setup, Transaction, Update, Watch } from './lib/types.js'
+import type { ApiKey, Cap, Connection, CostCenter, Invite, Member, Note, Question, Recurring, Setup, Transaction, Watch } from './lib/types.js'
 
 // The REST API (IMPLEMENTATION.md §3), with the signed-in member's token.
 
@@ -56,6 +56,8 @@ export const api = {
   makeRecurring: (body: { transaction_id: string; frequency: string; interval?: number; anchor?: string }) => call<Recurring>('POST', '/api/v1/repeats', body),
   updateRecurring: (id: string, patch: { amount?: number; frequency?: string; interval?: number; anchor?: string; ends_on?: string | null; paused?: boolean }) => call<Recurring>('PATCH', `/api/v1/repeats/${id}`, patch),
   deleteRecurring: (id: string) => call<void>('DELETE', `/api/v1/repeats/${id}`),
+  questions: () => call<{ questions: Question[] }>('GET', '/api/v1/questions').then((r) => r.questions),
+  answer: (id: string, answer: string) => call<void>('POST', `/api/v1/questions/${encodeURIComponent(id)}/answer`, { answer }),
   caps: () => call<{ caps: Cap[] }>('GET', '/api/v1/caps').then((r) => r.caps),
   addCap: (body: { category?: string; cost_center?: string; amount: number; period: string }) => call<Cap>('POST', '/api/v1/caps', body),
   updateCap: (id: string, patch: { amount?: number; period?: string }) => call<Cap>('PATCH', `/api/v1/caps/${id}`, patch),
@@ -78,8 +80,6 @@ export const api = {
   merge: (keepId: string, otherId: string) => call<Transaction>('POST', `/api/v1/transactions/${keepId}/merge`, { other_id: otherId }),
   categories: () => call<{ categories: { path: string }[] }>('GET', '/api/v1/categories').then((r) => r.categories.map((c) => c.path)),
   costCenters: () => call<{ cost_centers: CostCenter[] }>('GET', '/api/v1/cost-centers').then((r) => r.cost_centers),
-  updates: (all = false) => call<{ updates: Update[] }>('GET', `/api/v1/updates${all ? '?all=true' : ''}`).then((r) => r.updates),
-  markSeen: (ids: string[]) => call<{ marked: number }>('POST', '/api/v1/updates/seen', { ids }),
 
   addCategory: (path: string) => call('POST', '/api/v1/categories', { path }),
   renameCategory: (path: string, newPath: string) => call('PATCH', '/api/v1/categories', { path, new_path: newPath }),

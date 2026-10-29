@@ -57,13 +57,14 @@ function query(params: Record<string, unknown>): string {
 
 // The playbook, the household's vocabulary, the user's notes and watched groups, and what to do first, in one call.
 export async function playbook(rest: Rest, now = new Date()) {
-  const [setup, categories, costCenters, notes, watches, caps] = await Promise.all([
+  const [setup, categories, costCenters, notes, watches, caps, questions] = await Promise.all([
     rest('GET', '/api/v1/setup'),
     rest('GET', '/api/v1/categories'),
     rest('GET', '/api/v1/cost-centers'),
     rest('GET', '/api/v1/notes'),
     rest('GET', '/api/v1/watches'),
     rest('GET', '/api/v1/caps'),
+    rest('GET', '/api/v1/questions'),
   ])
   const s = setup.body as { household: { name: string; currency: string; timezone: string; next_step: string | null }; you: { introduced: boolean; role: string } }
   let startWith = 'Setup is done. Handle the user\'s request.'
@@ -80,6 +81,7 @@ export async function playbook(rest: Rest, now = new Date()) {
     notes: (notes.body as { notes: unknown[] }).notes,
     watching: (watches.body as { watches: unknown[] }).watches,
     caps: (caps.body as { caps: unknown[] }).caps,
+    questions: (questions.body as { questions: unknown[] }).questions,
     playbook: PLAYBOOK,
   }
 }
@@ -208,6 +210,20 @@ export function registerTools(server: McpServer, rest: Rest) {
     inputSchema: { id },
     annotations: destroy,
   }, async ({ id }) => result(await rest('DELETE', `/api/v1/watches/${id}`)))
+
+  server.registerTool('answer_question', {
+    title: 'Answer an open question',
+    description: 'Record the user\'s answer to one of get_playbook\'s questions. duplicate: merge or different; cap: remove or keep; missing_charge: stop or still_paying; unused_key: revoke or keep.',
+    inputSchema: { id: z.string(), answer: z.string() },
+    annotations: write,
+  }, async ({ id, answer }) => result(await rest('POST', `/api/v1/questions/${encodeURIComponent(id)}/answer`, { answer })))
+
+  server.registerTool('flag_missing_charge', {
+    title: 'Flag a missing recurring charge',
+    description: 'A statement should have included a recurring charge and didn\'t, and the user hasn\'t said whether they cancelled it: keep it as an open question.',
+    inputSchema: { repeat_id: id, period: z.string().describe('The statement\'s month, e.g. "October".') },
+    annotations: write,
+  }, async ({ repeat_id, period }) => result(await rest('POST', `/api/v1/repeats/${repeat_id}/missing`, { period })))
 
   server.registerTool('set_cap', {
     title: 'Set a cap',

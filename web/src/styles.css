@@ -220,3 +220,4 @@ a.tag { position: relative; z-index: 1; text-decoration: none; display: inline-f
 .meter { height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; margin: 6px 0 4px; }
 .meter > span { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
 .meter.over > span { background: var(--danger); }
+a.button { display: inline-block; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); text-decoration: none; color: inherit; }

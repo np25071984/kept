@@ -33,6 +33,7 @@ export interface Database {
     created_at: Generated<Date>
     last_used_at: Timestamp | null
     revoked_at: Timestamp | null
+    kept_at: Timestamp | null
   }
   categories: {
     id: Generated<string>
@@ -117,12 +118,14 @@ export interface Database {
     id: Generated<string>
     household_id: string
     user_id: string
-    kind: 'repeat_registered' | 'possible_duplicate'
+    kind: 'repeat_registered' | 'possible_duplicate' | 'missing_charge'
     text: string
     transaction_id: string | null
     other_transaction_id: string | null
+    repeat_id: string | null
     created_at: Generated<Date>
     seen_at: Timestamp | null
+    resolved_at: Timestamp | null
   }
   watches: {
     id: Generated<string>
@@ -140,6 +143,7 @@ export interface Database {
     cost_center_id: string | null
     amount: Numeric
     period: 'month' | 'year'
+    kept_period: string | null
     created_at: Generated<Date>
   }
   notes: {

@@ -90,6 +90,12 @@ describe('repeats', () => {
 
     expect((await sam.post('/api/v1/updates/seen', { ids: [updates[0].id] })).body.marked).toBe(1)
     expect((await sam.get('/api/v1/updates')).body.updates).toEqual([])
+
+    const missing = await sam.post(`/api/v1/repeats/${repeat.body.id}/missing`, { period: 'October' })
+    expect(missing.body.text).toBe('No Verizon charge on your October statement. Did you cancel it?')
+    expect((await sam.get('/api/v1/questions')).body.questions).toContainEqual(expect.objectContaining({ id: missing.body.id, kind: 'missing_charge' }))
+    expect((await sam.post(`/api/v1/questions/${missing.body.id}/answer`, { answer: 'still_paying' })).status).toBe(204)
+    expect((await sam.get('/api/v1/questions')).body.questions.some((q: { id: string }) => q.id === missing.body.id)).toBe(false)
   })
 
   it('takes the real amount from the bill and uses it from then on', async () => {

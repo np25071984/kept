@@ -93,6 +93,10 @@ export const CapBody = Type.Object({
 })
 export const CapPatch = Type.Object({ amount: Type.Optional(Amount), period: Type.Optional(Type.Union([Type.Literal('month'), Type.Literal('year')])) })
 
+export const QuestionParams = Type.Object({ id: Type.String({ minLength: 3, description: 'A question id from GET /api/v1/questions, e.g. "cap:…".' }) })
+export const AnswerBody = Type.Object({ answer: Type.String({ description: 'duplicate: merge or different; cap: remove or keep; missing_charge: stop or still_paying; unused_key: revoke or keep.' }) })
+export const MissingBody = Type.Object({ period: Type.String({ minLength: 1, description: 'The statement it was missing from, e.g. "October".' }) })
+
 export const WatchBody = Type.Object({
   category: Type.Optional(Nullable(Type.String({ description: 'A category or subcategory, e.g. "Groceries/Alcohol".' }))),
   item: Type.Optional(Nullable(Type.String({ description: 'An item bought across categories, e.g. "snacks".' }))),

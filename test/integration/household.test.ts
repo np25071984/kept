@@ -84,6 +84,7 @@ describe('two members of one household', () => {
     expect(res.body.result).toBe('possible_duplicate')
     const updates = await sam.get('/api/v1/updates')
     expect(updates.body.updates).toEqual([expect.objectContaining({ kind: 'possible_duplicate', transaction_id: res.body.transaction.id })])
+    expect((await sam.get('/api/v1/questions')).body.questions).toEqual([expect.objectContaining({ kind: 'duplicate', later: expect.objectContaining({ id: res.body.transaction.id }) })])
 
     const target = updates.body.updates[0].other_transaction_id
     const merged = await sam.post(`/api/v1/transactions/${target}/merge`, { other_id: res.body.transaction.id })
@@ -149,6 +150,11 @@ describe('two members of one household', () => {
     const second = await alex.post('/api/v1/transactions', { amount: 30, merchant: 'Chipotle', category: 'Eating out' })
     expect(second.body.caps).toEqual(['That puts Eating out $15.00 over the cap this month.'])
     expect((await alex.get('/api/v1/caps')).body.caps).toMatchObject([{ spent: 115, state: 'over' }])
+    const question = (await alex.get('/api/v1/questions')).body.questions.find((q: { kind: string }) => q.kind === 'cap')
+    expect(question).toMatchObject({ cap: { name: 'Eating out', spent: 115 } })
+    expect((await alex.post(`/api/v1/questions/${question.id}/answer`, { answer: 'merge' })).status).toBe(422)
+    expect((await alex.post(`/api/v1/questions/${question.id}/answer`, { answer: 'keep' })).status).toBe(204)
+    expect((await alex.get('/api/v1/questions')).body.questions.filter((q: { kind: string }) => q.kind === 'cap')).toEqual([])
     expect((await sam.get('/api/v1/caps')).body.caps).toEqual([])
     expect((await sam.delete(`/api/v1/caps/${cap.body.id}`)).status).toBe(404)
   })

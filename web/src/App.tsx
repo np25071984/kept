@@ -12,7 +12,7 @@ import { PurchasePage } from './pages/Purchase.js'
 import { PurchasesPage } from './pages/Purchases.js'
 import { RecurringPage } from './pages/Recurring.js'
 import { GeneralPage, HouseholdLayout, ProfilePage, SettingsLayout } from './pages/Settings.js'
-import { UpdatesPage } from './pages/Updates.js'
+import { NotificationsPage } from './pages/Notifications.js'
 import { messageFor, SessionContext, SIGNED_OUT, useLoad, type Session } from './session.js'
 
 export function App() {
@@ -26,7 +26,7 @@ export function App() {
           <Route path="purchases/:id" element={<PurchasePage />} />
           <Route path="recurring" element={<RecurringPage />} />
           <Route path="reports/*" element={<p className="empty">Reports will show here.</p>} />
-          <Route path="notifications" element={<UpdatesPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
           <Route path="preferences" element={<PreferencesPage />} />
           <Route path="settings" element={<SettingsLayout />}>
             <Route index element={<Navigate to="profile" replace />} />
@@ -104,14 +104,14 @@ function Shell() {
 function SignedIn({ onSignOut }: { onSignOut: () => void }) {
   const base = useLoad(() => Promise.all([api.setup(), api.categories(), api.costCenters()]), [])
   const [unseenVersion, setUnseenVersion] = useState(0)
-  const updates = useLoad(() => api.updates(), [unseenVersion])
+  const questions = useLoad(() => api.questions(), [unseenVersion])
   const refreshUnseen = useCallback(() => setUnseenVersion((v) => v + 1), [])
 
   if (base.error) return <Centered><p className="error">{base.error}</p><button onClick={base.reload}>Try again</button></Centered>
   // A reload keeps the last data on screen, so editing the vocabulary doesn't flash the whole app.
   if (!base.data) return <Centered><p className="muted">Loading…</p></Centered>
   const [setup, categories, costCenters] = base.data
-  const session: Session = { setup, categories, costCenters, unseen: updates.data?.length ?? 0, refreshUnseen, refreshVocabulary: base.reload }
+  const session: Session = { setup, categories, costCenters, unseen: questions.data?.length ?? 0, refreshUnseen, refreshVocabulary: base.reload }
   return (
     <SessionContext.Provider value={session}>
       <Header onSignOut={onSignOut} />
