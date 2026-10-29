@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
-import { BrowserRouter, Navigate, NavLink, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router'
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { api } from './api.js'
 import { completeSignIn, hasSession, signIn, signOut } from './auth.js'
-import { HouseholdPage } from './pages/Household.js'
-import { MePage } from './pages/Me.js'
+import { Header } from './Header.js'
+import { AssistantsPage } from './pages/Assistants.js'
+import { CategoriesPage, PeoplePage } from './pages/Household.js'
+import { NotesSection } from './pages/Memory.js'
+import { PreferencesPage } from './pages/Preferences.js'
 import { PurchasePage } from './pages/Purchase.js'
 import { PurchasesPage } from './pages/Purchases.js'
+import { HouseholdLayout, ProfilePage, SettingsLayout } from './pages/Settings.js'
 import { UpdatesPage } from './pages/Updates.js'
 import { messageFor, SessionContext, SIGNED_OUT, useLoad, type Session } from './session.js'
 
@@ -18,9 +22,25 @@ export function App() {
           <Route index element={<Navigate to="/purchases" replace />} />
           <Route path="purchases" element={<PurchasesPage />} />
           <Route path="purchases/:id" element={<PurchasePage />} />
-          <Route path="updates" element={<UpdatesPage />} />
-          <Route path="household" element={<HouseholdPage />} />
-          <Route path="me" element={<MePage />} />
+          <Route path="recurring" element={<p className="empty">Recurring bills will show here.</p>} />
+          <Route path="reports/*" element={<p className="empty">Reports will show here.</p>} />
+          <Route path="notifications" element={<UpdatesPage />} />
+          <Route path="preferences" element={<PreferencesPage />} />
+          <Route path="settings" element={<SettingsLayout />}>
+            <Route index element={<Navigate to="profile" replace />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="household" element={<HouseholdLayout />}>
+              <Route index element={<Navigate to="categories" replace />} />
+              <Route path="categories" element={<CategoriesPage />} />
+              <Route path="people" element={<PeoplePage />} />
+            </Route>
+            <Route path="assistants" element={<AssistantsPage />} />
+            <Route path="notes" element={<NotesSection />} />
+          </Route>
+          {/* Addresses from before the settings pages. */}
+          <Route path="updates" element={<Navigate to="/notifications" replace />} />
+          <Route path="household" element={<Navigate to="/settings/household" replace />} />
+          <Route path="me" element={<Navigate to="/settings/assistants" replace />} />
           <Route path="*" element={<p className="empty">There's nothing here.</p>} />
         </Route>
       </Routes>
@@ -90,23 +110,7 @@ function SignedIn({ onSignOut }: { onSignOut: () => void }) {
   const session: Session = { setup, categories, costCenters, unseen: updates.data?.length ?? 0, refreshUnseen, refreshVocabulary: base.reload }
   return (
     <SessionContext.Provider value={session}>
-      <header className="topbar">
-        <div className="topbar-inner">
-          <span className="brand"><img src="/app/icon.svg" width="22" height="22" alt="" />Kept</span>
-          <nav>
-            <NavLink to="/purchases">My purchases</NavLink>
-            <NavLink to="/updates">
-              Updates{session.unseen > 0 && <span className="badge" aria-label={`${session.unseen} new`}>{session.unseen}</span>}
-            </NavLink>
-            <NavLink to="/household">Household</NavLink>
-            <NavLink to="/me">Me</NavLink>
-          </nav>
-          <div className="me">
-            <span title={setup.you.email}>{setup.you.name}</span>
-            <button className="link" onClick={onSignOut}>Sign out</button>
-          </div>
-        </div>
-      </header>
+      <Header onSignOut={onSignOut} />
       <main className="page">
         <Outlet />
       </main>

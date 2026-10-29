@@ -1,54 +1,55 @@
+import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { api } from '../api.js'
+import { IconButton } from '../IconButton.js'
 import type { CostCenter } from '../lib/types.js'
 import { categoryTree } from '../lib/vocabulary.js'
 import { useAction, useSession } from '../session.js'
 
-// The household's shared vocabulary (VISION.md §4.C, "Household").
-export function HouseholdPage() {
-  const { setup } = useSession()
+// Settings → Household → Categories (VISION.md §4.C): add, rename and delete in place; three levels at most.
+export function CategoriesPage() {
+  const { categories } = useSession()
+  const [adding, setAdding] = useState(false)
   return (
-    <>
-      <div className="page-head">
-        <h1>{setup.household.name}</h1>
-        <p className="muted">Shared by everyone in the household · {setup.household.currency}</p>
+    <section className="section">
+      <div className="section-head">
+        <p className="muted small" style={{ margin: 0 }}>Up to three levels. Renaming keeps every purchase in it; a category can be deleted once nothing uses it.</p>
+        {!adding && <button onClick={() => setAdding(true)}>Add category</button>}
       </div>
-      <Categories />
-      <CostCenters />
-    </>
+      <ul className="list">
+        {adding && <li className="list-row"><NewCategory parent={null} onDone={() => setAdding(false)} /></li>}
+        {categoryTree(categories).map((row) => <CategoryRow key={row.path} path={row.path} name={row.name} depth={row.depth} />)}
+      </ul>
+    </section>
   )
 }
 
-function Categories() {
-  const { categories, refreshVocabulary } = useSession()
-  const [path, setPath] = useState('')
+// A field for a new category, top-level or under `parent`, so nobody types paths.
+function NewCategory({ parent, onDone }: { parent: string | null; onDone: () => void }) {
+  const { refreshVocabulary } = useSession()
+  const [name, setName] = useState('')
   const { busy, error, act } = useAction()
   const add = async (event: FormEvent) => {
     event.preventDefault()
-    if (await act(() => api.addCategory(path.trim()))) {
-      setPath('')
+    if (await act(() => api.addCategory(parent ? `${parent}/${name.trim()}` : name.trim()))) {
       refreshVocabulary()
+      onDone()
     }
   }
   return (
-    <section className="section">
-      <h2>Categories</h2>
-      <p className="muted small">Up to three levels, like Car/Fuel/Diesel. Renaming keeps every purchase in it; a category can be deleted once nothing uses it.</p>
-      <ul className="list">
-        {categoryTree(categories).map((row) => <CategoryRow key={row.path} path={row.path} name={row.name} depth={row.depth} />)}
-      </ul>
-      <form className="row" onSubmit={add}>
-        <input className="grow" value={path} onChange={(e) => setPath(e.target.value)} placeholder="New category, e.g. Car/Parking" aria-label="New category" />
-        <button type="submit" disabled={busy || !path.trim()}>Add</button>
-      </form>
-      {error && <p className="error">{error}</p>}
-    </section>
+    <form className="row tight grow" onSubmit={add}>
+      <span className="muted small">{parent ? `New under ${parent}` : 'New category'}</span>
+      <input className="grow" value={name} onChange={(e) => setName(e.target.value)} aria-label={parent ? `New category under ${parent}` : 'New category'} autoFocus style={{ maxWidth: 260 }} />
+      <button type="submit" className="primary" disabled={busy || !name.trim() || name.includes('/')}>Add</button>
+      <button type="button" onClick={onDone}>Cancel</button>
+      {error && <p className="error full">{error}</p>}
+    </form>
   )
 }
 
 function CategoryRow({ path, name, depth }: { path: string; name: string; depth: number }) {
   const { refreshVocabulary } = useSession()
-  const [mode, setMode] = useState<'view' | 'rename' | 'delete'>('view')
+  const [mode, setMode] = useState<'view' | 'rename' | 'delete' | 'add'>('view')
   const [newPath, setNewPath] = useState(path)
   const { busy, error, act, clearError } = useAction()
   const done = () => {
@@ -56,44 +57,48 @@ function CategoryRow({ path, name, depth }: { path: string; name: string; depth:
     refreshVocabulary()
   }
   return (
-    <li className={`list-row depth-${depth}`}>
-      {mode === 'rename' ? (
-        <form className="row tight grow" onSubmit={(e) => { e.preventDefault(); void act(() => api.renameCategory(path, newPath.trim())).then((ok) => ok && done()) }}>
-          <input className="grow" value={newPath} onChange={(e) => setNewPath(e.target.value)} aria-label={`New path for ${path}`} autoFocus />
-          <button type="submit" className="primary" disabled={busy}>Rename</button>
-          <button type="button" onClick={() => { setMode('view'); setNewPath(path); clearError() }}>Cancel</button>
-        </form>
-      ) : (
-        <span className="grow">{name}</span>
-      )}
-      {mode === 'delete' && (
-        <div className="row tight">
-          <span className="muted small">Delete {path}?</span>
-          <button className="danger" disabled={busy} onClick={() => void act(() => api.deleteCategory(path)).then((ok) => ok && done())}>Delete</button>
-          <button onClick={() => { setMode('view'); clearError() }}>Keep</button>
-        </div>
-      )}
-      {mode === 'view' && (
-        <div className="row tight">
-          <button className="link" onClick={() => setMode('rename')}>Rename</button>
-          <button className="link" onClick={() => setMode('delete')}>Delete</button>
-        </div>
-      )}
-      {error && <p className="error full">{error}</p>}
-    </li>
+    <>
+      <li className={`list-row depth-${depth}`}>
+        {mode === 'rename' ? (
+          <form className="row tight grow" onSubmit={(e) => { e.preventDefault(); void act(() => api.renameCategory(path, newPath.trim())).then((ok) => ok && done()) }}>
+            <input className="grow" value={newPath} onChange={(e) => setNewPath(e.target.value)} aria-label={`New path for ${path}`} autoFocus />
+            <button type="submit" className="primary" disabled={busy}>Rename</button>
+            <button type="button" onClick={() => { setMode('view'); setNewPath(path); clearError() }}>Cancel</button>
+          </form>
+        ) : (
+          <span className="grow">{name}</span>
+        )}
+        {mode === 'delete' && (
+          <div className="row tight">
+            <span className="muted small">Delete {path}?</span>
+            <button className="danger" disabled={busy} onClick={() => void act(() => api.deleteCategory(path)).then((ok) => ok && done())}>Delete</button>
+            <button onClick={() => { setMode('view'); clearError() }}>Keep</button>
+          </div>
+        )}
+        {(mode === 'view' || mode === 'add') && (
+          <div className="row tight">
+            {depth < 2 && <IconButton icon={Plus} label={`Add subcategory under ${path}`} onClick={() => setMode('add')} />}
+            <IconButton icon={Pencil} label={`Rename ${path}`} onClick={() => setMode('rename')} />
+            <IconButton icon={Trash2} label={`Delete ${path}`} danger onClick={() => setMode('delete')} />
+          </div>
+        )}
+        {error && <p className="error full">{error}</p>}
+      </li>
+      {mode === 'add' && <li className={`list-row depth-${depth + 1}`}><NewCategory parent={path} onDone={done} /></li>}
+    </>
   )
 }
 
-function CostCenters() {
+// Settings → Household → People & things.
+export function PeoplePage() {
   const { costCenters } = useSession()
   const [adding, setAdding] = useState(false)
   return (
     <section className="section">
       <div className="section-head">
-        <h2>People &amp; things</h2>
+        <p className="muted small" style={{ margin: 0 }}>Who and what money is spent for. The kind tells your assistant which purchases each one could be for: fuel for a Car, rent for a Home.</p>
         {!adding && <button onClick={() => setAdding(true)}>Add a person or thing</button>}
       </div>
-      <p className="muted small">The people, cars, homes and projects money is spent for. The kind tells your assistant which purchases each one could be for.</p>
       {adding && <CostCenterEditor onDone={() => setAdding(false)} />}
       <ul className="list">
         {costCenters.map((cc) => <CostCenterRow key={cc.name} cc={cc} />)}
@@ -119,8 +124,8 @@ function CostCenterRow({ cc }: { cc: CostCenter }) {
         </div>
       ) : (
         <div className="row tight">
-          <button className="link" onClick={() => setMode('edit')}>Edit</button>
-          <button className="link" onClick={() => setMode('delete')}>Delete</button>
+          <IconButton icon={Pencil} label={`Edit ${cc.name}`} onClick={() => setMode('edit')} />
+          <IconButton icon={Trash2} label={`Delete ${cc.name}`} danger onClick={() => setMode('delete')} />
         </div>
       )}
       {error && <p className="error full">{error}</p>}

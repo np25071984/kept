@@ -1,23 +1,15 @@
 import { useState, type FormEvent } from 'react'
 import { api } from '../api.js'
 import type { ApiKey, Connection } from '../lib/types.js'
-import { useAction, useLoad, useSession } from '../session.js'
-import { NotesSection, WatchingSection } from './Memory.js'
+import { useAction, useLoad } from '../session.js'
 
-// The member's own settings: connecting assistants, API keys, watched groups and notes (VISION.md §4.C, "Me").
-export function MePage() {
-  const { setup } = useSession()
+// Settings → Assistants & keys: connecting an assistant over MCP, its connections and API keys (VISION.md §4.C).
+export function AssistantsPage() {
   return (
     <>
-      <div className="page-head">
-        <h1>{setup.you.name}</h1>
-        <p className="muted">{setup.you.email} · {setup.you.role === 'owner' ? 'Owner' : 'Member'}</p>
-      </div>
       <ConnectAssistant />
       <Connections />
       <ApiKeys />
-      <WatchingSection />
-      <NotesSection />
     </>
   )
 }
