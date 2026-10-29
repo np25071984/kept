@@ -1,3 +1,5 @@
+import { zoneOptions } from '../domain/timezones.js'
+
 // The sign-in and consent pages an assistant opens when a member connects Kept. Plain server-rendered HTML.
 
 export function escape(value: string): string {
@@ -88,7 +90,9 @@ ${cancel(uid)}`)
 // After the code, for an email with no account and no invite (docs/mockups/create-household.html).
 export function createPage(uid: string, email: string, error?: string): string {
   const currencies = Intl.supportedValuesOf('currency').map((code) => `<option value="${code}"${code === 'USD' ? ' selected' : ''}>${code}</option>`).join('')
-  const zones = Intl.supportedValuesOf('timeZone').map((zone) => `<option value="${zone}">${zone.replaceAll('_', ' ')}</option>`).join('')
+  const groups = new Map<string, string[]>()
+  for (const o of zoneOptions(Intl.supportedValuesOf('timeZone'), new Date())) groups.set(o.region, [...(groups.get(o.region) ?? []), `<option value="${escape(o.id)}">${escape(o.label)}</option>`])
+  const zones = [...groups].map(([region, options]) => `<optgroup label="${escape(region)}">${options.join('')}</optgroup>`).join('')
   return layout('Create your household', `
 <h1>Create your household</h1>
 <p>${escape(email)} isn't in a household yet. Joining someone else's? Ask them to invite this email, then sign in again.</p>

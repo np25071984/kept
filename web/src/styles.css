@@ -30,7 +30,7 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 button.danger { color: var(--danger); }
 button.link { border: 0; background: none; padding: 4px; color: var(--accent); }
 input, select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); min-width: 0; width: 100%; }
-label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+label, .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
 label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 14px; color: var(--fg); }
 label.check input { width: auto; }
 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
@@ -163,3 +163,19 @@ code { font-size: 13px; }
 .icon-btn.danger:hover { color: var(--danger); }
 .form { display: grid; gap: 14px; max-width: 520px; }
 .form label > .small { margin-top: 2px; }
+.picker { position: relative; display: grid; gap: 4px; }
+.picker-trigger { display: flex; gap: 8px; align-items: center; width: 100%; text-align: left; padding: 8px 10px; white-space: nowrap; overflow: hidden; color: var(--fg); font-size: 15px; }
+.picker-trigger .detail { margin-left: auto; color: var(--muted); font-size: 13px; }
+.picker-trigger[aria-expanded="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
+.picker-panel { position: absolute; left: 0; right: 0; top: 44px; z-index: 20; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 32px rgb(0 0 0 / 0.16); }
+.picker-panel ul { list-style: none; margin: 6px 0 0; padding: 0; max-height: 280px; overflow-y: auto; }
+.picker-panel li { display: flex; gap: 8px; padding: 6px 8px; border-radius: 6px; font-size: 14px; color: var(--fg); cursor: pointer; }
+.picker-panel li.region { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; cursor: default; padding-top: 10px; }
+.picker-panel li.active { background: var(--bg); }
+.picker-panel li.selected { color: var(--accent); font-weight: 600; }
+.picker .off { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 92px; }
+.picker-trigger .off { min-width: 0; }
+.picker li.selected .off { color: inherit; }
+.search-field { position: relative; display: block; }
+.search-field svg { position: absolute; left: 10px; top: 50%; margin-top: -8px; color: var(--muted); pointer-events: none; }
+.search-field input { padding-left: 34px; }

@@ -92,10 +92,10 @@ export function GeneralPage() {
         </select>
         <span className="small muted">{setup.household.currency_locked ? 'Fixed after the first purchase.' : 'Can change until the first purchase.'}</span>
       </label>
-      <label>Time zone
+      <div className="field">Time zone
         <TimeZoneField value={form.timezone} disabled={!owner} onChange={(timezone) => setForm({ ...form, timezone })} />
         <span className="small muted">"Today", recurring bills and monthly totals follow it, for everyone in the household.</span>
-      </label>
+      </div>
       {error && <p className="error">{error}</p>}
       {owner && (
         <div className="row tight">
