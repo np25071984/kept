@@ -433,7 +433,7 @@ A cap is a personal soft reminder: "I don't want to spend more than $1,000 on gr
 
 - **It reminds, it never blocks.** Purchases over a cap are logged like any other.
 - **The agent mentions it when it matters.** Once a purchase that counts toward a cap takes it past 80%, the confirmation says so: "Log $64 at Trader Joe's? That's $860 of your $1,000 groceries cap this month." Crossing it gets one line: "That puts groceries $40 over your cap for October." Below 80% it says nothing.
-- **Set in conversation or on the web.** "Cap eating out at $250 a month" is saved after the user confirms, like a rule. My spending shows each cap's progress.
+- **Set in conversation or on the web.** "Cap eating out at $250 a month" is saved after the user confirms, like a rule. Me lists each cap's progress, and My spending shows the ones past 80%.
 
 #### Households, Accounts and Privacy
 
@@ -511,7 +511,7 @@ Every member signs in with their own account and sees:
 | **Updates**            | What the ledger did on its own ("Registered repeating phone expense, $50"), plus uncategorized transactions and possible duplicates to fix or merge. |
 | **Repeats**            | The member's repeats with next date and amount. Pause, edit or stop them. Any purchase can be made to repeat from its detail view. |
 | **My purchases**       | The member's own purchase history, private ones included and marked. Search and filter by date, merchant, category, cost center, item and source. Open a purchase to see its line items, shares and sources (what was read from a receipt, email or bank charge), edit it, mark it private or delete it. |
-| **My spending**        | Graphs of the member's own spending, private purchases included, with their watched groups and caps. |
+| **My spending**        | Graphs of the member's own spending, private purchases included, with their watched groups and the caps past 80%. |
 | **Household spending** | Graphs of the household's spending: every member's non-private purchases, by category, cost center and item. |
 | **Household**          | Shared cost centers and categories, in tabs. Owners also invite and remove members and set the household's name and currency. |
 | **Me**                 | Profile, the member's rules, notes and caps, and connections: connect an assistant over MCP and manage API keys. |

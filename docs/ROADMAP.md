@@ -30,7 +30,7 @@ Looking back, fixing and managing (`VISION.md` §4.C). Started before Phase 3's 
 - [ ] Paging for My purchases, and filters for source, privacy and a merchant-or-item search.
 - [ ] Profile on the Me page (name, time zone) and household settings (name, currency).
 - [ ] Rules and notes are personal only: drop household-wide ones from the API, tools and playbook, and ask a new member what to watch (`VISION.md` §4.A, "Rules", "Notes").
-- [ ] Caps: storage, API, tools, the playbook's reminders and the My spending card (`VISION.md` §4.A, "Caps").
+- [ ] Caps: storage, API, tools, the playbook's reminders the Me section and the My spending line (`VISION.md` §4.A, "Caps").
 - [x] Household and Me pages: shared vocabulary, rules and notes, connecting an assistant, API keys.
 - [x] Mockups of every page, the spending graphs included (`docs/mockups/`).
 - [ ] My spending and Household spending pages, as `docs/mockups/my-spending.html` and `household-spending.html` show.
