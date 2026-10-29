@@ -1,6 +1,6 @@
 import { t } from '../i18n.js'
 
-// My purchases' filters (docs/mockups/purchases.html): kept in the URL, turned into API parameters and chips.
+// My purchases' filters: kept in the URL, turned into API parameters and chips.
 // Categories are a three-state tree: `cats` are whole branches, `only` are parents whose own purchases count while
 // some of their subcategories don't.
 

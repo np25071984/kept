@@ -241,6 +241,13 @@ describe('OAuth2 for MCP clients', () => {
     expect((await authorizeWith('https://elsewhere.example/cb')).status).toBe(400)
   })
 
+  it('serves the landing page at / in the browser\'s language', async () => {
+    const page = await fetch(`${base}/`, { headers: { 'accept-language': 'ru-RU,ru;q=0.9' } })
+    expect(page.status).toBe(200)
+    expect(page.headers.get('content-security-policy')).toContain("frame-ancestors 'none'")
+    expect(await page.text()).toContain('<html lang="ru">')
+  })
+
   it('signs a member in to the web UI without a consent page, and serves the app', async () => {
     const callbackUrl = `${base}/app/callback`
     const verifier = randomBytes(32).toString('base64url')

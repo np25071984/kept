@@ -16,7 +16,7 @@ const monthName = (ym: string, style: 'short' | 'long' = 'short') => new Intl.Da
 const dayRange = (from: string, to: string) =>
   new Intl.DateTimeFormat(locale(), { month: 'short', day: 'numeric', timeZone: 'UTC' }).formatRange(new Date(`${from}T00:00:00Z`), new Date(`${to}T00:00:00Z`))
 
-// Reports · Mine and Reports · Household (docs/mockups/reports*.html): the trend, then a chosen period broken down in tabs.
+// Reports · Mine and Reports · Household: the trend, then a chosen period broken down in tabs.
 export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
   const { setup } = useSession()
   const today = todayIn(setup.household.timezone)

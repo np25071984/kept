@@ -7,7 +7,7 @@ import type { Cap } from '../lib/types.js'
 import { useAction, useLoad, useSession } from '../session.js'
 import { t } from '../i18n.js'
 
-// Preferences → Caps (docs/mockups/preferences.html): soft reminders with this month's or year's progress.
+// Preferences → Caps: soft reminders with this month's or year's progress.
 export function CapsSection() {
   const list = useLoad(() => api.caps(), [])
   const [mode, setMode] = useState<'list' | 'add' | string>('list')

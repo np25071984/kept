@@ -7,7 +7,7 @@ import { t } from '../i18n.js'
 
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString(locale(), { month: 'short', day: 'numeric' })
 
-// Settings → Household → Members (docs/mockups/settings-household.html): owners invite, promote and remove; members see the list.
+// Settings → Household → Members: owners invite, promote and remove; members see the list.
 export function MembersPage() {
   const { setup } = useSession()
   const owner = setup.you.role === 'owner'

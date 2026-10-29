@@ -5,7 +5,7 @@ import { useSession } from './session.js'
 import { api } from './api.js'
 import { language, setLanguage, t, type Language } from './i18n.js'
 
-// The header every signed-in page shares (docs/mockups): pages for looking back, the bell, and the user menu.
+// The header every signed-in page shares (VISION.md §4.C): pages for looking back, the bell, and the user menu.
 export function Header({ onSignOut }: { onSignOut: () => void }) {
   const { setup, unseen } = useSession()
   const { pathname } = useLocation()
@@ -67,7 +67,7 @@ function Menu({ label, className, active, align, children }: { label: string; cl
   )
 }
 
-// The language menu (docs/mockups/index.html): saved to the account, so emails follow it too.
+// The language menu (VISION.md §4.C): saved to the account, so emails follow it too.
 function LanguageMenu() {
   const ref = useRef<HTMLDetailsElement>(null)
   const pick = async (lang: Language) => {

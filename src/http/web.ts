@@ -2,9 +2,11 @@ import { existsSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import fastifyStatic from '@fastify/static'
+import { requestLanguage } from '../oauth/language.js'
 import type { App } from './app.js'
+import { LANDING_CSP, landingPage } from './landing.js'
 
-// Serves the built web UI at /app/ (IMPLEMENTATION.md §6). Every path the app routes itself gets index.html.
+// Serves the landing page at / and the built web UI at /app/ (IMPLEMENTATION.md §6). Every path the app routes itself gets index.html.
 
 const here = dirname(fileURLToPath(import.meta.url))
 // dist/http/web.js finds dist/web; running from src finds the last build.
@@ -18,7 +20,17 @@ function isFile(path: string): boolean {
 }
 
 export async function webRoutes(app: App, webRoot?: string) {
-  app.get('/', { config: { public: true }, schema: { hide: true } }, async (_request, reply) => reply.redirect('/app/'))
+  app.get('/', { config: { public: true }, schema: { hide: true } }, async (request, reply) =>
+    reply
+      .type('text/html; charset=utf-8')
+      .header('content-security-policy', LANDING_CSP)
+      .header('x-content-type-options', 'nosniff')
+      // The language switch posts to /language, which returns to the page it came from.
+      .header('referrer-policy', 'same-origin')
+      .header('vary', 'cookie, accept-language')
+      .header('cache-control', 'no-cache')
+      .send(landingPage(requestLanguage(request.headers.cookie, request.headers['accept-language']))),
+  )
   const root = (webRoot ? [webRoot] : ROOTS).find((dir) => existsSync(join(dir, 'index.html')))
   if (!root) {
     app.get('/app/*', { config: { public: true }, schema: { hide: true } }, async (_request, reply) =>

@@ -14,7 +14,7 @@ const PAGE = 50
 
 const todayIn = (zone: string) => new Intl.DateTimeFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
 
-// The member's own purchases (docs/mockups/purchases.html): a search, a Filters panel with chips for what's on, grouped by month, paged.
+// The member's own purchases: a search, a Filters panel with chips for what's on, grouped by month, paged.
 export function PurchasesPage() {
   const { setup, categories } = useSession()
   const [params, setParams] = useSearchParams()

@@ -134,7 +134,7 @@ textarea { font: inherit; color: inherit; padding: 8px 10px; border: 1px solid v
 .steps { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
 code { font-size: 13px; }
 
-/* Header menus, the bell and tabs (docs/mockups/mockup.css). */
+/* Header menus, the bell and tabs. */
 .topbar .right { display: flex; align-items: center; gap: 8px; }
 .bell { position: relative; display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; color: var(--fg); }
 .bell.active { background: var(--accent-soft); color: var(--accent); }
@@ -180,7 +180,7 @@ code { font-size: 13px; }
 .search-field svg { position: absolute; left: 10px; top: 50%; margin-top: -8px; color: var(--muted); pointer-events: none; }
 .search-field input { padding-left: 34px; }
 
-/* My purchases: search, Filters panel and chips (docs/mockups/purchases.html). */
+/* My purchases: search, Filters panel and chips. */
 .filterbar { display: flex; gap: 8px; align-items: center; }
 .filtermenu { position: relative; }
 .filtermenu summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); white-space: nowrap; }
@@ -222,7 +222,7 @@ a.tag { position: relative; z-index: 1; text-decoration: none; display: inline-f
 .meter.over > span { background: var(--danger); }
 a.button { display: inline-block; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); text-decoration: none; color: inherit; }
 
-/* Reports (docs/mockups/reports*.html). */
+/* Reports. */
 .card-section { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
 .card-section h3 { margin: 0; font-size: 15px; }
 .num.big { font-size: 20px; }

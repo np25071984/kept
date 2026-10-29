@@ -103,7 +103,7 @@ function Actions({ t, setMode, onSaved }: { t: Transaction; setMode: (mode: 'edi
   )
 }
 
-// "Make it recurring" (docs/mockups/purchase.html): this purchase is the first one; the schedule starts from its date.
+// "Make it recurring": this purchase is the first one; the schedule starts from its date.
 function MakeRecurring({ t, onDone }: { t: Transaction; onDone: (repeatId?: string) => void }) {
   const [every, setEvery] = useState('monthly:1')
   const { busy, error, act } = useAction()

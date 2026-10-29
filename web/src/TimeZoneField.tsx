@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { searchZones, zoneOptions } from './lib/timezones.js'
 import { t } from './i18n.js'
 
-// A searchable time zone picker (docs/mockups/settings-household-details.html): grouped by region, sorted by today's
+// A searchable time zone picker: grouped by region, sorted by today's
 // offset, typed to filter; ↑/↓ and Enter pick, Escape closes. Shows the time there, so a wrong pick shows at once.
 export function TimeZoneField({ value, disabled, onChange }: { value: string; disabled?: boolean; onChange: (zone: string) => void }) {
   const options = useMemo(() => zoneOptions(Intl.supportedValuesOf('timeZone'), new Date()), [])

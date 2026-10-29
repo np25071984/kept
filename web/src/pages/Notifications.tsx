@@ -10,7 +10,7 @@ import { t as tr } from '../i18n.js'
 const SOURCE: Record<string, string> = { talk: 'chat', photo: 'receipt', document: 'receipt', email: 'email', statement: 'statement', other: 'other' }
 const when = (iso: string) => new Date(iso).toLocaleDateString(locale(), { month: 'short', day: 'numeric' })
 
-// Notifications, behind the bell (docs/mockups/notifications.html): Kept's open questions, answered with a button.
+// Notifications, behind the bell: Kept's open questions, answered with a button.
 // The assistant asks the same ones in chat, one per conversation; answering in either place clears them here.
 export function NotificationsPage() {
   const { refreshUnseen } = useSession()

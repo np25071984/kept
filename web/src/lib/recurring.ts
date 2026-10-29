@@ -1,6 +1,6 @@
 import { language, locale, t } from '../i18n.js'
 
-// How a recurring bill's schedule reads on the Recurring page (docs/mockups/recurring.html).
+// How a recurring bill's schedule reads on the Recurring page.
 
 export interface Cadence {
   frequency: 'weekly' | 'monthly' | 'yearly'

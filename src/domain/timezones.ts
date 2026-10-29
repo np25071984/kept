@@ -1,4 +1,4 @@
-// The time zone picker's list (docs/mockups/settings-household-details.html): zones grouped by region, sorted by today's
+// The time zone picker's list: zones grouped by region, sorted by today's
 // GMT offset west to east, labelled "(GMT−04:00) New York", and a search that ignores case and accents.
 
 export interface ZoneOption {

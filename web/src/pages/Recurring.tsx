@@ -12,7 +12,7 @@ import { t } from '../i18n.js'
 
 const short = (date: string, year = false) => new Intl.DateTimeFormat(locale(), { month: 'short', day: 'numeric', ...(year && { year: 'numeric' }), timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`))
 
-// The member's recurring bills (docs/mockups/recurring.html): this month's total, then each with its next date; pause, edit or delete.
+// The member's recurring bills: this month's total, then each with its next date; pause, edit or delete.
 export function RecurringPage() {
   const { setup } = useSession()
   const list = useLoad(() => api.recurring(), [])

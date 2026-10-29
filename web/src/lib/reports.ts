@@ -1,4 +1,4 @@
-// Reports (docs/mockups/reports*.html): the trend, and a period broken down by category, people & things or merchant,
+// Reports: the trend, and a period broken down by category, people & things or merchant,
 // each bar with a tick for the same days of the previous period.
 
 export interface Row { key: string; amount: number; period?: string | null }

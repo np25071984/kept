@@ -101,7 +101,7 @@ ${problem(lang, error)}
 ${cancel(lang, uid)}`)
 }
 
-// After the code, for an email with no account and no invite (docs/mockups/create-household.html).
+// After the code, for an email with no account and no invite.
 export function createPage(lang: Language, uid: string, email: string, error?: string): string {
   const preferred = lang === 'ru' ? 'RUB' : 'USD'
   const currencies = Intl.supportedValuesOf('currency').map((code) => `<option value="${code}"${code === preferred ? ' selected' : ''}>${code}</option>`).join('')

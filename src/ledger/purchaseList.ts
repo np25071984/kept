@@ -5,7 +5,7 @@ import { fromCents, numericToCents } from '../domain/money.js'
 import type { Caller } from './caller.js'
 import { loadViews, type TransactionView } from './transactions.js'
 
-// The caller's purchases, filtered and paged (docs/mockups/purchases.html). Never another member's.
+// The caller's purchases, filtered and paged. Never another member's.
 
 export interface ListFilters {
   from?: string
