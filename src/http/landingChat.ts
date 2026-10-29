@@ -3,7 +3,8 @@ import { tr } from '../i18n.js'
 
 // The landing page's animated chat (VISION.md §4.C): three conversations take turns, the way people log with Kept.
 // The user's text types into the input; the assistant shows a typing indicator before each reply. With reduced
-// motion, a picked conversation shows finished. Each reply follows the playbook: best guess, confirm, one-line result.
+// motion, a picked conversation shows finished. It pauses while the phone is off screen.
+// Each reply follows the playbook: best guess, confirm, one-line result.
 
 export interface Shot {
   kind: 'bank' | 'receipt'
@@ -92,7 +93,17 @@ export const CHAT_SCRIPT = `(() => {
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches
   const placeholder = input.textContent
   let run = 0
-  const wait = (ms, id) => new Promise((resolve, reject) => setTimeout(() => (id === run ? resolve() : reject()), ms))
+  // Paused while the phone is off screen, so nothing moves while the visitor reads the rest of the page.
+  let shown = true
+  let resume = null
+  new IntersectionObserver(([entry]) => {
+    shown = entry.isIntersecting
+    if (shown && resume) resume()
+  }).observe(chat)
+  const onScreen = () => (shown ? Promise.resolve() : new Promise((resolve) => (resume = resolve)))
+  const wait = (ms, id) => new Promise((resolve) => setTimeout(resolve, ms)).then(onScreen).then(() => {
+    if (id !== run) throw new Error('replaced')
+  })
   const el = (tag, cls, text) => {
     const e = document.createElement(tag)
     if (cls) e.className = cls
