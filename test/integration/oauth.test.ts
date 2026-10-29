@@ -163,18 +163,20 @@ describe('OAuth2 for MCP clients', () => {
     expect((await fetch(`${base}/api/v1/setup`, { headers: { authorization: `Bearer ${tokens.access_token}` } })).status).toBe(200)
   })
 
-  it('rejects a wrong code and sends no code to an unknown email', async () => {
+  it('rejects a wrong code, and lets an unknown email create a household', async () => {
     const { metadata, clientId } = await register()
     const browser = new Browser()
     const params = new URLSearchParams({ response_type: 'code', client_id: clientId, redirect_uri: REDIRECT, code_challenge: 'x'.repeat(43), code_challenge_method: 'S256', scope: 'kept' })
     const page = await follow(browser, await browser.fetch(`${metadata.authorization_endpoint}?${params}`))
     const uid = new URL(page.url).pathname.split('/')[3]!
-    const sent = h.codes.length
-    const unknown = await browser.form(`/oauth/interaction/${uid}/email`, { email: 'nobody@example.com' })
+    const unknown = await browser.form(`/oauth/interaction/${uid}/email`, { email: 'newcomer@example.com' })
     expect(await unknown.text()).toContain('Check your email')
-    expect(h.codes.length).toBe(sent)
-    const wrong = await browser.form(`/oauth/interaction/${uid}/code`, { code: '000000' })
-    expect(wrong.status).toBe(400)
+    expect(h.codes.at(-1)!.to).toBe('newcomer@example.com')
+    expect((await browser.form(`/oauth/interaction/${uid}/code`, { code: '000000' })).status).toBe(400)
+    const create = await browser.form(`/oauth/interaction/${uid}/code`, { code: h.codes.at(-1)!.code })
+    expect(await create.text()).toContain('Create your household')
+    const done = await browser.form(`/oauth/interaction/${uid}/create`, { household: 'The Newcomers', name: 'Nia', currency: 'EUR', timezone: 'Europe/Berlin' })
+    expect(done.status).toBe(303)
   })
 
   it('refuses a token that is not Kept\'s', async () => {

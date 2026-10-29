@@ -22,13 +22,14 @@ function layout(title: string, body: string): string {
   h1 { font-size: 22px; margin: 0 0 8px; }
   p { color: var(--muted); margin: 0 0 20px; }
   label { display: block; font-weight: 600; margin: 16px 0 6px; }
-  input { width: 100%; padding: 12px; font: inherit; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: inherit; }
+  input, select { width: 100%; padding: 12px; font: inherit; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: inherit; }
   input.code { letter-spacing: 0.3em; font-size: 22px; text-align: center; }
   button { width: 100%; margin-top: 20px; padding: 12px; font: inherit; font-weight: 600; border: 0; border-radius: 8px; background: var(--accent); color: var(--bg); cursor: pointer; }
   button.secondary { background: transparent; color: var(--muted); border: 1px solid var(--line); margin-top: 10px; }
   .error { color: #c0392b; }
   .brand { font-weight: 700; letter-spacing: 0.02em; color: var(--accent); margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
   .brand img { border-radius: 6px; }
+  .hint { font-size: 13px; color: var(--muted); margin: 4px 0 12px; }
 </style>
 </head>
 <body><main><div class="brand"><img src="/app/icon.svg" width="24" height="24" alt="">Kept</div>${body}</main></body>
@@ -81,6 +82,30 @@ ${error ? `<p class="error">${escape(error)}</p>` : ''}
   <input id="name" name="name" autocomplete="given-name" required autofocus>
   <button type="submit">Join</button>
 </form>
+${cancel(uid)}`)
+}
+
+// After the code, for an email with no account and no invite (docs/mockups/create-household.html).
+export function createPage(uid: string, email: string, error?: string): string {
+  const currencies = Intl.supportedValuesOf('currency').map((code) => `<option value="${code}"${code === 'USD' ? ' selected' : ''}>${code}</option>`).join('')
+  const zones = Intl.supportedValuesOf('timeZone').map((zone) => `<option value="${zone}">${zone.replaceAll('_', ' ')}</option>`).join('')
+  return layout('Create your household', `
+<h1>Create your household</h1>
+<p>${escape(email)} isn't in a household yet. Joining someone else's? Ask them to invite this email, then sign in again.</p>
+${error ? `<p class="error">${escape(error)}</p>` : ''}
+<form method="post" action="/oauth/interaction/${escape(uid)}/create">
+  <label for="household">Household name</label>
+  <input id="household" name="household" placeholder="The Smiths" required autofocus>
+  <label for="name">Your name</label>
+  <input id="name" name="name" autocomplete="given-name" required>
+  <label for="currency">Currency</label>
+  <select id="currency" name="currency">${currencies}</select>
+  <label for="timezone">Time zone</label>
+  <select id="timezone" name="timezone">${zones}</select>
+  <p class="hint">Currency can change until the first purchase.</p>
+  <button type="submit">Create household</button>
+</form>
+<script>document.getElementById('timezone').value = Intl.DateTimeFormat().resolvedOptions().timeZone</script>
 ${cancel(uid)}`)
 }
 

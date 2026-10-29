@@ -255,6 +255,9 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `GET`    | `/api/v1/setup`             | The household's setup steps and whether the caller has been introduced.                          |
 | `PATCH`  | `/api/v1/setup`             | Save confirmed setup answers: the household's name, currency and time zone (owners), step states, the introduction. The response's `currency_locked` says the first purchase fixed the currency. |
 | `PATCH`  | `/api/v1/me`                | Change the caller's own name.                                                                     |
+| `GET`    | `/api/v1/members`           | The household's members and open invites.                                                         |
+| `PATCH`  | `/api/v1/members/{id}`      | Owners only: make someone an owner or a member. A household keeps at least one owner.             |
+| `DELETE` | `/api/v1/members/{id}`      | Owners only: remove a member and everything they logged; never the last owner.                    |
 | `POST`   | `/api/v1/invites`           | Owners only. Invite a member by email; Kept emails them the address to add to their assistant.    |
 | `DELETE` | `/api/v1/invites/{id}`      | Cancel an invite that hasn't been accepted.                                                       |
 | `POST`   | `/api/v1/invites/accept`    | No API key. Accept with the token from the link: creates the member and returns their first API key. |
@@ -443,7 +446,7 @@ sequenceDiagram
 
 - **The code is typed, not clicked.** On a phone, the assistant's sign-in browser and the mail app's browser are different, so an emailed link arrives without the sign-in session. The email also carries a link, which works in the same browser. A code expires after 10 minutes or 5 wrong tries.
 - **Sign-in doesn't reveal accounts.** An email with no account and no open invite gets the same "check your email" page and no code.
-- **Invited people join by signing in.** A verified email with an open invite and no account gets a page for their name, then joins as a `member`; their assistant then runs the new-member path of [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
+- **Invited people join by signing in.** Every email gets a code. A verified email with no account and no invite gets the create-household form and becomes its owner (`kept_create_household`). A verified email with an open invite and no account gets a page for their name, then joins as a `member`; their assistant then runs the new-member path of [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
 - **Tokens:** PKCE with S256 is required. Access tokens are opaque, bound to `<PUBLIC_URL>/mcp` and scope `kept`; a request with no scope gets `kept`. Refresh tokens rotate and don't end with the browser session, so the assistant stays connected.
 - **Metadata:** `/.well-known/oauth-authorization-server` serves the OAuth part of the OpenID document at `/.well-known/openid-configuration`: the `code` flow only, scope `kept`, and `protected_resources` pointing back to `/mcp`.
 - **The web UI** signs in as the built-in public client `kept-web` with PKCE, redirecting to `<PUBLIC_URL>/app/callback`. It skips the consent page, and asks with `prompt=login`, so every sign-in takes an emailed code and signing out on a shared computer holds. The refresh token stays in `localStorage` and the access token in memory; refreshes run under a Web Lock, because two tabs rotating one refresh token would revoke it.

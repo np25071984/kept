@@ -55,6 +55,20 @@ export async function authenticate(db: Db, key: string): Promise<Caller | null> 
   return row ? callerFor(db, row.user_id, row.household_id) : null
 }
 
+// A household created at sign-in by a verified email with no account and no invite (VISION.md §3.6, "One way in").
+export async function createHouseholdForEmail(db: Db, input: { name: string; currency: string; timezone: string; owner_name: string; email: string }) {
+  const currency = validateCurrency(input.currency)
+  const timezone = validateTimeZone(input.timezone)
+  const name = input.name.trim()
+  const owner = input.owner_name.trim()
+  if (!name || !owner) throw invalid('invalid_name', 'Enter the household\'s name and yours.')
+  const created = await sql<{ household_id: string; user_id: string }>`
+    select * from kept_create_household(${name}, ${currency}, ${timezone}, ${JSON.stringify(initialSetup())}::jsonb, ${owner}, ${input.email})`.execute(db)
+  const row = created.rows[0]!
+  await inHousehold(db, row.household_id, (tx) => tx.insertInto('categories').values(SEED_CATEGORIES.map((path) => ({ household_id: row.household_id, path }))).execute())
+  return row
+}
+
 // The caller for a user whose household is known, e.g. from an OAuth2 access token.
 export async function callerFor(db: Db, userId: string, householdId?: string): Promise<Caller | null> {
   const household = householdId ?? (await sql<{ household_id: string | null }>`select kept_user_household(${userId}) as household_id`.execute(db)).rows[0]?.household_id

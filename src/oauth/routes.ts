@@ -2,9 +2,9 @@ import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { Db } from '../db/db.js'
 import type { App } from '../http/app.js'
 import type { Mailer } from '../ledger/households.js'
-import { codePage, consentPage, emailPage, errorPage, joinPage } from './pages.js'
+import { codePage, consentPage, createPage, emailPage, errorPage, joinPage } from './pages.js'
 import { SCOPE, WEB_CLIENT_ID, type OAuth } from './provider.js'
-import { invitedHousehold, joinWithVerifiedEmail, sendCode, verifyCode } from './signin.js'
+import { createWithVerifiedEmail, invitedHousehold, joinWithVerifiedEmail, sendCode, verifiedNewEmail, verifyCode } from './signin.js'
 
 // OAuth2 endpoints for MCP clients (IMPLEMENTATION.md §5, §6): protected resource metadata, oidc-provider's endpoints, and
 // the sign-in and consent pages it hands interactions to.
@@ -144,6 +144,7 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
       const verified = await verifyCode(deps.db, interaction.uid, code)
       if (verified.kind === 'user') return finish(request, reply, { login: { accountId: verified.user_id } })
       if (verified.kind === 'invite') return html(reply, joinPage(interaction.uid, verified.invite.household_name, verified.invite.inviter_name))
+      if (verified.kind === 'new') return html(reply, createPage(interaction.uid, verified.email))
       return html(reply, codePage(interaction.uid, 'your email', 'That code is wrong or expired. Check it, or send a new one.'), 400)
     }
     scope.post<{ Params: { uid: string }; Body: Form }>('/oauth/interaction/:uid/code', options, async (request, reply) => verify(request, reply, request.body?.code ?? ''))
@@ -160,6 +161,23 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
       const userId = await joinWithVerifiedEmail(deps.db, interaction.uid, name)
       if (!userId) return expired(reply)
       return finish(request, reply, { login: { accountId: userId } })
+    })
+
+    scope.post<{ Params: { uid: string }; Body: Form }>('/oauth/interaction/:uid/create', options, async (request, reply) => {
+      const interaction = await details(request, reply)
+      if (!interaction || interaction.uid !== request.params.uid) return expired(reply)
+      const email = await verifiedNewEmail(deps.db, interaction.uid)
+      if (!email) return expired(reply)
+      const input = { name: (request.body?.household ?? '').trim(), owner_name: (request.body?.name ?? '').trim(), currency: request.body?.currency ?? '', timezone: request.body?.timezone ?? '' }
+      if (!input.name || !input.owner_name) return html(reply, createPage(interaction.uid, email, 'Enter the household\'s name and yours.'), 400)
+      try {
+        const userId = await createWithVerifiedEmail(deps.db, interaction.uid, input)
+        if (!userId) return expired(reply)
+        return finish(request, reply, { login: { accountId: userId } })
+      } catch (error) {
+        request.log.warn(error, 'household not created')
+        return html(reply, createPage(interaction.uid, email, 'Check the currency and time zone, then try again.'), 400)
+      }
     })
 
     scope.post<{ Params: { uid: string } }>('/oauth/interaction/:uid/consent', options, async (request, reply) => {

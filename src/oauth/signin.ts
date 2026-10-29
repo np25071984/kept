@@ -1,7 +1,7 @@
 import { createHash, randomInt } from 'node:crypto'
 import { sql } from 'kysely'
 import { inHousehold, type Db } from '../db/db.js'
-import { joinHousehold, type Mailer } from '../ledger/households.js'
+import { createHouseholdForEmail, joinHousehold, type Mailer } from '../ledger/households.js'
 
 // Members sign in with a six-digit code emailed to them (IMPLEMENTATION.md §6). The code is typed into the browser that
 // started sign-in: on a phone the assistant's sign-in browser and the mail app's browser are different, so a link alone
@@ -30,10 +30,9 @@ async function findInvite(db: Db, email: string): Promise<OpenInvite | null> {
   return (await sql<OpenInvite>`select * from kept_open_invite(${email})`.execute(db)).rows[0] ?? null
 }
 
-// Sends a code when the email has an account or an open invite. The page says the same either way, so it doesn't reveal who has an account.
+// Every email gets a code, so the pages never reveal who has an account (VISION.md §3.6, "One way in").
 export async function sendCode(db: Db, mailer: Mailer, uid: string, email: string, link: (code: string) => string): Promise<void> {
   const address = email.trim().toLowerCase()
-  if (!(await findUser(db, address)) && !(await findInvite(db, address))) return
   const code = String(randomInt(0, 1_000_000)).padStart(6, '0')
   await db.deleteFrom('sign_in_codes').where('interaction_uid', '=', uid).execute()
   await db
@@ -43,7 +42,7 @@ export async function sendCode(db: Db, mailer: Mailer, uid: string, email: strin
   await mailer.sendSignInCode({ to: address, code, link: link(code) })
 }
 
-export type Verified = { kind: 'user'; user_id: string } | { kind: 'invite'; invite: OpenInvite; email: string } | { kind: 'invalid' }
+export type Verified = { kind: 'user'; user_id: string } | { kind: 'invite'; invite: OpenInvite; email: string } | { kind: 'new'; email: string } | { kind: 'invalid' }
 
 export async function verifyCode(db: Db, uid: string, code: string): Promise<Verified> {
   const row = await db.selectFrom('sign_in_codes').selectAll().where('interaction_uid', '=', uid).executeTakeFirst()
@@ -56,7 +55,7 @@ export async function verifyCode(db: Db, uid: string, code: string): Promise<Ver
   const user = await findUser(db, row.email)
   if (user) return { kind: 'user', user_id: user.user_id }
   const invite = await findInvite(db, row.email)
-  return invite ? { kind: 'invite', invite, email: row.email } : { kind: 'invalid' }
+  return invite ? { kind: 'invite', invite, email: row.email } : { kind: 'new', email: row.email }
 }
 
 // An invited person who verified their email joins with the name they give.
@@ -78,4 +77,19 @@ export async function joinWithVerifiedEmail(db: Db, uid: string, name: string): 
 export async function invitedHousehold(db: Db, uid: string): Promise<OpenInvite | null> {
   const row = await db.selectFrom('sign_in_codes').select('email').where('interaction_uid', '=', uid).where('verified_at', 'is not', null).executeTakeFirst()
   return row ? findInvite(db, row.email) : null
+}
+// A verified email with no account and no invite creates a household and becomes its owner.
+export async function createWithVerifiedEmail(db: Db, uid: string, input: { name: string; owner_name: string; currency: string; timezone: string }): Promise<string | null> {
+  const row = await db.selectFrom('sign_in_codes').select(['email', 'verified_at']).where('interaction_uid', '=', uid).where('verified_at', 'is not', null).executeTakeFirst()
+  if (!row?.verified_at || Date.now() - new Date(row.verified_at).getTime() > JOIN_MINUTES * 60_000) return null
+  if ((await findUser(db, row.email)) || (await findInvite(db, row.email))) return null
+  const created = await createHouseholdForEmail(db, { ...input, email: row.email })
+  await db.deleteFrom('sign_in_codes').where('interaction_uid', '=', uid).execute()
+  return created.user_id
+}
+
+export async function verifiedNewEmail(db: Db, uid: string): Promise<string | null> {
+  const row = await db.selectFrom('sign_in_codes').select(['email', 'verified_at']).where('interaction_uid', '=', uid).where('verified_at', 'is not', null).executeTakeFirst()
+  if (!row?.verified_at || (await findUser(db, row.email)) || (await findInvite(db, row.email))) return null
+  return row.email
 }

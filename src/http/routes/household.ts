@@ -1,6 +1,7 @@
 import { acceptInvite, createInvite, deleteInvite, getSetup, issueApiKey, listApiKeys, revokeApiKey, updateMe, updateSetup } from '../../ledger/households.js'
+import { listMembers, removeMember, updateMember } from '../../ledger/members.js'
 import type { App, RouteDeps } from '../app.js'
-import { AcceptBody, ApiKeyBody, IdParams, InviteBody, MePatch, SetupPatch } from '../schemas.js'
+import { AcceptBody, ApiKeyBody, IdParams, InviteBody, MePatch, MemberPatch, SetupPatch } from '../schemas.js'
 
 export function householdRoutes(app: App, deps: RouteDeps) {
   const { run } = deps
@@ -16,6 +17,21 @@ export function householdRoutes(app: App, deps: RouteDeps) {
   app.patch('/api/v1/me', {
     schema: { tags: ['setup'], summary: 'Change the caller\'s own name. Returns the setup.', body: MePatch },
   }, async (request) => run(request, (tx, caller) => updateMe(tx, caller, request.body)))
+
+  app.get('/api/v1/members', {
+    schema: { tags: ['setup'], summary: 'The household\'s members and open invites.' },
+  }, async (request) => run(request, (tx, caller) => listMembers(tx, caller)))
+
+  app.patch('/api/v1/members/:id', {
+    schema: { tags: ['setup'], summary: 'Owners only. Make a member an owner or a member; a household keeps at least one owner.', params: IdParams, body: MemberPatch },
+  }, async (request) => run(request, (tx, caller) => updateMember(tx, caller, request.params.id, request.body.role)))
+
+  app.delete('/api/v1/members/:id', {
+    schema: { tags: ['setup'], summary: 'Owners only. Remove a member and everything they logged; not the last owner.', params: IdParams },
+  }, async (request, reply) => {
+    await run(request, (tx, caller) => removeMember(tx, caller, request.params.id))
+    return reply.status(204).send()
+  })
 
   app.post('/api/v1/invites', {
     schema: { tags: ['setup'], summary: 'Owners only. Invite a member by email; Kept sends the sign-in link.', body: InviteBody },
