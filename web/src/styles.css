@@ -161,3 +161,5 @@ code { font-size: 13px; }
 .icon-btn:hover { background: var(--bg); color: var(--fg); }
 .icon-btn.danger { color: var(--muted); }
 .icon-btn.danger:hover { color: var(--danger); }
+.form { display: grid; gap: 14px; max-width: 520px; }
+.form label > .small { margin-top: 2px; }

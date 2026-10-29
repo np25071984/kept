@@ -50,6 +50,8 @@ const query = (params: Record<string, string | undefined>) => {
 
 export const api = {
   setup: () => call<Setup>('GET', '/api/v1/setup'),
+  updateSetup: (patch: { name?: string; currency?: string; timezone?: string }) => call<Setup>('PATCH', '/api/v1/setup', patch),
+  updateMe: (patch: { name?: string }) => call<Setup>('PATCH', '/api/v1/me', patch),
   transactions: (filters: TransactionFilters) => call<{ transactions: Transaction[] }>('GET', `/api/v1/transactions${query({ ...filters, limit: '500' })}`).then((r) => r.transactions),
   transaction: (id: string) => call<Transaction>('GET', `/api/v1/transactions/${id}`),
   updateTransaction: (id: string, patch: unknown) => call<Transaction>('PATCH', `/api/v1/transactions/${id}`, patch),

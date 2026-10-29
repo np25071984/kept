@@ -78,9 +78,24 @@ export async function getSetup(tx: Tx, caller: Caller) {
   const user = await tx.selectFrom('users').select(['name', 'email', 'introduced_at', 'role']).where('id', '=', caller.user_id).executeTakeFirstOrThrow()
   const setup = { ...initialSetup(), ...household.setup } as SetupState
   return {
-    household: { name: household.name, currency: household.currency, timezone: household.timezone, steps: setup, next_step: nextStep(setup) },
+    household: { name: household.name, currency: household.currency, currency_locked: await hasPurchases(tx), timezone: household.timezone, steps: setup, next_step: nextStep(setup) },
     you: { name: user.name, email: user.email, introduced: user.introduced_at != null, role: user.role },
   }
+}
+
+// Any purchase in the household, by any member: the currency is fixed from then on.
+async function hasPurchases(tx: Tx): Promise<boolean> {
+  return (await tx.selectFrom('transactions').select('id').limit(1).executeTakeFirst()) != null
+}
+
+// The caller's own profile (VISION.md §4.C, Settings → Profile).
+export async function updateMe(tx: Tx, caller: Caller, patch: { name?: string }) {
+  if (patch.name !== undefined) {
+    const name = patch.name.trim()
+    if (!name) throw invalid('invalid_name', 'Enter your name.')
+    await tx.updateTable('users').set({ name }).where('id', '=', caller.user_id).execute()
+  }
+  return getSetup(tx, caller)
 }
 
 export interface SetupPatch {
@@ -95,11 +110,13 @@ export async function updateSetup(tx: Tx, caller: Caller, patch: SetupPatch) {
   if (patch.currency !== undefined) {
     if (caller.role !== 'owner') throw forbidden('Only an owner can change the household currency.')
     const currency = validateCurrency(patch.currency)
-    const used = await tx.selectFrom('transactions').select('id').limit(1).executeTakeFirst()
-    if (used && currency !== caller.currency) throw conflict('currency_in_use', 'The currency can only change before the first transaction.')
+    if ((await hasPurchases(tx)) && currency !== caller.currency) throw conflict('currency_in_use', 'The currency can only change before the first transaction.')
     await tx.updateTable('households').set({ currency }).execute()
   }
-  if (patch.name !== undefined) await tx.updateTable('households').set({ name: patch.name.trim() }).execute()
+  if (patch.name !== undefined) {
+    if (caller.role !== 'owner') throw forbidden('Only an owner can rename the household.')
+    await tx.updateTable('households').set({ name: patch.name.trim() }).execute()
+  }
   if (patch.timezone !== undefined) {
     if (caller.role !== 'owner') throw forbidden('Only an owner can change the household time zone.')
     await tx.updateTable('households').set({ timezone: validateTimeZone(patch.timezone) }).execute()

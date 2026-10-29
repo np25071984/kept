@@ -9,7 +9,7 @@ import { NotesSection } from './pages/Memory.js'
 import { PreferencesPage } from './pages/Preferences.js'
 import { PurchasePage } from './pages/Purchase.js'
 import { PurchasesPage } from './pages/Purchases.js'
-import { HouseholdLayout, ProfilePage, SettingsLayout } from './pages/Settings.js'
+import { GeneralPage, HouseholdLayout, ProfilePage, SettingsLayout } from './pages/Settings.js'
 import { UpdatesPage } from './pages/Updates.js'
 import { messageFor, SessionContext, SIGNED_OUT, useLoad, type Session } from './session.js'
 
@@ -33,6 +33,7 @@ export function App() {
               <Route index element={<Navigate to="categories" replace />} />
               <Route path="categories" element={<CategoriesPage />} />
               <Route path="people" element={<PeoplePage />} />
+              <Route path="general" element={<GeneralPage />} />
             </Route>
             <Route path="assistants" element={<AssistantsPage />} />
             <Route path="notes" element={<NotesSection />} />

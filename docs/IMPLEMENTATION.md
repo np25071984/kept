@@ -253,7 +253,8 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `GET`    | `/api/v1/updates`           | What the ledger did on its own since the caller last checked: repeats registered, plus possible duplicates still to resolve. |
 | `POST`   | `/api/v1/updates/seen`      | Mark updates as shown.                                                                            |
 | `GET`    | `/api/v1/setup`             | The household's setup steps and whether the caller has been introduced.                          |
-| `PATCH`  | `/api/v1/setup`             | Save confirmed setup answers: currency and time zone (owners), step states, the introduction.    |
+| `PATCH`  | `/api/v1/setup`             | Save confirmed setup answers: the household's name, currency and time zone (owners), step states, the introduction. The response's `currency_locked` says the first purchase fixed the currency. |
+| `PATCH`  | `/api/v1/me`                | Change the caller's own name.                                                                     |
 | `POST`   | `/api/v1/invites`           | Owners only. Invite a member by email; Kept emails them the address to add to their assistant.    |
 | `DELETE` | `/api/v1/invites/{id}`      | Cancel an invite that hasn't been accepted.                                                       |
 | `POST`   | `/api/v1/invites/accept`    | No API key. Accept with the token from the link: creates the member and returns their first API key. |

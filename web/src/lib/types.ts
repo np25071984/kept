@@ -48,7 +48,7 @@ export interface Update {
 }
 
 export interface Setup {
-  household: { name: string; currency: string; timezone: string; next_step: string | null }
+  household: { name: string; currency: string; currency_locked: boolean; timezone: string; next_step: string | null }
   you: { name: string; email: string; role: 'owner' | 'member' }
 }
 

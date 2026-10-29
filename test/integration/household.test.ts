@@ -128,6 +128,13 @@ describe('two members of one household', () => {
     expect(JSON.stringify(household.body)).not.toContain('Alex')
   })
 
+  it('lets each member rename themselves and only an owner rename the household', async () => {
+    const renamed = await alex.patch('/api/v1/me', { name: 'Alexandra' })
+    expect(renamed.body.you.name).toBe('Alexandra')
+    expect((await alex.patch('/api/v1/setup', { name: 'Alex\'s place' })).status).toBe(403)
+    expect((await sam.get('/api/v1/setup')).body.household.currency_locked).toBe(true)
+  })
+
   it('shares one time zone that only an owner changes', async () => {
     expect((await alex.get('/api/v1/setup')).body.household.timezone).toBe('America/New_York')
     expect((await alex.patch('/api/v1/setup', { timezone: 'Europe/Berlin' })).status).toBe(403)

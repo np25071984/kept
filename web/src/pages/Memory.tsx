@@ -1,5 +1,7 @@
+import { Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '../api.js'
+import { IconButton } from '../IconButton.js'
 import type { Note, Watch } from '../lib/types.js'
 import { noteBody, watchBody, type WatchForm } from '../lib/vocabulary.js'
 import { useAction, useLoad, useSession } from '../session.js'
@@ -74,7 +76,7 @@ export function NotesSection() {
   return (
     <section className="section">
       <div className="section-head">
-        <h2>Notes</h2>
+        <h2>Assistant notes</h2>
         {!adding && <button onClick={() => setAdding(true)}>Add a note</button>}
       </div>
       <p className="muted small">What your assistants remember about your spending, in your words. They read every note before asking anything.</p>
@@ -106,8 +108,8 @@ function NoteRow({ note, onChanged }: { note: Note; onChanged: () => void }) {
         </div>
       ) : (
         <div className="row tight">
-          <button className="link" onClick={() => setMode('edit')}>Edit</button>
-          <button className="link" onClick={() => setMode('delete')}>Delete</button>
+          <IconButton icon={Pencil} label="Edit note" onClick={() => setMode('edit')} />
+          <IconButton icon={Trash2} label="Delete note" danger onClick={() => setMode('delete')} />
         </div>
       )}
     </li>

@@ -1,6 +1,6 @@
-import { acceptInvite, createInvite, deleteInvite, getSetup, issueApiKey, listApiKeys, revokeApiKey, updateSetup } from '../../ledger/households.js'
+import { acceptInvite, createInvite, deleteInvite, getSetup, issueApiKey, listApiKeys, revokeApiKey, updateMe, updateSetup } from '../../ledger/households.js'
 import type { App, RouteDeps } from '../app.js'
-import { AcceptBody, ApiKeyBody, IdParams, InviteBody, SetupPatch } from '../schemas.js'
+import { AcceptBody, ApiKeyBody, IdParams, InviteBody, MePatch, SetupPatch } from '../schemas.js'
 
 export function householdRoutes(app: App, deps: RouteDeps) {
   const { run } = deps
@@ -10,8 +10,12 @@ export function householdRoutes(app: App, deps: RouteDeps) {
   }, async (request) => run(request, (tx, caller) => getSetup(tx, caller)))
 
   app.patch('/api/v1/setup', {
-    schema: { tags: ['setup'], summary: 'Save confirmed setup answers: name, currency (owners, before the first transaction), the caller\'s time zone, step states, the introduction.', body: SetupPatch },
+    schema: { tags: ['setup'], summary: 'Save confirmed setup answers: the household\'s name, currency (before the first transaction) and time zone, owners only; step states; the introduction.', body: SetupPatch },
   }, async (request) => run(request, (tx, caller) => updateSetup(tx, caller, request.body)))
+
+  app.patch('/api/v1/me', {
+    schema: { tags: ['setup'], summary: 'Change the caller\'s own name. Returns the setup.', body: MePatch },
+  }, async (request) => run(request, (tx, caller) => updateMe(tx, caller, request.body)))
 
   app.post('/api/v1/invites', {
     schema: { tags: ['setup'], summary: 'Owners only. Invite a member by email; Kept sends the sign-in link.', body: InviteBody },

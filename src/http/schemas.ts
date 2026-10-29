@@ -117,6 +117,7 @@ export const SetupPatch = Type.Object({
   introduced: Type.Optional(Type.Literal(true)),
 })
 
+export const MePatch = Type.Object({ name: Type.Optional(Type.String({ minLength: 1 })) })
 export const InviteBody = Type.Object({ email: Type.String({ format: 'email' }) })
 export const AcceptBody = Type.Object({ token: Type.String({ minLength: 10 }), name: Type.String({ minLength: 1 }) })
 export const ApiKeyBody = Type.Object({ name: Type.String({ minLength: 1 }) })
