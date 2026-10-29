@@ -45,11 +45,6 @@ export interface Database {
     name: string
     kind: string
   }
-  cost_center_categories: {
-    household_id: string
-    cost_center_id: string
-    category_id: string
-  }
   invites: {
     id: Generated<string>
     household_id: string

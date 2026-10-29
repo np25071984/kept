@@ -93,13 +93,13 @@ If the user's answer is still ambiguous, the AI asks one more short question ins
 
 #### Step 4: Clarify the cost center
 
-Some categories are split across several cost centers. The AI looks up the cost centers for `Car/Fuel` and finds two cars. It knows who is talking from the authenticated request (see [`IMPLEMENTATION.md` §4](IMPLEMENTATION.md#4-security)), checks which car this person usually fills up, and leads with that one:
+Each cost center has a kind, such as Car, Home, Child or Pet. Fuel is for a Car, and the household has two. It knows who is talking from the authenticated request (see [`IMPLEMENTATION.md` §4](IMPLEMENTATION.md#4-security)), checks which car this person usually fills up, and leads with that one:
 
 > **AI:** "For the Hyundai, like your last fill-up, or the Kia?"
 >
 > **User:** "Kia."
 
-If there is only one cost center for the category, the AI skips this question.
+With one car, the AI uses it without asking. When the user names someone ("trousers for Zoe"), that settles it. A purchase that isn't clearly for one kind, like groceries or clothes nobody was named for, gets no cost center and no question.
 
 A name that isn't in the household is usually a typo, so the AI asks about it on its own before anything else, and adds a cost center or category only after a yes to that question:
 
@@ -355,7 +355,7 @@ flowchart TD
 - **Every step can be skipped or left for later.** "Later" keeps the starting categories, and new ones are added when a purchase first needs one, after asking. A skipped cost center is asked about when it first matters: "Is this fuel for a car you want to track separately?"
 - **One question at a time, and interruptible.** If the user stops, the next conversation picks up at the first unanswered step and doesn't repeat the introduction.
 - **Nothing is saved before the summary is confirmed,** as with every other write.
-- **The starting categories are the same for every household:** Groceries, Eating out, Car, Housing, Health, Clothing, Travel and Other. There is no Kids category: a child is one of the people & things, and what a child costs is everything spent for them, across categories. The interview adds to them and links them to cost centers (Car to both cars, Clothing and Health to Zoe and Maya).
+- **The starting categories are the same for every household:** Groceries, Eating out, Car, Housing, Health, Clothing, Travel and Other. There is no Kids category: a child is one of the people & things, and what a child costs is everything spent for them, across categories. The interview adds to them.
 - **Repeating bills aren't asked about.** They come up when one is logged ([Repeating Spending](#35-repeating-spending-phone-rent-subscriptions)).
 - **One way in.** The web UI and every assistant start with the same sign-in: an email and a code. A verified email with no account and no invite is offered to create a household; with an invite, to join it.
 - **Invites come from Kept.** Only an owner can invite. Kept emails the invited person; they add Kept to their own assistant and sign in with that email, which joins them to the household, and their assistant runs the new-member path above.

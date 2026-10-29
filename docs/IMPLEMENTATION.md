@@ -93,9 +93,9 @@ Every table carries a `household_id` for [row-level security](#4-security), incl
 | `household_id` | UUID   | Yes      |                                      |
 | `path`         | String | Yes      | Groceries, Groceries/Alcohol, Car/Fuel |
 
-Line items, cost centers and watched groups store a link to the category's `id`, so renaming a category ("Car/Fuel" to "Car/Gas") doesn't break anything that uses it. The API and MCP tools accept and return the `path`, which is what the agent and the user see. The AI picks from this list and asks before adding a new one, so the household doesn't end up with "Car/Fuel", "Gas" and "Fuel" side by side. A write naming an unknown category or cost center fails with `unknown_category` or `unknown_cost_center`, listing the `known` names and the `similar` ones: a typo, swapped letters, a shorter form or another form of the word ([`VISION.md` §3.1](VISION.md#step-4-clarify-the-cost-center)).
+Line items and watched groups store a link to the category's `id`, so renaming a category ("Car/Fuel" to "Car/Gas") doesn't break anything that uses it. The API and MCP tools accept and return the `path`, which is what the agent and the user see. The AI picks from this list and asks before adding a new one, so the household doesn't end up with "Car/Fuel", "Gas" and "Fuel" side by side. A write naming an unknown category or cost center fails with `unknown_category` or `unknown_cost_center`, listing the `known` names and the `similar` ones: a typo, swapped letters, a shorter form or another form of the word ([`VISION.md` §3.1](VISION.md#step-4-clarify-the-cost-center)).
 
-Renaming a category or cost center keeps every link. Repeat templates and `checked_groups` hold paths and names as text, so a rename rewrites them, and a category's subcategories move with it. A delete fails with `409 in_use`, naming the counts, while any purchase, subcategory, watched group or repeat uses the name; links from cost centers to the category go with it. A new household starts with the fixed seed in [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
+Renaming a category or cost center keeps every link. Repeat templates and `checked_groups` hold paths and names as text, so a rename rewrites them, and a category's subcategories move with it. A delete fails with `409 in_use`, naming the counts, while any purchase, subcategory, watched group or repeat uses the name. A new household starts with the fixed seed in [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
 
 **Invites**
 
@@ -150,8 +150,7 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `id`         | UUID            | Yes      |                            |
 | `household_id` | UUID          | Yes      |                            |
 | `name`       | String          | Yes      | Kia, House, Zoe, Rex    |
-| `kind`       | String          | Yes      | Car, Home, Child, Pet      |
-| `categories` | List of category links | No | Car/Fuel, Car/Insurance |
+| `kind`       | String          | Yes      | Car, Home, Child, Pet. Tells the agent which purchases it could be for. |
 
 **Sources** (what was read behind a transaction; see [Sources](VISION.md#34-sources-anything-the-users-ai-can-read))
 
@@ -227,9 +226,9 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `GET`    | `/api/v1/transactions/{id}` | One of the caller's transactions.                                                                 |
 | `PATCH`  | `/api/v1/transactions/{id}` | Edit one of the caller's transactions, including marking it private.                              |
 | `DELETE` | `/api/v1/transactions/{id}` | Delete one of the caller's transactions.                                                          |
-| `GET`  | `/api/v1/cost-centers`        | List the household's cost centers (cars, homes, kids, pets), optionally filtered by category.     |
+| `GET`  | `/api/v1/cost-centers`        | List the household's cost centers (cars, homes, kids, pets) with their kind.                      |
 | `POST`   | `/api/v1/cost-centers`      | Add a cost center for the household.                                                              |
-| `PATCH`  | `/api/v1/cost-centers`      | Rename a cost center, change its kind or replace its linked categories: `{"name", "new_name"?, "kind"?, "categories"?}`. |
+| `PATCH`  | `/api/v1/cost-centers`      | Rename a cost center or change its kind: `{"name", "new_name"?, "kind"?}`.                       |
 | `DELETE` | `/api/v1/cost-centers?name=` | Delete a cost center nothing uses.                                                               |
 | `GET`    | `/api/v1/categories`        | List the household's categories and subcategories.                                                |
 | `POST`   | `/api/v1/categories`        | Add a category or subcategory for the household.                                                  |
@@ -361,7 +360,7 @@ The MCP server is stateless Streamable HTTP at `POST /mcp`, in the same process 
 | `list_transactions`   | `GET /api/v1/transactions`     | Recent history, used to infer category, merchant, cost center and items.  |
 | `edit_transaction`    | `PATCH /api/v1/transactions/{id}` | Change a purchase after the user confirmed, e.g. a return.             |
 | `delete_transaction`  | `DELETE /api/v1/transactions/{id}` | Delete a purchase after the user confirmed.                           |
-| `list_cost_centers`   | `GET /api/v1/cost-centers`     | Cost centers, optionally filtered by category.                            |
+| `list_cost_centers`   | `GET /api/v1/cost-centers`     | Cost centers with their kind.                                             |
 | `watch_group`         | `POST /api/v1/watches`         | Start watching a category or item, after the user asked.                  |
 | `stop_watching`       | `DELETE /api/v1/watches/{id}`  | Stop watching a group.                                                    |
 | `save_note`           | `POST /api/v1/notes`           | Remember something the user said, after telling them.                     |

@@ -55,7 +55,6 @@ export interface Setup {
 export interface CostCenter {
   name: string
   kind: string
-  categories: string[]
 }
 
 export interface Watch {

@@ -93,7 +93,7 @@ function CostCenters() {
         <h2>People &amp; things</h2>
         {!adding && <button onClick={() => setAdding(true)}>Add a person or thing</button>}
       </div>
-      <p className="muted small">The people, cars, homes and projects money is spent for. Linked categories tell your assistant when to ask which one.</p>
+      <p className="muted small">The people, cars, homes and projects money is spent for. The kind tells your assistant which purchases each one could be for.</p>
       {adding && <CostCenterEditor onDone={() => setAdding(false)} />}
       <ul className="list">
         {costCenters.map((cc) => <CostCenterRow key={cc.name} cc={cc} />)}
@@ -111,7 +111,6 @@ function CostCenterRow({ cc }: { cc: CostCenter }) {
     <li className="list-row">
       <div className="grow">
         <div><strong>{cc.name}</strong> <span className="muted small">· {cc.kind}</span></div>
-        {cc.categories.length > 0 && <div className="tags">{cc.categories.map((c) => <span key={c} className="tag">{c}</span>)}</div>}
       </div>
       {mode === 'delete' ? (
         <div className="row tight">
@@ -130,14 +129,14 @@ function CostCenterRow({ cc }: { cc: CostCenter }) {
 }
 
 function CostCenterEditor({ cc, onDone }: { cc?: CostCenter; onDone: () => void }) {
-  const { categories, refreshVocabulary } = useSession()
-  const [form, setForm] = useState({ name: cc?.name ?? '', kind: cc?.kind ?? '', categories: cc?.categories ?? [] })
+  const { refreshVocabulary } = useSession()
+  const [form, setForm] = useState({ name: cc?.name ?? '', kind: cc?.kind ?? '' })
   const { busy, error, act } = useAction()
   const save = async (event: FormEvent) => {
     event.preventDefault()
-    const body = { name: form.name.trim(), kind: form.kind.trim(), categories: form.categories }
+    const body = { name: form.name.trim(), kind: form.kind.trim() }
     const ok = await act(() =>
-      cc ? api.updateCostCenter(cc.name, { ...(body.name !== cc.name && { new_name: body.name }), kind: body.kind, categories: body.categories }) : api.addCostCenter(body),
+      cc ? api.updateCostCenter(cc.name, { ...(body.name !== cc.name && { new_name: body.name }), kind: body.kind }) : api.addCostCenter(body),
     )
     if (ok) {
       refreshVocabulary()
@@ -153,32 +152,11 @@ function CostCenterEditor({ cc, onDone }: { cc?: CostCenter; onDone: () => void 
           <datalist id="cost-center-kinds">{['Car', 'Child', 'Home', 'Pet', 'Project', 'Person'].map((k) => <option key={k} value={k} />)}</datalist>
         </label>
       </div>
-      <label>Linked categories<MultiSelect options={categories} value={form.categories} onChange={(linked) => setForm({ ...form, categories: linked })} /></label>
       {error && <p className="error">{error}</p>}
       <div className="row tight">
         <button type="submit" className="primary" disabled={busy || !form.name.trim() || !form.kind.trim()}>{cc ? 'Save' : 'Add'}</button>
         <button type="button" onClick={onDone}>Cancel</button>
       </div>
     </form>
-  )
-}
-
-function MultiSelect({ options, value, onChange }: { options: string[]; value: string[]; onChange: (value: string[]) => void }) {
-  const rest = options.filter((option) => !value.includes(option))
-  return (
-    <span className="spent-for">
-      {value.map((item) => (
-        <span key={item} className="chip">
-          {item}
-          <button type="button" className="link" aria-label={`Remove ${item}`} onClick={() => onChange(value.filter((v) => v !== item))}>×</button>
-        </span>
-      ))}
-      {rest.length > 0 && (
-        <select value="" onChange={(e) => e.target.value && onChange([...value, e.target.value])}>
-          <option value="">{value.length ? 'Add…' : 'None'}</option>
-          {rest.map((option) => <option key={option} value={option}>{option}</option>)}
-        </select>
-      )}
-    </span>
   )
 }

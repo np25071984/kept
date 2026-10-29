@@ -70,11 +70,11 @@ describe('MCP server', () => {
   it('runs the fuel conversation\'s tool calls end to end', async () => {
     const client = await connect(key)
     expect((await call(client, 'add_category', { path: 'Car/Fuel' })).isError).toBe(false)
-    await call(client, 'add_cost_center', { name: 'Hyundai', kind: 'Car', categories: ['Car'] })
-    await call(client, 'add_cost_center', { name: 'Kia', kind: 'Car', categories: ['Car'] })
+    await call(client, 'add_cost_center', { name: 'Hyundai', kind: 'Car' })
+    await call(client, 'add_cost_center', { name: 'Kia', kind: 'Car' })
 
-    const cars = await call(client, 'list_cost_centers', { category: 'Car/Fuel' })
-    expect(cars.body.cost_centers.map((c: { name: string }) => c.name)).toEqual(['Hyundai', 'Kia'])
+    const cars = await call(client, 'list_cost_centers')
+    expect(cars.body.cost_centers).toEqual([{ name: 'Hyundai', kind: 'Car' }, { name: 'Kia', kind: 'Car' }])
 
     const logged = await call(client, 'log_transaction', { transactions: [{ amount: 60, date: '2026-10-27', merchant: 'Shell', category: 'Car/Fuel', spent_for: [{ cost_center: 'Kia' }] }] })
     expect(logged.body.results[0]).toMatchObject({ result: 'created', transaction: { amount: 60, category: 'Car/Fuel' } })

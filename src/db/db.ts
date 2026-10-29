@@ -4,6 +4,7 @@ import pg from 'pg'
 import * as initial from './migrations/001_initial.js'
 import * as oauth from './migrations/002_oauth.js'
 import * as memory from './migrations/003_memory.js'
+import * as links from './migrations/004_drop_cost_center_links.js'
 import type { Database } from './schema.js'
 
 // Dates stay 'YYYY-MM-DD' strings; JavaScript Date would shift them by the machine's time zone.
@@ -27,7 +28,7 @@ export async function inHousehold<T>(db: Db, householdId: string, fn: (tx: Tx) =
 export function migrator(db: Kysely<any>): Migrator {
   return new Migrator({
     db,
-    provider: { getMigrations: async () => ({ '001_initial': initial, '002_oauth': oauth, '003_memory': memory }) },
+    provider: { getMigrations: async () => ({ '001_initial': initial, '002_oauth': oauth, '003_memory': memory, '004_drop_cost_center_links': links }) },
   })
 }
 

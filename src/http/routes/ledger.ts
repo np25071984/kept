@@ -6,7 +6,7 @@ import { addCategory, addCostCenter, deleteCategory, deleteCostCenter, listCateg
 import { addWatch, deleteWatch, listWatches } from '../../ledger/watches.js'
 import type { App, RouteDeps } from '../app.js'
 import {
-  CategoryBody, CategoryQuery, CategoryRename, CostCenterBody, CostCenterName, CostCenterQuery, CostCenterPatch, IdParams, NoteBody, RepeatBody, RepeatPatch,
+  CategoryBody, CategoryQuery, CategoryRename, CostCenterBody, CostCenterName, CostCenterPatch, IdParams, NoteBody, RepeatBody, RepeatPatch,
   SeenBody, SummaryQuery, UpdatesQuery, WatchBody,
 } from '../schemas.js'
 
@@ -34,21 +34,21 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.get('/api/v1/cost-centers', {
-    schema: { tags: ['vocabulary'], summary: 'The household\'s cost centers, optionally those linked to a category or its parent.', querystring: CostCenterQuery },
-  }, async (request) => ({ cost_centers: await run(request, (tx) => listCostCenters(tx, request.query.category)) }))
+    schema: { tags: ['vocabulary'], summary: 'The household\'s cost centers with their kind.' },
+  }, async (request) => ({ cost_centers: await run(request, (tx) => listCostCenters(tx)) }))
 
   app.post('/api/v1/cost-centers', {
-    schema: { tags: ['vocabulary'], summary: 'Add a cost center, optionally linked to categories.', body: CostCenterBody },
+    schema: { tags: ['vocabulary'], summary: 'Add a cost center with its kind: Car, Home, Child, Pet or anything else.', body: CostCenterBody },
   }, async (request, reply) => {
     reply.status(201)
     return run(request, (tx, caller) => addCostCenter(tx, caller, request.body))
   })
 
   app.patch('/api/v1/cost-centers', {
-    schema: { tags: ['vocabulary'], summary: 'Rename a cost center, change its kind or the categories it is linked to. Purchases and repeats keep pointing at it.', body: CostCenterPatch },
+    schema: { tags: ['vocabulary'], summary: 'Rename a cost center or change its kind. Purchases and repeats keep pointing at it.', body: CostCenterPatch },
   }, async (request) => {
     const { name, ...patch } = request.body
-    return run(request, (tx, caller) => updateCostCenter(tx, caller, name, patch))
+    return run(request, (tx) => updateCostCenter(tx, name, patch))
   })
 
   app.delete('/api/v1/cost-centers', {

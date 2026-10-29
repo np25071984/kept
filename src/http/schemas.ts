@@ -69,18 +69,15 @@ export const TransactionQuery = Type.Object({
 export const CategoryBody = Type.Object({ path: Type.String({ minLength: 1 }) })
 export const CategoryRename = Type.Object({ path: Type.String({ minLength: 1 }), new_path: Type.String({ minLength: 1, description: 'The new path; its parent must exist. Subcategories move with it.' }) })
 export const CategoryQuery = Type.Object({ path: Type.String({ minLength: 1 }) })
-export const CostCenterQuery = Type.Object({ category: Type.Optional(Type.String()) })
 export const CostCenterPatch = Type.Object({
   name: Type.String({ minLength: 1, description: 'The cost center to change.' }),
   new_name: Type.Optional(Type.String({ minLength: 1 })),
   kind: Type.Optional(Type.String({ minLength: 1 })),
-  categories: Type.Optional(Type.Array(Type.String(), { description: 'Replaces the categories it is linked to.' })),
 })
 export const CostCenterName = Type.Object({ name: Type.String({ minLength: 1 }) })
 export const CostCenterBody = Type.Object({
   name: Type.String({ minLength: 1 }),
   kind: Type.String({ minLength: 1, description: 'Car, Home, Child, Pet or anything else.' }),
-  categories: Type.Optional(Type.Array(Type.String())),
 })
 
 export const WatchBody = Type.Object({

@@ -63,8 +63,8 @@ export const api = {
   addCategory: (path: string) => call('POST', '/api/v1/categories', { path }),
   renameCategory: (path: string, newPath: string) => call('PATCH', '/api/v1/categories', { path, new_path: newPath }),
   deleteCategory: (path: string) => call<void>('DELETE', `/api/v1/categories${query({ path })}`),
-  addCostCenter: (body: { name: string; kind: string; categories: string[] }) => call<CostCenter>('POST', '/api/v1/cost-centers', body),
-  updateCostCenter: (name: string, patch: { new_name?: string; kind?: string; categories?: string[] }) => call<CostCenter>('PATCH', '/api/v1/cost-centers', { name, ...patch }),
+  addCostCenter: (body: { name: string; kind: string }) => call<CostCenter>('POST', '/api/v1/cost-centers', body),
+  updateCostCenter: (name: string, patch: { new_name?: string; kind?: string }) => call<CostCenter>('PATCH', '/api/v1/cost-centers', { name, ...patch }),
   deleteCostCenter: (name: string) => call<void>('DELETE', `/api/v1/cost-centers${query({ name })}`),
 
   watches: () => call<{ watches: Watch[] }>('GET', '/api/v1/watches').then((r) => r.watches),

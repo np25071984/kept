@@ -147,15 +147,14 @@ export function registerTools(server: McpServer, rest: Rest) {
 
   server.registerTool('list_cost_centers', {
     title: 'List people & things',
-    description: 'The people and things the household spends for (cars, homes, kids, pets; "cost centers" in the API), or those linked to a category. Ask which one only when there is more than one.',
-    inputSchema: { category: z.string().optional() },
+    description: 'The people and things the household spends for ("cost centers" in the API), each with its kind: Car, Home, Child, Pet. get_playbook already returns them.',
     annotations: read,
-  }, async (args) => result(await rest('GET', `/api/v1/cost-centers${query(args)}`)))
+  }, async () => result(await rest('GET', '/api/v1/cost-centers')))
 
   server.registerTool('add_cost_center', {
     title: 'Add a person or thing',
-    description: 'Add a car, home, child, pet or anything else the household tracks spending for. Only after the user said yes to adding this name as new, asked on its own: a name that isn\'t in list_cost_centers is often a typo for one that is. Link it to the categories it applies to.',
-    inputSchema: { name: z.string(), kind: z.string().describe('Car, Home, Child, Pet, …'), categories: z.array(z.string()).optional() },
+    description: 'Add a car, home, child, pet or anything else the household tracks spending for. Only after the user said yes to adding this name as new, asked on its own: a name that isn\'t in list_cost_centers is often a typo for one that is.',
+    inputSchema: { name: z.string(), kind: z.string().describe('Car, Home, Child, Pet, …') },
     annotations: write,
   }, async (args) => result(await rest('POST', '/api/v1/cost-centers', args)))
 

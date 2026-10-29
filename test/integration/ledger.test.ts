@@ -15,7 +15,7 @@ beforeAll(async () => {
   sam = client(h, samKey)
   await sam.post('/api/v1/categories', { path: 'Phone' })
   await sam.post('/api/v1/categories', { path: 'Car/Fuel' })
-  await sam.post('/api/v1/cost-centers', { name: 'Kia', kind: 'Car', categories: ['Car'] })
+  await sam.post('/api/v1/cost-centers', { name: 'Kia', kind: 'Car' })
 })
 afterAll(() => h.close())
 
@@ -41,8 +41,8 @@ describe('renaming and deleting vocabulary', () => {
     expect(blocked.status).toBe(409)
     expect(blocked.body.error.message).toBe('"Iva" is still used by 1 purchase. Move or change those first, or rename it instead.')
 
-    expect((await c.patch('/api/v1/cost-centers', { name: 'iva', new_name: 'Ivy' })).body).toEqual({ name: 'Ivy', kind: 'Child', categories: [] })
-    expect((await c.patch('/api/v1/cost-centers', { name: 'Ivy', kind: 'Kid', categories: ['clothing', 'Health'] })).body).toEqual({ name: 'Ivy', kind: 'Kid', categories: ['Clothing', 'Health'] })
+    expect((await c.patch('/api/v1/cost-centers', { name: 'iva', new_name: 'Ivy' })).body).toEqual({ name: 'Ivy', kind: 'Child' })
+    expect((await c.patch('/api/v1/cost-centers', { name: 'Ivy', kind: 'Kid' })).body).toEqual({ name: 'Ivy', kind: 'Kid' })
     expect((await c.get(`/api/v1/transactions/${shirt.body.transaction.id}`)).body.line_items[0].spent_for).toEqual([{ cost_center: 'Ivy', share: null }])
     expect((await c.patch('/api/v1/cost-centers', { name: 'Ivy', new_name: 'maya' })).status).toBe(409)
 
