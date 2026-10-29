@@ -5,3 +5,8 @@
 	log
 	reverse_proxy kept:3000
 }
+
+# Needs a www DNS record pointing at the server; without one, Caddy only logs that it can't get a certificate for it.
+www.{$KEPT_HOST} {
+	redir https://{$KEPT_HOST}{uri} permanent
+}
