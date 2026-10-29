@@ -302,9 +302,9 @@ export function registerTools(server: McpServer, rest: Rest) {
 
   server.registerTool('get_summary', {
     title: 'Get a spending summary',
-    description: 'Totals by category, person or thing (group_by cost_center) or item, per month, year or in total. scope "me" (default) is the user\'s own spending, private included; "household" is every member\'s non-private spending, never by member. Watched groups come with checked_share and estimate: say how reliable the total is.',
+    description: 'Totals by category, person or thing (group_by cost_center), item or merchant, per month, year or in total. scope "me" (default) is the user\'s own spending, private included; "household" is every member\'s non-private spending, never by member. Watched groups come with checked_share and estimate: say how reliable the total is.',
     inputSchema: {
-      from: date.optional(), to: date.optional(), group_by: z.enum(['category', 'cost_center', 'item']).optional(),
+      from: date.optional(), to: date.optional(), group_by: z.enum(['category', 'cost_center', 'item', 'merchant']).optional(),
       period: z.enum(['month', 'year', 'total']).optional(), scope: z.enum(['me', 'household']).optional(),
     },
     annotations: read,

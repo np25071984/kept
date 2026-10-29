@@ -143,7 +143,7 @@ export const ApiKeyBody = Type.Object({ name: Type.String({ minLength: 1 }) })
 export const SummaryQuery = Type.Object({
   from: Type.Optional(LocalDate),
   to: Type.Optional(LocalDate),
-  group_by: Type.Optional(Type.Union([Type.Literal('category'), Type.Literal('cost_center'), Type.Literal('item')])),
+  group_by: Type.Optional(Type.Union([Type.Literal('category'), Type.Literal('cost_center'), Type.Literal('item'), Type.Literal('merchant')])),
   period: Type.Optional(Type.Union([Type.Literal('month'), Type.Literal('year'), Type.Literal('total')])),
   scope: Type.Optional(Type.Union([Type.Literal('me'), Type.Literal('household')])),
 })

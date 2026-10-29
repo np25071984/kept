@@ -1,6 +1,7 @@
 import { Pencil, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '../api.js'
+import { formatMoney } from '../lib/money.js'
 import { IconButton } from '../IconButton.js'
 import type { Note, Watch } from '../lib/types.js'
 import { noteBody, watchBody, type WatchForm } from '../lib/vocabulary.js'
@@ -10,6 +11,8 @@ import { useAction, useLoad, useSession } from '../session.js'
 
 export function WatchingSection() {
   const watches = useLoad(() => api.watches(), [])
+  // This month's amount found and coverage per group (VISION.md §4.A, "Coverage").
+  const month = useLoad(() => api.summary({ scope: 'me' }), [watches.data])
   const [adding, setAdding] = useState(false)
   return (
     <section className="section">
@@ -22,19 +25,31 @@ export function WatchingSection() {
       {adding && <WatchEditor onDone={(saved) => { setAdding(false); if (saved) watches.reload() }} />}
       {watches.data && watches.data.length === 0 && !adding && <p className="muted">Nothing watched yet.</p>}
       <ul className="list">
-        {(watches.data ?? []).map((watch) => <WatchRow key={watch.id} watch={watch} onChanged={watches.reload} />)}
+        {(watches.data ?? []).map((watch) => <WatchRow key={watch.id} watch={watch} found={month.data?.watched.find((w) => w.group.toLowerCase() === watch.group.toLowerCase())} onChanged={watches.reload} />)}
       </ul>
     </section>
   )
 }
 
-function WatchRow({ watch, onChanged }: { watch: Watch; onChanged: () => void }) {
+function WatchRow({ watch, found, onChanged }: { watch: Watch; found?: { total: number; checked_share: number | null; estimate: number | null }; onChanged: () => void }) {
+  const { setup } = useSession()
   const { busy, error, act } = useAction()
+  const money = (n: number) => formatMoney(n, setup.household.currency)
+  const share = found?.checked_share
   return (
     <li className="list-row">
       <div className="grow">
-        <div>{watch.category ? watch.category.split('/').at(-1) : watch.item}</div>
+        <div className="row tight" style={{ justifyContent: 'space-between' }}>
+          <span>{watch.category ? watch.category.split('/').at(-1) : watch.item}</span>
+          {found && <span className="num"><strong>{share != null && share < 0.9 && found.estimate != null ? 'about ' : ''}{money(found.total)}</strong> <span className="small muted">this month</span></span>}
+        </div>
         <div className="muted small">{watch.category ? `Category ${watch.category}` : 'Item'}</div>
+        {found && share != null && (
+          <>
+            <div className="meter"><span style={{ width: `${Math.round(share * 100)}%` }} /></div>
+            <div className="small muted">Checked in {Math.round(share * 100)}% of the spending where it's bought{found.estimate != null && share < 1 ? ` · about ${money(found.estimate)} with the rest` : ''}</div>
+          </>
+        )}
         {error && <p className="error">{error}</p>}
       </div>
       <button className="link" disabled={busy} onClick={() => act(async () => { await api.stopWatching(watch.id); onChanged() })}>Stop watching</button>

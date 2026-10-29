@@ -11,6 +11,7 @@ import { PreferencesPage } from './pages/Preferences.js'
 import { PurchasePage } from './pages/Purchase.js'
 import { PurchasesPage } from './pages/Purchases.js'
 import { RecurringPage } from './pages/Recurring.js'
+import { ReportsPage } from './pages/Reports.js'
 import { GeneralPage, HouseholdLayout, ProfilePage, SettingsLayout } from './pages/Settings.js'
 import { NotificationsPage } from './pages/Notifications.js'
 import { messageFor, SessionContext, SIGNED_OUT, useLoad, type Session } from './session.js'
@@ -25,7 +26,13 @@ export function App() {
           <Route path="purchases" element={<PurchasesPage />} />
           <Route path="purchases/:id" element={<PurchasePage />} />
           <Route path="recurring" element={<RecurringPage />} />
-          <Route path="reports/*" element={<p className="empty">Reports will show here.</p>} />
+          <Route path="reports" element={<Navigate to="/reports/mine" replace />} />
+          <Route path="reports/mine" element={<ReportsPage scope="me" tab="category" />} />
+          <Route path="reports/mine/people" element={<ReportsPage scope="me" tab="people" />} />
+          <Route path="reports/mine/merchants" element={<ReportsPage scope="me" tab="merchants" />} />
+          <Route path="reports/household" element={<ReportsPage scope="household" tab="category" />} />
+          <Route path="reports/household/people" element={<ReportsPage scope="household" tab="people" />} />
+          <Route path="reports/household/merchants" element={<ReportsPage scope="household" tab="merchants" />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="preferences" element={<PreferencesPage />} />
           <Route path="settings" element={<SettingsLayout />}>

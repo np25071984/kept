@@ -29,7 +29,7 @@ export async function getSummary(tx: Tx, caller: Caller, query: SummaryQuery, no
     .selectFrom('transactions')
     .innerJoin('line_items', 'line_items.transaction_id', 'transactions.id')
     .innerJoin('categories', 'categories.id', 'line_items.category_id')
-    .select(['transactions.id as transaction_id', 'transactions.date', 'transactions.checked_groups', 'line_items.id', 'line_items.amount', 'line_items.item', 'categories.path'])
+    .select(['transactions.id as transaction_id', 'transactions.date', 'transactions.checked_groups', 'transactions.merchant', 'transactions.spent_by', 'line_items.id', 'line_items.amount', 'line_items.item', 'categories.path'])
     .where('transactions.date', '>=', from)
     .where('transactions.date', '<=', to)
     .$if(scope === 'me', (q) => q.where('transactions.spent_by', '=', caller.user_id))
@@ -48,6 +48,8 @@ export async function getSummary(tx: Tx, caller: Caller, query: SummaryQuery, no
     category: row.path,
     item: row.item,
     spent_for: shares.filter((s) => s.line_item_id === row.id).map((s) => ({ cost_center: s.name, share: s.share == null ? null : Number(s.share) })),
+    merchant: row.merchant,
+    member: row.spent_by,
   }))
 
   const byTransaction = new Map<string, CoverageTransaction>()
@@ -65,7 +67,7 @@ export async function getSummary(tx: Tx, caller: Caller, query: SummaryQuery, no
     group_by: groupBy,
     period,
     currency: caller.currency,
-    totals: summarize(lines, groupBy, period).map((row) => ({ ...row, amount: fromCents(row.amount) })),
+    totals: summarize(lines, groupBy, period, scope === 'household' ? 2 : 1).map((row) => ({ ...row, amount: fromCents(row.amount) })),
     watched: groups.map((group) => {
       const coverage = computeCoverage(group, [...byTransaction.values()])
       return { ...coverage, total: fromCents(coverage.total), estimate: coverage.estimate == null ? null : fromCents(coverage.estimate) }

@@ -56,6 +56,7 @@ export const api = {
   makeRecurring: (body: { transaction_id: string; frequency: string; interval?: number; anchor?: string }) => call<Recurring>('POST', '/api/v1/repeats', body),
   updateRecurring: (id: string, patch: { amount?: number; frequency?: string; interval?: number; anchor?: string; ends_on?: string | null; paused?: boolean }) => call<Recurring>('PATCH', `/api/v1/repeats/${id}`, patch),
   deleteRecurring: (id: string) => call<void>('DELETE', `/api/v1/repeats/${id}`),
+  summary: (q: Record<string, string>) => call<{ totals: { key: string; amount: number; period: string | null }[]; watched: { group: string; total: number; checked_share: number | null; estimate: number | null }[] }>('GET', `/api/v1/expenses/summary?${new URLSearchParams(q)}`),
   questions: () => call<{ questions: Question[] }>('GET', '/api/v1/questions').then((r) => r.questions),
   answer: (id: string, answer: string) => call<void>('POST', `/api/v1/questions/${encodeURIComponent(id)}/answer`, { answer }),
   caps: () => call<{ caps: Cap[] }>('GET', '/api/v1/caps').then((r) => r.caps),

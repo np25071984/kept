@@ -221,3 +221,41 @@ a.tag { position: relative; z-index: 1; text-decoration: none; display: inline-f
 .meter > span { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
 .meter.over > span { background: var(--danger); }
 a.button { display: inline-block; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); text-decoration: none; color: inherit; }
+
+/* Reports (docs/mockups/reports*.html). */
+.card-section { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.card-section h3 { margin: 0; font-size: 15px; }
+.num.big { font-size: 20px; }
+.capline { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 13px; }
+.chart { width: 100%; height: auto; max-height: 260px; display: block; margin-top: 8px; }
+.chart text { font-size: 9px; fill: var(--muted); }
+.chart .bar { fill: var(--accent); }
+.chart .bar.partial { fill: url(#hatch); stroke: var(--accent); stroke-width: 1; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .avg { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.chart .hit { fill: transparent; }
+.chart g:hover .bar { opacity: 0.85; }
+.hbars { display: grid; gap: 8px; margin-top: 8px; }
+.hbar { display: grid; grid-template-columns: minmax(90px, 160px) 1fr auto; gap: 10px; align-items: center; font-size: 14px; }
+.hbar .track { position: relative; height: 12px; }
+.hbar .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 0 4px 4px 0; }
+.hbar .prev { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--fg); opacity: 0.55; }
+.hbar .val { min-width: 84px; text-align: right; }
+.hbar.sub { font-size: 13px; color: var(--muted); }
+.hbar.sub > span:first-child { padding-left: 12px; }
+.hbar.sub .fill { opacity: 0.45; }
+.totalline { display: flex; justify-content: space-between; border-top: 1px solid var(--line); margin-top: 10px; padding-top: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 10px; }
+.legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--accent); margin-right: 5px; vertical-align: -1px; }
+.legend .sw.tick { width: 2px; height: 12px; background: var(--fg); opacity: 0.55; border-radius: 0; }
+.legend .sw.hatch { background: repeating-linear-gradient(45deg, var(--accent) 0 2px, transparent 2px 4px); border: 1px solid var(--accent); }
+.legend .sw.dash { width: 14px; height: 0; border-top: 2px dashed var(--muted); border-radius: 0; background: none; }
+.table-view summary { cursor: pointer; color: var(--accent); font-size: 13px; margin-top: 8px; }
+.breakdown { border-top: 1px solid var(--line); padding-top: 20px; }
+.folder-tabs { display: flex; gap: 4px; padding-left: 12px; position: relative; z-index: 1; margin-bottom: -1px; margin-top: 12px; }
+.folder-tabs a { padding: 8px 14px; font-size: 14px; text-decoration: none; color: var(--muted); white-space: nowrap; background: var(--bg); border: 1px solid var(--line); border-bottom: 0; border-radius: 10px 10px 0 0; }
+.folder-tabs a:hover { color: var(--fg); }
+.folder-tabs a.active { background: var(--surface); color: var(--fg); font-weight: 600; padding-bottom: 9px; margin-bottom: -1px; box-shadow: inset 0 3px 0 var(--accent); }
+.folder-body { border-top-left-radius: 12px; }
+.folder-tabs .short { display: none; }
+@media (max-width: 480px) { .folder-tabs { padding-left: 6px; gap: 2px; } .folder-tabs a { padding: 7px 9px; font-size: 13px; } .folder-tabs .long { display: none; } .folder-tabs .short { display: inline; } .hbar { grid-template-columns: 90px 1fr auto; } }
