@@ -1,6 +1,6 @@
 // The first conversation (VISION.md §3.6).
 
-export const SEED_CATEGORIES = ['Groceries', 'Eating out', 'Car', 'Home', 'Kids', 'Health', 'Clothing', 'Travel', 'Other'] as const
+export const SEED_CATEGORIES = ['Groceries', 'Eating out', 'Car', 'Housing', 'Kids', 'Health', 'Clothing', 'Travel', 'Other'] as const
 
 export const SETUP_STEPS = ['basics', 'cost_centers', 'categories', 'watch', 'invite'] as const
 export type SetupStep = (typeof SETUP_STEPS)[number]

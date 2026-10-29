@@ -54,16 +54,16 @@ describe('two members of one household', () => {
   it('adds the rest line to a mixed purchase', async () => {
     const res = await sam.post('/api/v1/transactions', {
       date: '2026-10-26', amount: 40, merchant: 'Target', category: 'Groceries',
-      line_items: [{ amount: 22, category: 'Clothing', item: 'shoes', spent_for: [{ cost_center: 'Zoe' }] }, { amount: 12, category: 'Home', item: 'bath curtains' }],
+      line_items: [{ amount: 22, category: 'Clothing', item: 'shoes', spent_for: [{ cost_center: 'Zoe' }] }, { amount: 12, category: 'Housing', item: 'bath curtains' }],
     })
-    expect(res.body.transaction.line_items.map((l: { amount: number; category: string; rest: boolean }) => [l.amount, l.category, l.rest])).toEqual([[22, 'Clothing', false], [12, 'Home', false], [6, 'Groceries', true]])
+    expect(res.body.transaction.line_items.map((l: { amount: number; category: string; rest: boolean }) => [l.amount, l.category, l.rest])).toEqual([[22, 'Clothing', false], [12, 'Housing', false], [6, 'Groceries', true]])
   })
 
   it('rejects unknown categories and line items over the total', async () => {
     const unknown = await sam.post('/api/v1/transactions', { amount: 5, category: 'Gas' })
     expect(unknown.status).toBe(422)
     expect(unknown.body.error.code).toBe('unknown_category')
-    const over = await sam.post('/api/v1/transactions', { amount: 5, category: 'Groceries', line_items: [{ amount: 6, category: 'Home' }] })
+    const over = await sam.post('/api/v1/transactions', { amount: 5, category: 'Groceries', line_items: [{ amount: 6, category: 'Housing' }] })
     expect(over.body.error.code).toBe('line_items_exceed_amount')
     const shares = await sam.post('/api/v1/transactions', { amount: 900, category: 'Car/Insurance', spent_for: [{ cost_center: 'Hyundai', share: 0.7 }, { cost_center: 'Kia', share: 0.4 }] })
     expect(shares.body.error.code).toBe('shares_exceed_one')

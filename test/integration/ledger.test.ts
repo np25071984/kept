@@ -160,7 +160,7 @@ describe('setup and members', () => {
     const setup = await fresh.get('/api/v1/setup')
     expect(setup.body).toMatchObject({ household: { next_step: 'basics', currency: 'USD' }, you: { introduced: false, role: 'owner' } })
     const categories = (await fresh.get('/api/v1/categories')).body.categories.map((c: { path: string }) => c.path)
-    expect(categories).toEqual(['Car', 'Clothing', 'Eating out', 'Groceries', 'Health', 'Home', 'Kids', 'Other', 'Travel'])
+    expect(categories).toEqual(['Car', 'Clothing', 'Eating out', 'Groceries', 'Health', 'Housing', 'Kids', 'Other', 'Travel'])
 
     const patched = await fresh.patch('/api/v1/setup', { currency: 'EUR', timezone: 'Europe/Berlin', steps: { basics: 'done', categories: 'later' }, introduced: true })
     expect(patched.body).toMatchObject({ household: { currency: 'EUR', next_step: 'cost_centers' }, you: { introduced: true, timezone: 'Europe/Berlin' } })

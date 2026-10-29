@@ -305,7 +305,7 @@ The response has `result` (`created`, `attached` or `possible_duplicate`, §3.2)
   "category": "Groceries",
   "line_items": [
     { "amount": 22.00, "category": "Clothing", "item": "shoes", "spent_for": [{ "cost_center": "Zoe" }] },
-    { "amount": 12.00, "category": "Home", "item": "bath curtains", "spent_for": [{ "cost_center": "House" }] }
+    { "amount": 12.00, "category": "Housing", "item": "bath curtains", "spent_for": [{ "cost_center": "House" }] }
   ]
 }
 ```
