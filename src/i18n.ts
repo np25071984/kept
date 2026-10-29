@@ -44,9 +44,7 @@ const RU: Record<string, string> = {
   'Go back to your assistant and connect Kept again.': 'Вернитесь к ассистенту и подключите Kept снова.',
   Language: 'Язык',
   // Emails
-  '{code} is your Kept code': '{code} — ваш код для Kept',
-  'Your Kept sign-in code is {code}.': 'Ваш код для входа в Kept: {code}.',
-  'Your sign-in code:': 'Ваш код для входа:',
+  'Kept sign-in code: {code}': 'Код для входа в Kept: {code}',
   "Type it on the sign-in page. It works for 10 minutes. If you didn't try to sign in, ignore this email.": 'Введите его на странице входа. Он действует 10 минут. Если вы не входили, просто проигнорируйте это письмо.',
   '{inviter} invited you to {household} on Kept': '{inviter} приглашает вас в «{household}» в Kept',
   '{inviter} invited you to track spending with {household} on Kept.': '{inviter} приглашает вас вести траты вместе с «{household}» в Kept.',

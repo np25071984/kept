@@ -466,7 +466,7 @@ sequenceDiagram
     A->>K: POST /mcp, Bearer token
 ```
 
-- **The code is typed, not clicked.** On a phone, the assistant's sign-in browser and the mail app's browser are different, so an emailed link arrives without the sign-in session. The email also carries a link, which works in the same browser. A code expires after 10 minutes or 5 wrong tries.
+- **The code is typed, not clicked.** On a phone, the assistant's sign-in browser and the mail app's browser are different, so an emailed link arrives without the sign-in session. The email also carries a link, which works in the same browser. The subject and first line read "Kept sign-in code: 123456", digits unspaced next to "code", so phones offer "Copy code" in the notification. A code expires after 10 minutes or 5 wrong tries.
 - **Sign-in doesn't reveal accounts.** Every email gets the same "check your email" page and a code.
 - **Invited people join by signing in.** Every email gets a code. A verified email with no account and no invite gets the create-household form and becomes its owner (`kept_create_household`). A verified email with an open invite and no account gets a page for their name, then joins as a `member`; their assistant then runs the new-member path of [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
 - **Tokens:** PKCE with S256 is required. Access tokens are opaque, bound to `<PUBLIC_URL>/mcp` and scope `kept`; a request with no scope gets `kept`. Refresh tokens rotate and don't end with the browser session, so the assistant stays connected.

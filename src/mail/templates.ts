@@ -18,14 +18,16 @@ function layout(lang: Language, body: string): string {
 <div style="max-width:440px;margin:0 auto"><div style="font-weight:700;color:#2f6b4f;margin-bottom:16px">Kept</div>${body}</div></body></html>`
 }
 
+// The code stays one run of digits next to the word "code" in the subject and the first line: phones detect it there
+// and offer "Copy code" in the notification. Letter-spacing keeps the big copy readable without breaking the run.
 export function signInCodeEmail(code: string, lang: Language = 'en'): Email {
-  const spaced = `${code.slice(0, 3)} ${code.slice(3)}`
+  const line = tr(lang, 'Kept sign-in code: {code}', { code })
   const note = tr(lang, "Type it on the sign-in page. It works for 10 minutes. If you didn't try to sign in, ignore this email.")
   return {
-    subject: tr(lang, '{code} is your Kept code', { code: spaced }),
-    text: `${tr(lang, 'Your Kept sign-in code is {code}.', { code: spaced })}\n\n${note}`,
-    html: layout(lang, `<p>${tr(lang, 'Your sign-in code:')}</p>
-<p style="font-size:32px;font-weight:700;letter-spacing:0.15em;margin:8px 0 16px">${escape(spaced)}</p>
+    subject: line,
+    text: `${line}\n\n${note}`,
+    html: layout(lang, `<p>${escape(line)}</p>
+<p style="font-size:32px;font-weight:700;letter-spacing:0.15em;margin:8px 0 16px">${escape(code)}</p>
 <p style="color:#6b6b66">${escape(note)}</p>`),
   }
 }
