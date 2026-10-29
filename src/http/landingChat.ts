@@ -176,6 +176,9 @@ export const CHAT_SCRIPT = `(() => {
 export const CHAT_STYLE = `
 .chat { display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; height: 440px; overflow: hidden; padding: 14px 12px; background-color: var(--chat-bg); background-image: radial-gradient(var(--chat-dot) 1px, transparent 1px); background-size: 14px 14px; }
 .chat > * { flex-shrink: 0; }
+/* Firefox anchors scrolling on the bubbles and scrolls the page with each message: keep the phone out of it. */
+.demo { overflow-anchor: none; }
+.chat { contain: strict; }
 .day { align-self: center; font-size: 11px; color: var(--muted); background: var(--surface); padding: 2px 10px; border-radius: 10px; margin-bottom: 4px; }
 .bubble { max-width: 82%; padding: 7px 10px 5px; border-radius: 14px; font-size: 14px; line-height: 1.35; box-shadow: 0 1px 1px rgb(0 0 0 / 0.08); }
 .bubble .text { white-space: pre-line; }
