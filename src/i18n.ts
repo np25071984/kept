@@ -31,6 +31,8 @@ const RU: Record<string, string> = {
   'The Smiths': 'Ивановы',
   Currency: 'Валюта',
   'Time zone': 'Часовой пояс',
+  'Search time zones': 'Поиск часового пояса',
+  'No time zone matches "{query}"': 'Нет часового пояса по запросу «{query}»',
   'Currency can change until the first purchase.': 'Валюту можно изменить до первой покупки.',
   'Create household': 'Создать семью',
   "Enter the household's name and yours.": 'Введите название семьи и своё имя.',

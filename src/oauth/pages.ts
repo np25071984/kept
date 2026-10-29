@@ -1,6 +1,7 @@
 import type { Language } from '../domain/language.js'
 import { zoneOptions } from '../domain/timezones.js'
 import { tr } from '../i18n.js'
+import { ZONE_PICKER_SCRIPT, ZONE_PICKER_STYLE } from './zonePicker.js'
 
 // The sign-in and consent pages an assistant opens when a member connects Kept. Plain server-rendered HTML.
 
@@ -39,6 +40,7 @@ function layout(lang: Language, title: string, body: string): string {
   .error { color: #c0392b; }
   .brand { font-weight: 700; letter-spacing: 0.02em; color: var(--accent); margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
   .brand img { border-radius: 6px; }
+${ZONE_PICKER_STYLE}
   .hint { font-size: 13px; color: var(--muted); margin: 4px 0 12px; }
   .lang { display: flex; gap: 4px; margin-left: auto; letter-spacing: 0; }
   .lang button { width: auto; margin: 0; padding: 4px 8px; background: none; color: var(--muted); font-weight: 400; font-size: 13px; }
@@ -120,11 +122,11 @@ ${problem(lang, error)}
   <label for="currency">${tr(lang, 'Currency')}</label>
   <select id="currency" name="currency">${currencies}</select>
   <label for="timezone">${tr(lang, 'Time zone')}</label>
-  <select id="timezone" name="timezone">${zones}</select>
+  <select id="timezone" name="timezone" data-search="${escape(tr(lang, 'Search time zones'))}" data-none="${escape(tr(lang, 'No time zone matches "{query}"'))}">${zones}</select>
   <p class="hint">${tr(lang, 'Currency can change until the first purchase.')}</p>
   <button type="submit">${tr(lang, 'Create household')}</button>
 </form>
-<script>document.getElementById('timezone').value = Intl.DateTimeFormat().resolvedOptions().timeZone</script>
+<script>${ZONE_PICKER_SCRIPT}</script>
 ${cancel(lang, uid)}`)
 }
 
