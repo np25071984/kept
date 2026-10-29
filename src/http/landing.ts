@@ -44,9 +44,9 @@ nav a { white-space: nowrap; padding: 6px 10px; border-radius: 8px; text-decorat
 .langmenu button[aria-checked="true"] { color: var(--accent); font-weight: 600; }
 main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
 section { margin-bottom: 28px; }
-.hero { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 32px; align-items: center; padding: 24px 0 8px; }
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; align-items: center; padding: 24px 0 8px; }
 @media (max-width: 720px) { .hero { grid-template-columns: 1fr; } }
-.demo { justify-self: center; width: 100%; max-width: 320px; }
+.demo { justify-self: center; width: 100%; max-width: 360px; }
 .phone { width: 100%; border: 1px solid var(--line); border-radius: 28px; overflow: hidden; background: var(--surface); box-shadow: 0 8px 24px rgb(0 0 0 / 0.08); }
 .phone-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 600; }
 .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-size: 13px; }

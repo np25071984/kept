@@ -190,10 +190,11 @@ export const CHAT_STYLE = `
 .shot.receipt { background: #fffef8; color: #333; border: 1px solid #e4e0d0; text-align: left; }
 .shot.receipt .shot-title { text-align: center; }
 .shot-total { border-top: 1px dashed #999; margin-top: 3px; padding-top: 3px; font-weight: 700; }
-.phone-input span { transition: color 0.2s; }
-.phone-input span.typed { color: var(--fg); }
+/* One line, like a messenger's input before it wraps: while typing, the text runs off to the left. */
+.phone-input span { display: flex; white-space: nowrap; overflow: hidden; transition: color 0.2s; }
+.phone-input span.typed { justify-content: flex-end; color: var(--fg); }
 .convs { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.convs button { font: inherit; font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; }
+.convs button { font: inherit; font-size: 12px; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; }
 .convs button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); font-weight: 600; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 `
