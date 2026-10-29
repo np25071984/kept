@@ -152,7 +152,7 @@ export function registerTools(server: McpServer, rest: Rest) {
 
   server.registerTool('add_cost_center', {
     title: 'Add a cost center',
-    description: 'Add a car, home, child, pet or anything else the household tracks spending against, after the user agreed. Link it to the categories it applies to.',
+    description: 'Add a car, home, child, pet or anything else the household tracks spending against. Only after the user said yes to adding this name as new, asked on its own: a name that isn\'t in list_cost_centers is often a typo for one that is. Link it to the categories it applies to.',
     inputSchema: { name: z.string(), kind: z.string().describe('Car, Home, Child, Pet, …'), categories: z.array(z.string()).optional() },
     annotations: write,
   }, async (args) => result(await rest('POST', '/api/v1/cost-centers', args)))

@@ -44,6 +44,13 @@ describe('two members of one household', () => {
     expect(res.body.transaction.line_items).toEqual([{ amount: 60, category: 'Car/Fuel', item: null, notes: null, rest: true, spent_for: [{ cost_center: 'Kia', share: null }] }])
   })
 
+  it('refuses an unknown cost center and names the likely one', async () => {
+    const res = await sam.post('/api/v1/transactions', { amount: 12, category: 'Car/Fuel', spent_for: [{ cost_center: 'Kai' }] })
+    expect(res.status).toBe(422)
+    expect(res.body.error).toMatchObject({ code: 'unknown_cost_center', details: { similar: ['Kia'] } })
+    expect(res.body.error.message).toContain('meant "Kia"')
+  })
+
   it('adds the rest line to a mixed purchase', async () => {
     const res = await sam.post('/api/v1/transactions', {
       date: '2026-10-26', amount: 40, merchant: 'Target', category: 'Groceries',

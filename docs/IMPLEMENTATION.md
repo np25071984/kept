@@ -93,7 +93,7 @@ Every table carries a `household_id` for [row-level security](#4-security), incl
 | `household_id` | UUID   | Yes      |                                      |
 | `path`         | String | Yes      | Groceries, Groceries/Alcohol, Car/Fuel |
 
-Line items, cost centers, rules and notes store a link to the category's `id`, so renaming a category ("Car/Fuel" to "Car/Gas") doesn't break anything that uses it. The API and MCP tools accept and return the `path`, which is what the agent and the user see. The AI picks from this list and asks before adding a new one, so the household doesn't end up with "Car/Fuel", "Gas" and "Fuel" side by side. A new household starts with the fixed seed in [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
+Line items, cost centers, rules and notes store a link to the category's `id`, so renaming a category ("Car/Fuel" to "Car/Gas") doesn't break anything that uses it. The API and MCP tools accept and return the `path`, which is what the agent and the user see. The AI picks from this list and asks before adding a new one, so the household doesn't end up with "Car/Fuel", "Gas" and "Fuel" side by side. A write naming an unknown category or cost center fails with `unknown_category` or `unknown_cost_center`, listing the `known` names and the `similar` ones: a typo, swapped letters, a shorter form or another form of the word ([`VISION.md` §3.1](VISION.md#step-4-clarify-the-cost-center)). A new household starts with the fixed seed in [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
 
 **Invites**
 

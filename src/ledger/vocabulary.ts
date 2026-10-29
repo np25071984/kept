@@ -1,4 +1,5 @@
 import type { Tx } from '../db/db.js'
+import { similarNames } from '../domain/names.js'
 import { isValidCategoryPath, parentPath } from '../domain/setup.js'
 import type { Caller } from './caller.js'
 import { conflict, invalid } from './errors.js'
@@ -10,6 +11,12 @@ export interface Vocabulary {
   categoryPath(id: string): string
   costCenterId(name: string): string
   costCenterName(id: string): string
+}
+
+function unknown(code: string, what: string, said: string, known: string[]) {
+  const similar = similarNames(said, known)
+  const hint = similar.length ? ` Ask the user whether they meant ${similar.map((name) => `"${name}"`).join(' or ')}, or want a new one.` : ' Ask the user whether it\'s new or one of the known ones.'
+  return invalid(code, `There is no ${what} "${said}".${hint} Don't add it without that answer.`, { known: [...known].sort(), similar })
 }
 
 export async function loadVocabulary(tx: Tx): Promise<Vocabulary> {
@@ -24,14 +31,14 @@ export async function loadVocabulary(tx: Tx): Promise<Vocabulary> {
   return {
     categoryId(path) {
       const id = byPath.get(path.trim().toLowerCase())
-      // The agent asks before adding a category, so an unknown one is an error rather than a new row (IMPLEMENTATION.md §2).
-      if (!id) throw invalid('unknown_category', `No category "${path}". Add it first, after asking the user.`, { known: categories.map((c) => c.path).sort() })
+      // An unknown name is often a typo, so it is an error the agent takes back to the user rather than a new row (IMPLEMENTATION.md §2).
+      if (!id) throw unknown('unknown_category', 'category', path, categories.map((c) => c.path))
       return id
     },
     categoryPath: (id) => pathById.get(id) ?? '',
     costCenterId(name) {
       const id = byName.get(name.trim().toLowerCase())
-      if (!id) throw invalid('unknown_cost_center', `No cost center "${name}". Add it first, after asking the user.`, { known: costCenters.map((c) => c.name).sort() })
+      if (!id) throw unknown('unknown_cost_center', 'cost center', name, costCenters.map((c) => c.name))
       return id
     },
     costCenterName: (id) => nameById.get(id) ?? '',
