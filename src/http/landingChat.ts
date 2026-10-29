@@ -29,7 +29,7 @@ export function conversations(lang: Language): Conversation[] {
   const day = (d: number) => new Intl.DateTimeFormat(lang, { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(Date.UTC(2026, 9, d))
   return [
     {
-      label: t('Typed'),
+      label: t('Text or voice'),
       messages: [
         { who: 'user', time: '8:14', text: t("I just spent $60 at Target. $11 on bath curtains, $22 sneakers for Zoe, the rest is groceries") },
         { who: 'ai', time: '8:14', text: t('Log $60 at Target, today?\nClothing $22 for Zoe\nHome $11, bath curtains\nGroceries $27') },

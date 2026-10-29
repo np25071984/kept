@@ -58,7 +58,7 @@ const RU: Record<string, string> = {
   'Example conversations': 'Примеры разговоров',
   You: 'Вы',
   Assistant: 'Ассистент',
-  Typed: 'Текстом',
+  'Text or voice': 'Текст или голос',
   'Bank screenshot': 'Скриншот банка',
   'Receipt photo': 'Фото чека',
   'I just spent $60 at Target. $11 on bath curtains, $22 sneakers for Zoe, the rest is groceries': 'Только что потратила 60 $ в Target. 11 $ на шторку для ванной, 22 $ кроссовки Зое, остальное продукты',
