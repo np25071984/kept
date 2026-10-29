@@ -254,3 +254,14 @@ svg.i { flex-shrink: 0; }
 .search-field { position: relative; display: block; flex: 1; }
 .search-field svg { position: absolute; left: 10px; top: 50%; margin-top: -8px; color: var(--muted); pointer-events: none; }
 .search-field input { padding-left: 34px; }
+.langmenu { position: relative; font-size: 14px; }
+.langmenu summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; border-radius: 8px; color: var(--fg); }
+.langmenu summary::-webkit-details-marker { display: none; }
+.langmenu summary:hover { background: var(--bg); }
+.langmenu .code { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; }
+.langmenu .menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 10; min-width: 180px; display: grid; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.12); }
+.langmenu .menu button { text-align: left; border: 0; background: none; padding: 7px 10px; border-radius: 6px; font: inherit; color: var(--fg); cursor: pointer; }
+.langmenu .menu button:hover { background: var(--bg); }
+.langmenu .menu button[aria-checked="true"] { color: var(--accent); font-weight: 600; }
+.langmenu .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+.langmenu .menu .auto { color: var(--muted); font-size: 13px; }
