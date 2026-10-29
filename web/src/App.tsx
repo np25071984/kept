@@ -49,7 +49,7 @@ function Callback() {
 function Centered({ children }: { children: React.ReactNode }) {
   return (
     <main className="centered">
-      <div className="brand">Kept</div>
+      <div className="brand"><img src="/app/icon.svg" width="22" height="22" alt="" />Kept</div>
       {children}
     </main>
   )
@@ -92,7 +92,7 @@ function SignedIn({ onSignOut }: { onSignOut: () => void }) {
     <SessionContext.Provider value={session}>
       <header className="topbar">
         <div className="topbar-inner">
-          <span className="brand">Kept</span>
+          <span className="brand"><img src="/app/icon.svg" width="22" height="22" alt="" />Kept</span>
           <nav>
             <NavLink to="/purchases">My purchases</NavLink>
             <NavLink to="/updates">

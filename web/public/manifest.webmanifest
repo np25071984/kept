@@ -1,0 +1,14 @@
+{
+  "name": "Kept",
+  "short_name": "Kept",
+  "start_url": "/app/",
+  "scope": "/app/",
+  "display": "standalone",
+  "background_color": "#fafaf7",
+  "theme_color": "#2f6b4f",
+  "icons": [
+    { "src": "/app/icon.svg", "type": "image/svg+xml", "sizes": "any" },
+    { "src": "/app/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/app/icon-512.png", "type": "image/png", "sizes": "512x512" }
+  ]
+}

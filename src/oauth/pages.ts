@@ -11,6 +11,8 @@ function layout(title: string, body: string): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escape(title)} · Kept</title>
+<link rel="icon" href="/app/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/app/apple-touch-icon.png">
 <style>
   :root { color-scheme: light dark; --bg: #fafaf7; --fg: #1d1d1b; --muted: #6b6b66; --line: #d9d9d2; --accent: #2f6b4f; }
   @media (prefers-color-scheme: dark) { :root { --bg: #161615; --fg: #ecece6; --muted: #a3a39c; --line: #3a3a37; --accent: #7cc4a0; } }
@@ -25,10 +27,11 @@ function layout(title: string, body: string): string {
   button { width: 100%; margin-top: 20px; padding: 12px; font: inherit; font-weight: 600; border: 0; border-radius: 8px; background: var(--accent); color: var(--bg); cursor: pointer; }
   button.secondary { background: transparent; color: var(--muted); border: 1px solid var(--line); margin-top: 10px; }
   .error { color: #c0392b; }
-  .brand { font-weight: 700; letter-spacing: 0.02em; color: var(--accent); margin-bottom: 24px; }
+  .brand { font-weight: 700; letter-spacing: 0.02em; color: var(--accent); margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
+  .brand img { border-radius: 6px; }
 </style>
 </head>
-<body><main><div class="brand">Kept</div>${body}</main></body>
+<body><main><div class="brand"><img src="/app/icon.svg" width="24" height="24" alt="">Kept</div>${body}</main></body>
 </html>`
 }
 

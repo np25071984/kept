@@ -20,7 +20,8 @@ p { margin: 0 0 12px; }
 .small { font-size: 13px; }
 .error { color: var(--danger); margin: 8px 0; }
 .empty { color: var(--muted); padding: 32px 0; text-align: center; }
-.brand { font-weight: 700; letter-spacing: 0.02em; color: var(--accent); }
+.brand { font-weight: 700; letter-spacing: 0.02em; color: var(--accent); display: inline-flex; align-items: center; gap: 8px; }
+.brand img { border-radius: 6px; }
 
 button, select, input { font: inherit; color: inherit; }
 button { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; }
