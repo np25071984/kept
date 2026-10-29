@@ -11,6 +11,7 @@ export interface Database {
     household_id: ColumnType<string, never, never>
     name: string
     currency: string
+    timezone: string
     setup: Json<Record<string, string>>
     created_at: Generated<Date>
   }
@@ -20,7 +21,6 @@ export interface Database {
     name: string
     email: string
     role: 'owner' | 'member'
-    timezone: string
     introduced_at: Timestamp | null
     created_at: Generated<Date>
   }

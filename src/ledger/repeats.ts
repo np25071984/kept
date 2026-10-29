@@ -163,7 +163,7 @@ export async function runDueRepeats(db: Db, now = new Date()): Promise<number> {
       const user = await tx
         .selectFrom('users')
         .innerJoin('households', 'households.id', 'users.household_id')
-        .select(['users.id', 'users.name', 'users.role', 'users.timezone', 'households.currency'])
+        .select(['users.id', 'users.name', 'users.role', 'households.timezone', 'households.currency'])
         .where('users.id', '=', row.user_id)
         .executeTakeFirstOrThrow()
       const caller: Caller = { user_id: user.id, household_id, role: user.role, name: user.name, timezone: user.timezone, currency: user.currency }

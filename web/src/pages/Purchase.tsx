@@ -44,7 +44,7 @@ function Details({ t }: { t: Transaction }) {
       <div className="purchase-head">
         <div>
           <h1>{t.merchant ?? 'No merchant'}</h1>
-          <p className="muted">{formatDate(t.date)}{t.timezone !== setup.you.timezone && ` · ${t.timezone}`}{t.repeat_id && ' · Repeats'}</p>
+          <p className="muted">{formatDate(t.date)}{t.timezone !== setup.household.timezone && ` · ${t.timezone}`}{t.repeat_id && ' · Repeats'}</p>
         </div>
         <div className="purchase-amount">
           {formatMoney(t.amount, currency)}

@@ -26,7 +26,7 @@ describe('two members of one household', () => {
     const invite = await sam.post('/api/v1/invites', { email: 'alex@example.com' })
     expect(invite.status).toBe(201)
     const token = h.invites[0]!.link.split('#token=')[1]!
-    const accepted = await h.app.inject({ method: 'POST', url: '/api/v1/invites/accept', payload: { token, name: 'Alex', timezone: 'America/New_York' } })
+    const accepted = await h.app.inject({ method: 'POST', url: '/api/v1/invites/accept', payload: { token, name: 'Alex' } })
     expect(accepted.statusCode).toBe(201)
     alex = client(h, accepted.json().api_key)
   })
@@ -126,6 +126,12 @@ describe('two members of one household', () => {
     // Fuel rolls up into Car, and the household total adds both members' fuel.
     expect(total(household.body.totals, 'Car')).toBe(121.2)
     expect(JSON.stringify(household.body)).not.toContain('Alex')
+  })
+
+  it('shares one time zone that only an owner changes', async () => {
+    expect((await alex.get('/api/v1/setup')).body.household.timezone).toBe('America/New_York')
+    expect((await alex.patch('/api/v1/setup', { timezone: 'Europe/Berlin' })).status).toBe(403)
+    expect((await sam.patch('/api/v1/setup', { timezone: 'nowhere' })).status).toBe(422)
   })
 
   it('keeps each member\'s notes and watched groups to themselves', async () => {

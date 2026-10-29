@@ -27,7 +27,7 @@ const SourceKind = Type.Union(SOURCE_KINDS.map((kind) => Type.Literal(kind)))
 const TransactionFields = {
   date: Type.Optional(LocalDate),
   occurred_at: Type.Optional(Type.String({ description: 'Exact moment, ISO 8601.' })),
-  timezone: Type.Optional(Type.String({ description: 'IANA name. Defaults to the caller\'s time zone.' })),
+  timezone: Type.Optional(Type.String({ description: 'IANA name. Defaults to the household\'s time zone.' })),
   merchant: Type.Optional(Nullable(Type.String())),
   notes: Type.Optional(Nullable(Type.String())),
   private: Type.Optional(Type.Boolean()),
@@ -112,13 +112,13 @@ export const SeenBody = Type.Object({ ids: Type.Array(Type.String({ format: 'uui
 export const SetupPatch = Type.Object({
   name: Type.Optional(Type.String({ minLength: 1 })),
   currency: Type.Optional(Type.String({ minLength: 3, maxLength: 3 })),
-  timezone: Type.Optional(Type.String()),
+  timezone: Type.Optional(Type.String({ description: 'The household\'s IANA time zone. Owners only.' })),
   steps: Type.Optional(Type.Record(Type.String(), Type.Union([Type.Literal('pending'), Type.Literal('done'), Type.Literal('later')]))),
   introduced: Type.Optional(Type.Literal(true)),
 })
 
 export const InviteBody = Type.Object({ email: Type.String({ format: 'email' }) })
-export const AcceptBody = Type.Object({ token: Type.String({ minLength: 10 }), name: Type.String({ minLength: 1 }), timezone: Type.String() })
+export const AcceptBody = Type.Object({ token: Type.String({ minLength: 10 }), name: Type.String({ minLength: 1 }) })
 export const ApiKeyBody = Type.Object({ name: Type.String({ minLength: 1 }) })
 
 export const SummaryQuery = Type.Object({

@@ -11,7 +11,7 @@ export function MePage() {
     <>
       <div className="page-head">
         <h1>{setup.you.name}</h1>
-        <p className="muted">{setup.you.email} · {setup.you.role === 'owner' ? 'Owner' : 'Member'} · {setup.you.timezone}</p>
+        <p className="muted">{setup.you.email} · {setup.you.role === 'owner' ? 'Owner' : 'Member'}</p>
       </div>
       <ConnectAssistant />
       <Connections />

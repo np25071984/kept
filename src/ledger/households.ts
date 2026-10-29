@@ -39,9 +39,9 @@ export async function createHousehold(ownerDb: Db, input: { name: string; curren
   const currency = validateCurrency(input.currency)
   const timezone = validateTimeZone(input.timezone)
   return ownerDb.transaction().execute(async (tx) => {
-    const household = await tx.insertInto('households').values({ name: input.name, currency, setup: JSON.stringify(initialSetup()) }).returning('id').executeTakeFirstOrThrow()
+    const household = await tx.insertInto('households').values({ name: input.name, currency, timezone, setup: JSON.stringify(initialSetup()) }).returning('id').executeTakeFirstOrThrow()
     await sql`select set_config('app.household_id', ${household.id}, true)`.execute(tx)
-    const owner = await tx.insertInto('users').values({ household_id: household.id, name: input.owner_name, email: input.owner_email, role: 'owner', timezone }).returning('id').executeTakeFirstOrThrow()
+    const owner = await tx.insertInto('users').values({ household_id: household.id, name: input.owner_name, email: input.owner_email, role: 'owner' }).returning('id').executeTakeFirstOrThrow()
     await tx.insertInto('categories').values(SEED_CATEGORIES.map((path) => ({ household_id: household.id, path }))).execute()
     const key = await issueApiKey(tx, household.id, owner.id, 'First key')
     return { household_id: household.id, user_id: owner.id, api_key: key.key }
@@ -63,7 +63,7 @@ export async function callerFor(db: Db, userId: string, householdId?: string): P
     const user = await tx
       .selectFrom('users')
       .innerJoin('households', 'households.id', 'users.household_id')
-      .select(['users.id', 'users.name', 'users.role', 'users.timezone', 'households.currency'])
+      .select(['users.id', 'users.name', 'users.role', 'households.timezone', 'households.currency'])
       .where('users.id', '=', userId)
       .executeTakeFirst()
     if (!user) return null
@@ -74,12 +74,12 @@ export async function callerFor(db: Db, userId: string, householdId?: string): P
 // Setup state for the first conversation (VISION.md §3.6).
 
 export async function getSetup(tx: Tx, caller: Caller) {
-  const household = await tx.selectFrom('households').select(['name', 'currency', 'setup']).executeTakeFirstOrThrow()
-  const user = await tx.selectFrom('users').select(['name', 'email', 'introduced_at', 'role', 'timezone']).where('id', '=', caller.user_id).executeTakeFirstOrThrow()
+  const household = await tx.selectFrom('households').select(['name', 'currency', 'timezone', 'setup']).executeTakeFirstOrThrow()
+  const user = await tx.selectFrom('users').select(['name', 'email', 'introduced_at', 'role']).where('id', '=', caller.user_id).executeTakeFirstOrThrow()
   const setup = { ...initialSetup(), ...household.setup } as SetupState
   return {
-    household: { name: household.name, currency: household.currency, steps: setup, next_step: nextStep(setup) },
-    you: { name: user.name, email: user.email, introduced: user.introduced_at != null, role: user.role, timezone: user.timezone },
+    household: { name: household.name, currency: household.currency, timezone: household.timezone, steps: setup, next_step: nextStep(setup) },
+    you: { name: user.name, email: user.email, introduced: user.introduced_at != null, role: user.role },
   }
 }
 
@@ -101,7 +101,8 @@ export async function updateSetup(tx: Tx, caller: Caller, patch: SetupPatch) {
   }
   if (patch.name !== undefined) await tx.updateTable('households').set({ name: patch.name.trim() }).execute()
   if (patch.timezone !== undefined) {
-    await tx.updateTable('users').set({ timezone: validateTimeZone(patch.timezone) }).where('id', '=', caller.user_id).execute()
+    if (caller.role !== 'owner') throw forbidden('Only an owner can change the household time zone.')
+    await tx.updateTable('households').set({ timezone: validateTimeZone(patch.timezone) }).execute()
   }
   if (patch.steps) {
     const current = await tx.selectFrom('households').select('setup').executeTakeFirstOrThrow()
@@ -150,21 +151,20 @@ export async function deleteInvite(tx: Tx, caller: Caller, id: string) {
 }
 
 // The invite link's token signs the new member in once; they join as a member and get their first API key.
-export async function acceptInvite(db: Db, input: { token: string; name: string; timezone: string }) {
-  const timezone = validateTimeZone(input.timezone)
+export async function acceptInvite(db: Db, input: { token: string; name: string }) {
   const found = await sql<{ id: string; household_id: string; email: string; expires_at: Date; accepted_at: Date | null }>`select * from kept_find_invite(${hashSecret(input.token)})`.execute(db)
   const invite = found.rows[0]
   if (!invite || invite.accepted_at || invite.expires_at < new Date()) throw new ApiError(410, 'invite_invalid', 'This invite link is invalid, used or expired.')
   return inHousehold(db, invite.household_id, async (tx) => {
-    const userId = await joinHousehold(tx, invite, input.name, timezone)
+    const userId = await joinHousehold(tx, invite, input.name)
     const key = await issueApiKey(tx, invite.household_id, userId, 'First key')
     return { user_id: userId, api_key: key.key }
   })
 }
 
 // Creates the invited member and marks the invite used. Runs inside the invite's household.
-export async function joinHousehold(tx: Tx, invite: { id: string; household_id: string; email: string }, name: string, timezone: string): Promise<string> {
-  const user = await tx.insertInto('users').values({ household_id: invite.household_id, name: name.trim(), email: invite.email, role: 'member', timezone: validateTimeZone(timezone) }).returning('id').executeTakeFirstOrThrow()
+export async function joinHousehold(tx: Tx, invite: { id: string; household_id: string; email: string }, name: string): Promise<string> {
+  const user = await tx.insertInto('users').values({ household_id: invite.household_id, name: name.trim(), email: invite.email, role: 'member' }).returning('id').executeTakeFirstOrThrow()
   await tx.updateTable('invites').set({ accepted_at: new Date() }).where('id', '=', invite.id).execute()
   return user.id
 }

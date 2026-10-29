@@ -71,7 +71,7 @@ The AI extracts what is explicit and fills defaults:
 | ----------- | --------- | ------------------- |
 | `amount`    | 60.00     | Stated              |
 | `date`      | Today     | Default             |
-| `timezone`  | America/New_York | User default |
+| `timezone`  | America/New_York | Household default |
 | `currency`  | USD       | Household currency  |
 | `category`  | *unknown* | Needs inference     |
 | `spent_for` | *unknown* | Depends on category |
@@ -357,6 +357,7 @@ flowchart TD
 - **Nothing is saved before the summary is confirmed,** as with every other write.
 - **The starting categories are the same for every household:** Groceries, Eating out, Car, Housing, Health, Clothing, Travel and Other. There is no Kids category: a child is one of the people & things, and what a child costs is everything spent for them, across categories. The interview adds to them.
 - **Recurring bills aren't asked about.** They come up when one is logged ([Repeating Spending](#35-repeating-spending-phone-rent-subscriptions)).
+- **One time zone per household.** It sets "today" for logging, recurring bills and monthly totals, so everyone shares one calendar. It is chosen when the household is created and owners can change it; members don't set one. A purchase made while traveling keeps its own zone.
 - **One way in.** The web UI and every assistant start with the same sign-in: an email and a code. A verified email with no account and no invite is offered to create a household; with an invite, to join it.
 - **Invites come from Kept.** Only an owner can invite. Kept emails the invited person; they add Kept to their own assistant and sign in with that email, which joins them to the household, and their assistant runs the new-member path above.
 - **A new member doesn't set up the household again.** Their agent introduces Kept, names the shared cost centers and categories, and asks what they want to keep an eye on and whether anything should be logged as private: watched groups and notes are personal.
@@ -493,6 +494,6 @@ Every member signs in with their own account. The header holds the pages for loo
 | **Reports**            | Two reports, picked from the header. Mine: the member's own spending, private purchases included, with the caps past 80%. Household: every member's non-private purchases, never by member. Each starts with this month and the per-month trend, then breaks a chosen period down by category, by people & things and by merchant, in tabs. |
 | **Notifications**      | Behind the bell: Kept's open questions, with their answers as buttons (see [The AI Integration Layer](#b-the-ai-integration-layer)). The bell's count is the number unanswered. |
 | **Preferences**        | In the user menu: the member's watched groups, with this month's amount and coverage, and caps, with their progress. |
-| **Settings**           | In the user menu, in tabs. Profile. Household: members (owners invite and remove them), categories, people & things, and the household's name and currency. Assistants & keys: connect an assistant over MCP and manage API keys. Assistant notes: the member's notes. |
+| **Settings**           | In the user menu, in tabs. Profile. Household: members (owners invite and remove them), categories, people & things, and General: the household's name, currency and time zone. Assistants & keys: connect an assistant over MCP and manage API keys. Assistant notes: the member's notes. |
 
 Every page, the spending graphs included (what to show, how to compare periods, how to show watched-group [coverage](#coverage)), is drawn in `docs/mockups/`.

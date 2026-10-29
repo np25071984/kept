@@ -76,11 +76,8 @@ ${error ? `<p class="error">${escape(error)}</p>` : ''}
 <form method="post" action="/oauth/interaction/${escape(uid)}/join">
   <label for="name">Your name</label>
   <input id="name" name="name" autocomplete="given-name" required autofocus>
-  <label for="timezone">Time zone</label>
-  <input id="timezone" name="timezone" required>
   <button type="submit">Join</button>
 </form>
-<script>document.getElementById('timezone').value = Intl.DateTimeFormat().resolvedOptions().timeZone</script>
 ${cancel(uid)}`)
 }
 

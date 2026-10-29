@@ -154,17 +154,12 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
       const interaction = await details(request, reply)
       if (!interaction || interaction.uid !== request.params.uid) return expired(reply)
       const name = (request.body?.name ?? '').trim()
-      const timezone = (request.body?.timezone ?? '').trim()
       const invite = await invitedHousehold(deps.db, interaction.uid)
       if (!invite) return expired(reply)
       if (!name) return html(reply, joinPage(interaction.uid, invite.household_name, invite.inviter_name, 'Enter your name.'), 400)
-      try {
-        const userId = await joinWithVerifiedEmail(deps.db, interaction.uid, name, timezone)
-        if (!userId) return expired(reply)
-        return finish(request, reply, { login: { accountId: userId } })
-      } catch {
-        return html(reply, joinPage(interaction.uid, invite.household_name, invite.inviter_name, 'Enter a time zone such as America/New_York.'), 400)
-      }
+      const userId = await joinWithVerifiedEmail(deps.db, interaction.uid, name)
+      if (!userId) return expired(reply)
+      return finish(request, reply, { login: { accountId: userId } })
     })
 
     scope.post<{ Params: { uid: string } }>('/oauth/interaction/:uid/consent', options, async (request, reply) => {

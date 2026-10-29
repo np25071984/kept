@@ -187,10 +187,10 @@ describe('OAuth2 for MCP clients', () => {
     expect(owner).toBeDefined()
 
     const tokens = await authorize('Jo@example.com', async (browser, uid) => {
-      return browser.form(`/oauth/interaction/${uid}/join`, { name: 'Jo', timezone: 'Europe/London' })
+      return browser.form(`/oauth/interaction/${uid}/join`, { name: 'Jo' })
     })
     const setup = await (await fetch(`${base}/api/v1/setup`, { headers: { authorization: `Bearer ${tokens.access_token}` } })).json()
-    expect(setup).toMatchObject({ household: { name: 'The Smiths' }, you: { role: 'member', timezone: 'Europe/London', introduced: false } })
+    expect(setup).toMatchObject({ household: { name: 'The Smiths' }, you: { role: 'member', introduced: false } })
   })
 
   it('lists the member\'s connected assistants and disconnects one', async () => {

@@ -29,7 +29,7 @@ const sourceKind = z.enum(['talk', 'photo', 'document', 'email', 'statement', 'o
 const transactionFields = {
   date: date.optional().describe('Local date of the purchase. Defaults to today in the user\'s time zone.'),
   occurred_at: z.string().optional().describe('Exact moment, ISO 8601, when a receipt or statement shows it.'),
-  timezone: z.string().optional().describe('IANA zone where it happened, if not the user\'s, e.g. "Asia/Tokyo".'),
+  timezone: z.string().optional().describe('IANA zone where it happened, if not the household\'s, e.g. "Asia/Tokyo".'),
   merchant: z.string().nullish(),
   notes: z.string().nullish().describe('E.g. the original amount and rate of a foreign purchase.'),
   private: z.boolean().optional().describe('Left out of household totals.'),
@@ -64,14 +64,14 @@ export async function playbook(rest: Rest, now = new Date()) {
     rest('GET', '/api/v1/notes'),
     rest('GET', '/api/v1/watches'),
   ])
-  const s = setup.body as { household: { name: string; currency: string; next_step: string | null }; you: { introduced: boolean; role: string; timezone: string } }
+  const s = setup.body as { household: { name: string; currency: string; timezone: string; next_step: string | null }; you: { introduced: boolean; role: string } }
   let startWith = 'Setup is done. Handle the user\'s request.'
   if (!s.you.introduced) startWith = s.you.role === 'owner' && s.household.next_step ? FIRST_MEMBER : NEW_MEMBER
   else if (s.you.role === 'owner' && s.household.next_step) startWith = resumeSetup(s.household.next_step)
   return {
     start_with: startWith,
-    today: todayIn(s.you.timezone, now),
-    timezone: s.you.timezone,
+    today: todayIn(s.household.timezone, now),
+    timezone: s.household.timezone,
     currency: s.household.currency,
     setup: setup.body,
     categories: (categories.body as { categories: { path: string }[] }).categories.map((c) => c.path),
@@ -273,7 +273,7 @@ export function registerTools(server: McpServer, rest: Rest) {
 
   server.registerTool('update_setup', {
     title: 'Update setup',
-    description: 'Save confirmed first-conversation answers: currency (owner, before the first purchase), the user\'s time zone, step states (basics, cost_centers, categories, watch, invite: done or later), and introduced: true once you introduced Kept.',
+    description: 'Save confirmed first-conversation answers: currency (owner, before the first purchase), the household\'s time zone (owner), step states (basics, cost_centers, categories, watch, invite: done or later), and introduced: true once you introduced Kept.',
     inputSchema: {
       name: z.string().optional(), currency: z.string().length(3).optional(), timezone: z.string().optional(),
       steps: z.record(z.string(), z.enum(['pending', 'done', 'later'])).optional(), introduced: z.literal(true).optional(),

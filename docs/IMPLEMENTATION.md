@@ -58,6 +58,7 @@ The costs are real. MCP is young and the spec still changes. Assistants support 
 | `id`   | UUID   | Yes      |               |
 | `name` | String | Yes      | The Smiths    |
 | `currency` | String | Yes  | USD. Every amount in the ledger is in this currency. |
+| `timezone` | String | Yes  | America/New_York. Sets "today" for logging and summaries; repeats are created on the date here. Owners change it. |
 | `setup`    | JSON   | Yes  | State of each setup step ([`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up)): `pending`, `done` or `later`, e.g. `{"basics": "done", "cost_centers": "done", "categories": "later", "watch": "pending", "invite": "pending"}`. |
 
 **Users** (any number per household)
@@ -69,7 +70,6 @@ The costs are real. MCP is young and the spec still changes. Assistants support 
 | `name`         | String | Yes      |                                                              |
 | `email`        | String | Yes      | Sign-in for the web UI and OAuth2.                           |
 | `role`         | String | Yes      | `owner` or `member`. Owners invite and remove members.       |
-| `timezone`     | String | Yes      | Repeats are created on the date in this time zone.           |
 | `introduced_at` | Timestamp | No    | When the agent first introduced Kept to this member. Empty = run the introduction. |
 
 **API Keys** (any number per user)
@@ -116,7 +116,7 @@ Renaming a category or cost center keeps every link. Repeat templates and `check
 | `id`       | UUID      | Yes      |                                                                    |
 | `date`     | Date      | Yes      | Local date where the purchase happened. Reports group by this date, so a purchase at 11pm on Dec 31 in New York counts in December. |
 | `occurred_at` | Timestamp (UTC) | No | Exact moment, when known (receipt, email, card statement). Always stored in UTC. |
-| `timezone` | String    | Yes      | IANA name where the purchase happened, e.g. `Asia/Tokyo`. Defaults to the user's time zone. |
+| `timezone` | String    | Yes      | IANA name where the purchase happened, e.g. `Asia/Tokyo`. Defaults to the household's time zone. |
 | `amount`   | Decimal   | Yes      | In the household currency. A purchase in another currency is converted at the time of purchase, and the original amount and rate go in `notes`, e.g. "¥4,800 at 148.15 JPY/USD". |
 | `spent_by` | UUID      | Yes      | Owner of the transaction. Set from the authenticated identity.     |
 | `private`  | Boolean   | Yes      | Default false. Private transactions are left out of household totals. |
@@ -253,7 +253,7 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `GET`    | `/api/v1/updates`           | What the ledger did on its own since the caller last checked: repeats registered, plus possible duplicates still to resolve. |
 | `POST`   | `/api/v1/updates/seen`      | Mark updates as shown.                                                                            |
 | `GET`    | `/api/v1/setup`             | The household's setup steps and whether the caller has been introduced.                          |
-| `PATCH`  | `/api/v1/setup`             | Save confirmed setup answers: currency, the caller's time zone, step states, the introduction.   |
+| `PATCH`  | `/api/v1/setup`             | Save confirmed setup answers: currency and time zone (owners), step states, the introduction.    |
 | `POST`   | `/api/v1/invites`           | Owners only. Invite a member by email; Kept emails them the address to add to their assistant.    |
 | `DELETE` | `/api/v1/invites/{id}`      | Cancel an invite that hasn't been accepted.                                                       |
 | `POST`   | `/api/v1/invites/accept`    | No API key. Accept with the token from the link: creates the member and returns their first API key. |
@@ -431,7 +431,7 @@ sequenceDiagram
     K-->>M: 6-digit code by email
     M->>K: Code
     opt Invited, no account yet
-        M->>K: Name and time zone: joins the household
+        M->>K: Name: joins the household
     end
     M->>K: Allow
     K-->>A: Redirect with authorization code
@@ -442,7 +442,7 @@ sequenceDiagram
 
 - **The code is typed, not clicked.** On a phone, the assistant's sign-in browser and the mail app's browser are different, so an emailed link arrives without the sign-in session. The email also carries a link, which works in the same browser. A code expires after 10 minutes or 5 wrong tries.
 - **Sign-in doesn't reveal accounts.** An email with no account and no open invite gets the same "check your email" page and no code.
-- **Invited people join by signing in.** A verified email with an open invite and no account gets a page for their name and time zone, then joins as a `member`; their assistant then runs the new-member path of [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
+- **Invited people join by signing in.** A verified email with an open invite and no account gets a page for their name, then joins as a `member`; their assistant then runs the new-member path of [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
 - **Tokens:** PKCE with S256 is required. Access tokens are opaque, bound to `<PUBLIC_URL>/mcp` and scope `kept`; a request with no scope gets `kept`. Refresh tokens rotate and don't end with the browser session, so the assistant stays connected.
 - **Metadata:** `/.well-known/oauth-authorization-server` serves the OAuth part of the OpenID document at `/.well-known/openid-configuration`: the `code` flow only, scope `kept`, and `protected_resources` pointing back to `/mcp`.
 - **The web UI** signs in as the built-in public client `kept-web` with PKCE, redirecting to `<PUBLIC_URL>/app/callback`. It skips the consent page, and asks with `prompt=login`, so every sign-in takes an emailed code and signing out on a shared computer holds. The refresh token stays in `localStorage` and the access token in memory; refreshes run under a Web Lock, because two tabs rotating one refresh token would revoke it.

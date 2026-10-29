@@ -48,8 +48,8 @@ export interface Update {
 }
 
 export interface Setup {
-  household: { name: string; currency: string; next_step: string | null }
-  you: { name: string; email: string; role: 'owner' | 'member'; timezone: string }
+  household: { name: string; currency: string; timezone: string; next_step: string | null }
+  you: { name: string; email: string; role: 'owner' | 'member' }
 }
 
 export interface CostCenter {

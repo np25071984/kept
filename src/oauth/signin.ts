@@ -59,8 +59,8 @@ export async function verifyCode(db: Db, uid: string, code: string): Promise<Ver
   return invite ? { kind: 'invite', invite, email: row.email } : { kind: 'invalid' }
 }
 
-// An invited person who verified their email joins with the name and time zone they give.
-export async function joinWithVerifiedEmail(db: Db, uid: string, name: string, timezone: string): Promise<string | null> {
+// An invited person who verified their email joins with the name they give.
+export async function joinWithVerifiedEmail(db: Db, uid: string, name: string): Promise<string | null> {
   const row = await db
     .selectFrom('sign_in_codes')
     .select(['email', 'verified_at'])
@@ -70,7 +70,7 @@ export async function joinWithVerifiedEmail(db: Db, uid: string, name: string, t
   if (!row?.verified_at || Date.now() - new Date(row.verified_at).getTime() > JOIN_MINUTES * 60_000) return null
   const invite = await findInvite(db, row.email)
   if (!invite) return null
-  const userId = await inHousehold(db, invite.household_id, (tx) => joinHousehold(tx, { ...invite, email: row.email }, name, timezone))
+  const userId = await inHousehold(db, invite.household_id, (tx) => joinHousehold(tx, { ...invite, email: row.email }, name))
   await db.deleteFrom('sign_in_codes').where('interaction_uid', '=', uid).execute()
   return userId
 }

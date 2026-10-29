@@ -229,7 +229,7 @@ a.tag:hover { border-color: var(--accent); color: var(--accent); }
 .fchip button { border: 0; background: none; color: inherit; padding: 0 6px; font-size: 15px; line-height: 1; cursor: pointer; }
 .fchips .link { margin-left: auto; font-size: 13px; }
 .picker { position: relative; }
-.picker summary { list-style: none; cursor: pointer; display: flex; gap: 8px; align-items: center; padding: 7px 28px 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg); font-size: 15px; position: relative; }
+.picker summary { list-style: none; cursor: pointer; white-space: nowrap; overflow: hidden; display: flex; gap: 8px; align-items: center; padding: 7px 28px 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--fg); font-size: 15px; position: relative; }
 .picker summary::-webkit-details-marker { display: none; }
 .picker summary::after { content: "▾"; position: absolute; right: 10px; color: var(--muted); }
 .picker[open] summary { outline: 2px solid var(--accent); outline-offset: 1px; }

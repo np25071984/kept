@@ -146,7 +146,7 @@ describe('setup and members', () => {
     expect(categories).toEqual(['Car', 'Clothing', 'Eating out', 'Groceries', 'Health', 'Housing', 'Other', 'Travel'])
 
     const patched = await fresh.patch('/api/v1/setup', { currency: 'EUR', timezone: 'Europe/Berlin', steps: { basics: 'done', categories: 'later' }, introduced: true })
-    expect(patched.body).toMatchObject({ household: { currency: 'EUR', next_step: 'cost_centers' }, you: { introduced: true, timezone: 'Europe/Berlin' } })
+    expect(patched.body).toMatchObject({ household: { currency: 'EUR', timezone: 'Europe/Berlin', next_step: 'cost_centers' }, you: { introduced: true } })
 
     await fresh.post('/api/v1/transactions', { amount: 10, category: 'Other' })
     expect((await fresh.patch('/api/v1/setup', { currency: 'USD' })).body.error.code).toBe('currency_in_use')
@@ -157,7 +157,7 @@ describe('setup and members', () => {
     const ownerClient = client(h, owner.api_key)
     await ownerClient.post('/api/v1/invites', { email: 'jo@example.com' })
     const token = h.invites.at(-1)!.link.split('#token=')[1]!
-    const accept = (name: string) => h.app.inject({ method: 'POST', url: '/api/v1/invites/accept', payload: { token, name, timezone: 'UTC' } })
+    const accept = (name: string) => h.app.inject({ method: 'POST', url: '/api/v1/invites/accept', payload: { token, name } })
     const first = await accept('Jo')
     expect(first.statusCode).toBe(201)
     expect((await accept('Jo again')).statusCode).toBe(410)
