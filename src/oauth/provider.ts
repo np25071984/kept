@@ -2,6 +2,7 @@ import Provider, { errors, type Configuration } from 'oidc-provider'
 import type { Db } from '../db/db.js'
 import { postgresAdapter } from './adapter.js'
 import type { OAuthKeys } from './keys.js'
+import { requestLanguage } from './language.js'
 import { errorPage } from './pages.js'
 
 // Kept's OAuth2 authorization server (IMPLEMENTATION.md §6). Assistants register themselves, sign a member in with PKCE,
@@ -91,7 +92,7 @@ export function createOAuth(db: Db, keys: OAuthKeys, publicUrl: string): OAuth {
     clientBasedCORS: () => true,
     renderError: async (ctx, out) => {
       ctx.type = 'html'
-      ctx.body = errorPage(String(out.error_description ?? out.error ?? 'Sign-in failed.'))
+      ctx.body = errorPage(requestLanguage(ctx.headers.cookie, ctx.headers['accept-language']), String(out.error_description ?? out.error ?? 'Sign-in failed.'))
     },
   }
   const provider = new Provider(issuer, configuration)

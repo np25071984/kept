@@ -1,21 +1,20 @@
+import { locale } from '../i18n.js'
 import { NavLink, useSearchParams } from 'react-router'
 import { api } from '../api.js'
 import { periodRange, type Period } from '../lib/filters.js'
 import { formatMoney } from '../lib/money.js'
-import { biggestChange, categoryBars, merchantBars, onTrack, peopleBars, previousRange, topLevelTotal, trend, type Bar, type Row } from '../lib/reports.js'
+import { biggestChange, categoryBars, merchantBars, NOBODY, onTrack, OTHER, peopleBars, previousRange, topLevelTotal, trend, type Bar, type Row } from '../lib/reports.js'
 import { useLoad, useSession } from '../session.js'
+import { t } from '../i18n.js'
 
 type Scope = 'me' | 'household'
 type Tab = 'category' | 'people' | 'merchants'
 
 const todayIn = (zone: string) => new Intl.DateTimeFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
-const monthName = (ym: string, style: 'short' | 'long' = 'short') => new Intl.DateTimeFormat(undefined, { month: style, timeZone: 'UTC' }).format(new Date(`${ym}-01T00:00:00Z`))
-const dayRange = (from: string, to: string) => {
-  const f = new Date(`${from}T00:00:00Z`)
-  const t = new Date(`${to}T00:00:00Z`)
-  const fmt = (d: Date, o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(undefined, { ...o, timeZone: 'UTC' }).format(d)
-  return from.slice(0, 7) === to.slice(0, 7) ? `${fmt(f, { month: 'short', day: 'numeric' })}–${fmt(t, { day: 'numeric' })}` : `${fmt(f, { month: 'short', day: 'numeric' })} – ${fmt(t, { month: 'short', day: 'numeric' })}`
-}
+const monthName = (ym: string, style: 'short' | 'long' = 'short') => new Intl.DateTimeFormat(locale(), { month: style, timeZone: 'UTC' }).format(new Date(`${ym}-01T00:00:00Z`))
+// "Sep 1 – 29" in English, "1–29 сент." in Russian.
+const dayRange = (from: string, to: string) =>
+  new Intl.DateTimeFormat(locale(), { month: 'short', day: 'numeric', timeZone: 'UTC' }).formatRange(new Date(`${from}T00:00:00Z`), new Date(`${to}T00:00:00Z`))
 
 // Reports · Mine and Reports · Household (docs/mockups/reports*.html): the trend, then a chosen period broken down in tabs.
 export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
@@ -74,61 +73,61 @@ export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
 
   return (
     <>
-      <div className="page-head"><h1>Reports · {scope === 'me' ? 'Mine' : 'Household'}</h1></div>
-      <p className="muted small">{scope === 'me' ? 'Only your purchases, private ones included.' : 'Everyone\'s purchases except private ones. Never broken down by member.'}</p>
+      <div className="page-head"><h1>{t(scope === 'me' ? 'Reports · Mine' : 'Reports · Household')}</h1></div>
+      <p className="muted small">{t(scope === 'me' ? 'Only your purchases, private ones included.' : 'Everyone\'s purchases except private ones. Never broken down by member.')}</p>
 
       <section className="section">
-        <h2>The trend</h2>
+        <h2>{t('The trend')}</h2>
         {caps.data?.filter((c) => c.state !== 'under').map((c) => (
-          <p key={c.id} className="capline">{c.category ?? c.cost_center}: {money(c.spent)} of your {money(c.amount)} cap {c.period === 'month' ? 'this month' : 'this year'} ({Math.round((c.spent / c.amount) * 100)}%). <NavLink to="/preferences#caps">Caps</NavLink></p>
+          <p key={c.id} className="capline">{t(c.period === 'month' ? '{name}: {spent} of your {amount} cap this month ({pct}%).' : '{name}: {spent} of your {amount} cap this year ({pct}%).', { name: (c.category ?? c.cost_center)!, spent: money(c.spent), amount: money(c.amount), pct: Math.round((c.spent / c.amount) * 100) })} <NavLink to="/preferences#caps">{t('Caps')}</NavLink></p>
         ))}
         <div className="card-section">
           <div className="section-head" style={{ alignItems: 'flex-start', flexWrap: 'wrap' }}>
-            <h3>Per month</h3>
+            <h3>{t('Per month')}</h3>
             <div style={{ textAlign: 'right' }}>
-              <div><span className="small muted">{monthName(today.slice(0, 7), 'long')} so far</span> <strong className="num big">{money(soFar)}</strong></div>
-              <div className="small muted">{money(Math.abs(soFar - before))} {soFar <= before ? 'less' : 'more'} than {dayRange(previousRange(`${today.slice(0, 7)}-01`, today).from, previousRange(`${today.slice(0, 7)}-01`, today).to)} {average != null && <> · average {money(average)}</>} · on track for {money(onTrack(soFar, today))}</div>
+              <div><span className="small muted">{t('{month} so far', { month: monthName(today.slice(0, 7), 'long') })}</span> <strong className="num big">{money(soFar)}</strong></div>
+              <div className="small muted">{t(soFar <= before ? '{amount} less than {range}' : '{amount} more than {range}', { amount: money(Math.abs(soFar - before)), range: dayRange(previousRange(`${today.slice(0, 7)}-01`, today).from, previousRange(`${today.slice(0, 7)}-01`, today).to) })}{average != null && <> · {t('average {amount}', { amount: money(average) })}</>} · {t('on track for {amount}', { amount: money(onTrack(soFar, today)) })}</div>
             </div>
           </div>
-          <MonthChart months={months} average={average} money={money} />
+          <MonthChart currency={currency} months={months} average={average} money={money} />
         </div>
       </section>
 
       <section className="section breakdown">
-        <h2>Breakdown</h2>
+        <h2>{t('Breakdown')}</h2>
         <div className="row">
-          <select value={period} onChange={(e) => setPeriod(e.target.value)} aria-label="Period" style={{ width: 'auto' }}>
-            <option value="this_month">This month</option><option value="last_month">Last month</option><option value="this_year">This year</option>
-            <option value="last_12">Last 12 months</option><option value="custom">Custom…</option>
+          <select value={period} onChange={(e) => setPeriod(e.target.value)} aria-label={t('Period')} style={{ width: 'auto' }}>
+            <option value="this_month">{t('This month')}</option><option value="last_month">{t('Last month')}</option><option value="this_year">{t('This year')}</option>
+            <option value="last_12">{t('Last 12 months')}</option><option value="custom">{t('Custom…')}</option>
           </select>
           {period === 'custom' ? (
             <>
-              <input type="date" value={from} onChange={(e) => setDate('from', e.target.value)} aria-label="From" style={{ width: 'auto' }} />
-              <input type="date" value={to} onChange={(e) => setDate('to', e.target.value)} aria-label="To" style={{ width: 'auto' }} />
+              <input type="date" value={from} onChange={(e) => setDate('from', e.target.value)} aria-label={t('From')} style={{ width: 'auto' }} />
+              <input type="date" value={to} onChange={(e) => setDate('to', e.target.value)} aria-label={t('To')} style={{ width: 'auto' }} />
             </>
           ) : <span className="small muted">{dayRange(from, to)}</span>}
         </div>
-        <nav className="folder-tabs" aria-label="Breakdown">
-          <NavLink to={`${base}${query}`} end><span className="long">By category</span><span className="short">Category</span></NavLink>
-          <NavLink to={`${base}/people${query}`}><span className="long">By people &amp; things</span><span className="short">People &amp; things</span></NavLink>
-          <NavLink to={`${base}/merchants${query}`}><span className="long">By merchant</span><span className="short">Merchant</span></NavLink>
+        <nav className="folder-tabs" aria-label={t('Breakdown')}>
+          <NavLink to={`${base}${query}`} end><span className="long">{t('By category')}</span><span className="short">{t('Category')}</span></NavLink>
+          <NavLink to={`${base}/people${query}`}><span className="long">{t('By people & things')}</span><span className="short">{t('People & things')}</span></NavLink>
+          <NavLink to={`${base}/merchants${query}`}><span className="long">{t('By merchant')}</span><span className="short">{t('Merchant')}</span></NavLink>
         </nav>
         <div className="card-section folder-body">
           {breakdown.error && <p className="error">{breakdown.error}</p>}
-          {change && <p className="small"><span className="muted">Biggest change:</span> <strong>{change.label} {change.amount >= change.prev ? '+' : '−'}{money(Math.abs(change.amount - change.prev))}</strong></p>}
-          {breakdown.data && bars.length === 0 && <p className="muted">Nothing logged in this period.</p>}
+          {change && <p className="small"><span className="muted">{t('Biggest change:')}</span> <strong>{change.label} {change.amount >= change.prev ? '+' : '−'}{money(Math.abs(change.amount - change.prev))}</strong></p>}
+          {breakdown.data && bars.length === 0 && <p className="muted">{t('Nothing logged in this period.')}</p>}
           <Bars bars={bars} money={money} />
           <div className="totalline">
-            <span><strong>Total</strong> <span className="small muted">· {money(Math.abs(diff))} {diff <= 0 ? 'less' : 'more'} than {dayRange(prev.from, prev.to)}</span></span>
+            <span><strong>{t('Total')}</strong> <span className="small muted">· {t(diff <= 0 ? '{amount} less than {range}' : '{amount} more than {range}', { amount: money(Math.abs(diff)), range: dayRange(prev.from, prev.to) })}</span></span>
             <strong className="num">{money(total)}</strong>
           </div>
-          <div className="legend"><span><span className="sw" />This period</span><span><span className="sw tick" />Same days last period</span></div>
-          {tab === 'people' && <p className="small muted">A shared bill counts toward each by its share; "Nobody in particular" is spending with no person or thing.</p>}
-          {tab === 'merchants' && <p className="small muted">The five biggest merchants of the period; the rest add up as "Other merchants".{scope === 'household' && ' A merchant shows by name only when at least two members bought there.'}</p>}
-          <details className="table-view"><summary>Show as table</summary>
-            <table className="lines"><thead><tr><th></th><th className="num">This period</th><th className="num">Before</th></tr></thead>
+          <div className="legend"><span><span className="sw" />{t('This period')}</span><span><span className="sw tick" />{t('Same days last period')}</span></div>
+          {tab === 'people' && <p className="small muted">{t('A shared bill counts toward each by its share; "Nobody in particular" is spending with no person or thing.')}</p>}
+          {tab === 'merchants' && <p className="small muted">{t('The five biggest merchants of the period; the rest add up as "Other merchants".')}{scope === 'household' && t(' A merchant shows by name only when at least two members bought there.')}</p>}
+          <details className="table-view"><summary>{t('Show as table')}</summary>
+            <table className="lines"><thead><tr><th></th><th className="num">{t('This period')}</th><th className="num">{t('Before')}</th></tr></thead>
               <tbody>{bars.map((b) => <tr key={b.key}><td>{b.sub ? '   ' : ''}{b.label}</td><td className="num">{money(b.amount)}</td><td className="num">{money(b.prev)}</td></tr>)}
-                <tr><td><strong>Total</strong></td><td className="num"><strong>{money(total)}</strong></td><td className="num">{money(prevTotal)}</td></tr></tbody>
+                <tr><td><strong>{t('Total')}</strong></td><td className="num"><strong>{money(total)}</strong></td><td className="num">{money(prevTotal)}</td></tr></tbody>
             </table>
           </details>
         </div>
@@ -144,7 +143,7 @@ function Bars({ bars, money }: { bars: Bar[]; money: (n: number) => string }) {
     <div className="hbars">
       {bars.map((b) => (
         <div key={b.key} className={`hbar${b.sub ? ' sub' : ''}`} title={`${b.key}: ${money(b.amount)} (before: ${money(b.prev)})`}>
-          <span>{b.label}</span>
+          <span>{b.key === NOBODY || b.key === OTHER ? t(b.label) : b.label}</span>
           <span className="track"><span className="fill" style={{ width: w(b.amount) }} /><span className="prev" style={{ left: w(b.prev) }} /></span>
           <span className="val num">{money(b.amount)}</span>
         </div>
@@ -153,7 +152,7 @@ function Bars({ bars, money }: { bars: Bar[]; money: (n: number) => string }) {
   )
 }
 
-function MonthChart({ months: all, average, money }: { months: { month: string; amount: number }[]; average: number | null; money: (n: number) => string }) {
+function MonthChart({ months: all, average, money, currency }: { months: { month: string; amount: number }[]; average: number | null; money: (n: number) => string; currency: string }) {
   // On a phone the last 6 months, so the labels stay readable.
   const months = typeof window !== 'undefined' && window.innerWidth < 600 ? all.slice(-6) : all
   if (!months.length) return null
@@ -165,10 +164,10 @@ function MonthChart({ months: all, average, money }: { months: { month: string; 
   const y = (v: number) => base - (v / ceiling) * height
   const slot = (W - left) / months.length
   const ticks = Array.from({ length: Math.round(ceiling / unit) + 1 }, (_, i) => i * unit)
-  const label = (v: number) => (v >= 1000 ? `$${v / 1000}k` : `$${v}`)
+  const label = (v: number) => new Intl.NumberFormat(locale(), { style: 'currency', currency, notation: 'compact', maximumFractionDigits: 1 }).format(v)
   return (
     <>
-      <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Spending per month">
+      <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={t('Spending per month')}>
         <defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="var(--accent)" /></pattern></defs>
         {ticks.map((t) => <g key={t}><line className="grid" x1={left} x2={W} y1={y(t)} y2={y(t)} /><text x={left - 6} y={y(t) + 4} textAnchor="end">{label(t)}</text></g>)}
         {months.map((m, i) => {
@@ -187,7 +186,7 @@ function MonthChart({ months: all, average, money }: { months: { month: string; 
         })}
         {average != null && <line className="avg" x1={left} x2={W} y1={y(average)} y2={y(average)} />}
       </svg>
-      <div className="legend"><span><span className="sw" />Spent</span><span><span className="sw hatch" />This month so far</span>{average != null && <span><span className="sw dash" />12-month average</span>}</div>
+      <div className="legend"><span><span className="sw" />{t('Spent')}</span><span><span className="sw hatch" />{t('This month so far')}</span>{average != null && <span><span className="sw dash" />{t('12-month average')}</span>}</div>
     </>
   )
 }

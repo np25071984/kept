@@ -5,6 +5,7 @@ import { IconButton } from '../IconButton.js'
 import type { CostCenter } from '../lib/types.js'
 import { categoryTree } from '../lib/vocabulary.js'
 import { useAction, useSession } from '../session.js'
+import { t } from '../i18n.js'
 
 // Settings → Household → Categories (VISION.md §4.C): add, rename and delete in place; three levels at most.
 export function CategoriesPage() {
@@ -13,8 +14,8 @@ export function CategoriesPage() {
   return (
     <section className="section">
       <div className="section-head">
-        <p className="muted small" style={{ margin: 0 }}>Up to three levels. Renaming keeps every purchase in it; a category can be deleted once nothing uses it.</p>
-        {!adding && <button onClick={() => setAdding(true)}>Add category</button>}
+        <p className="muted small" style={{ margin: 0 }}>{t('Up to three levels. Renaming keeps every purchase in it; a category can be deleted once nothing uses it.')}</p>
+        {!adding && <button onClick={() => setAdding(true)}>{t('Add category')}</button>}
       </div>
       <ul className="list">
         {adding && <li className="list-row"><NewCategory parent={null} onDone={() => setAdding(false)} /></li>}
@@ -38,10 +39,10 @@ function NewCategory({ parent, onDone }: { parent: string | null; onDone: () => 
   }
   return (
     <form className="row tight grow" onSubmit={add}>
-      <span className="muted small">{parent ? `New under ${parent}` : 'New category'}</span>
-      <input className="grow" value={name} onChange={(e) => setName(e.target.value)} aria-label={parent ? `New category under ${parent}` : 'New category'} autoFocus style={{ maxWidth: 260 }} />
-      <button type="submit" className="primary" disabled={busy || !name.trim() || name.includes('/')}>Add</button>
-      <button type="button" onClick={onDone}>Cancel</button>
+      <span className="muted small">{parent ? t('New under {parent}', { parent }) : t('New category')}</span>
+      <input className="grow" value={name} onChange={(e) => setName(e.target.value)} aria-label={parent ? t('New under {parent}', { parent }) : t('New category')} autoFocus style={{ maxWidth: 260 }} />
+      <button type="submit" className="primary" disabled={busy || !name.trim() || name.includes('/')}>{t('Add')}</button>
+      <button type="button" onClick={onDone}>{t('Cancel')}</button>
       {error && <p className="error full">{error}</p>}
     </form>
   )
@@ -62,24 +63,24 @@ function CategoryRow({ path, name, depth }: { path: string; name: string; depth:
         {mode === 'rename' ? (
           <form className="row tight grow" onSubmit={(e) => { e.preventDefault(); void act(() => api.renameCategory(path, newPath.trim())).then((ok) => ok && done()) }}>
             <input className="grow" value={newPath} onChange={(e) => setNewPath(e.target.value)} aria-label={`New path for ${path}`} autoFocus />
-            <button type="submit" className="primary" disabled={busy}>Rename</button>
-            <button type="button" onClick={() => { setMode('view'); setNewPath(path); clearError() }}>Cancel</button>
+            <button type="submit" className="primary" disabled={busy}>{t('Rename')}</button>
+            <button type="button" onClick={() => { setMode('view'); setNewPath(path); clearError() }}>{t('Cancel')}</button>
           </form>
         ) : (
           <span className="grow">{name}</span>
         )}
         {mode === 'delete' && (
           <div className="row tight">
-            <span className="muted small">Delete {path}?</span>
-            <button className="danger" disabled={busy} onClick={() => void act(() => api.deleteCategory(path)).then((ok) => ok && done())}>Delete</button>
-            <button onClick={() => { setMode('view'); clearError() }}>Keep</button>
+            <span className="muted small">{t('Delete {path}?', { path })}</span>
+            <button className="danger" disabled={busy} onClick={() => void act(() => api.deleteCategory(path)).then((ok) => ok && done())}>{t('Delete')}</button>
+            <button onClick={() => { setMode('view'); clearError() }}>{t('Keep')}</button>
           </div>
         )}
         {(mode === 'view' || mode === 'add') && (
           <div className="row tight">
-            {depth < 2 && <IconButton icon={Plus} label={`Add subcategory under ${path}`} onClick={() => setMode('add')} />}
-            <IconButton icon={Pencil} label={`Rename ${path}`} onClick={() => setMode('rename')} />
-            <IconButton icon={Trash2} label={`Delete ${path}`} danger onClick={() => setMode('delete')} />
+            {depth < 2 && <IconButton icon={Plus} label={t('Add subcategory under {path}', { path })} onClick={() => setMode('add')} />}
+            <IconButton icon={Pencil} label={t('Rename {path}', { path })} onClick={() => setMode('rename')} />
+            <IconButton icon={Trash2} label={t('Delete {path}', { path })} danger onClick={() => setMode('delete')} />
           </div>
         )}
         {error && <p className="error full">{error}</p>}
@@ -96,8 +97,8 @@ export function PeoplePage() {
   return (
     <section className="section">
       <div className="section-head">
-        <p className="muted small" style={{ margin: 0 }}>Who and what money is spent for. The kind tells your assistant which purchases each one could be for: fuel for a Car, rent for a Home.</p>
-        {!adding && <button onClick={() => setAdding(true)}>Add a person or thing</button>}
+        <p className="muted small" style={{ margin: 0 }}>{t('Who and what money is spent for. The kind tells your assistant which purchases each one could be for: fuel for a Car, rent for a Home.')}</p>
+        {!adding && <button onClick={() => setAdding(true)}>{t('Add a person or thing')}</button>}
       </div>
       {adding && <CostCenterEditor onDone={() => setAdding(false)} />}
       <ul className="list">
@@ -119,13 +120,13 @@ function CostCenterRow({ cc }: { cc: CostCenter }) {
       </div>
       {mode === 'delete' ? (
         <div className="row tight">
-          <button className="danger" disabled={busy} onClick={() => void act(() => api.deleteCostCenter(cc.name)).then((ok) => ok && (setMode('view'), refreshVocabulary()))}>Delete {cc.name}</button>
-          <button onClick={() => { setMode('view'); clearError() }}>Keep</button>
+          <button className="danger" disabled={busy} onClick={() => void act(() => api.deleteCostCenter(cc.name)).then((ok) => ok && (setMode('view'), refreshVocabulary()))}>{t('Delete {name}', { name: cc.name })}</button>
+          <button onClick={() => { setMode('view'); clearError() }}>{t('Keep')}</button>
         </div>
       ) : (
         <div className="row tight">
-          <IconButton icon={Pencil} label={`Edit ${cc.name}`} onClick={() => setMode('edit')} />
-          <IconButton icon={Trash2} label={`Delete ${cc.name}`} danger onClick={() => setMode('delete')} />
+          <IconButton icon={Pencil} label={t('Edit {name}', { name: cc.name })} onClick={() => setMode('edit')} />
+          <IconButton icon={Trash2} label={t('Delete {name}', { name: cc.name })} danger onClick={() => setMode('delete')} />
         </div>
       )}
       {error && <p className="error full">{error}</p>}
@@ -151,16 +152,16 @@ function CostCenterEditor({ cc, onDone }: { cc?: CostCenter; onDone: () => void 
   return (
     <form className="panel editor grow" onSubmit={save}>
       <div className="grid">
-        <label>Name<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Kia" required /></label>
-        <label>Kind
-          <input list="cost-center-kinds" value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} placeholder="Car, Child, Pet…" required />
+        <label>{t('Name')}<input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Kia" required /></label>
+        <label>{t('Kind')}
+          <input list="cost-center-kinds" value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })} placeholder={t('Car, Child, Pet…')} required />
           <datalist id="cost-center-kinds">{['Car', 'Child', 'Home', 'Pet', 'Project', 'Person'].map((k) => <option key={k} value={k} />)}</datalist>
         </label>
       </div>
       {error && <p className="error">{error}</p>}
       <div className="row tight">
-        <button type="submit" className="primary" disabled={busy || !form.name.trim() || !form.kind.trim()}>{cc ? 'Save' : 'Add'}</button>
-        <button type="button" onClick={onDone}>Cancel</button>
+        <button type="submit" className="primary" disabled={busy || !form.name.trim() || !form.kind.trim()}>{t(cc ? 'Save' : 'Add')}</button>
+        <button type="button" onClick={onDone}>{t('Cancel')}</button>
       </div>
     </form>
   )

@@ -3,6 +3,7 @@ import type { Db } from '../db/db.js'
 import type { App } from '../http/app.js'
 import type { Mailer } from '../ledger/households.js'
 import { codePage, consentPage, createPage, emailPage, errorPage, joinPage } from './pages.js'
+import { languageRoutes, requestLanguage } from './language.js'
 import { SCOPE, WEB_CLIENT_ID, type OAuth } from './provider.js'
 import { createWithVerifiedEmail, invitedHousehold, joinWithVerifiedEmail, sendCode, verifiedNewEmail, verifyCode } from './signin.js'
 
@@ -83,6 +84,8 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
     })
     const options = { config: { public: true }, schema: { hide: true } }
     type Form = Record<string, string | undefined>
+    const langOf = (request: FastifyRequest) => requestLanguage(request.headers.cookie, request.headers['accept-language'])
+    languageRoutes(scope)
     const html = (reply: FastifyReply, body: string, status = 200) => reply.status(status).type('text/html; charset=utf-8').header('cache-control', 'no-store').send(body)
     const details = async (request: FastifyRequest, reply: FastifyReply) => {
       try {
@@ -97,7 +100,7 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
       const location = await provider.interactionResult(request.raw, reply.raw, result, { mergeWithLastSubmission: merge })
       return reply.status(303).header('location', location).send()
     }
-    const expired = (reply: FastifyReply) => html(reply, errorPage('This sign-in has expired.'), 400)
+    const expired = (reply: FastifyReply) => html(reply, errorPage(langOf(reply.request), 'This sign-in has expired.'), 400)
 
     type Interaction = Awaited<ReturnType<typeof provider.interactionDetails>>
     const consent = async (request: FastifyRequest, reply: FastifyReply, interaction: Interaction) => {
@@ -117,25 +120,25 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
     scope.get<{ Params: { uid: string } }>('/oauth/interaction/:uid', options, async (request, reply) => {
       const interaction = await details(request, reply)
       if (!interaction || interaction.uid !== request.params.uid) return expired(reply)
-      if (interaction.prompt.name === 'login') return html(reply, emailPage(interaction.uid, await emailClient(interaction.params.client_id)))
+      if (interaction.prompt.name === 'login') return html(reply, emailPage(langOf(request), interaction.uid, await emailClient(interaction.params.client_id)))
       // Kept's own web UI needs no permission to act as the member who just signed in.
       if (interaction.params.client_id === WEB_CLIENT_ID) return consent(request, reply, interaction)
-      return html(reply, consentPage(interaction.uid, await clientName(interaction.params.client_id)))
+      return html(reply, consentPage(langOf(request), interaction.uid, await clientName(interaction.params.client_id)))
     })
 
     scope.post<{ Params: { uid: string }; Body: Form }>('/oauth/interaction/:uid/email', options, async (request, reply) => {
       const interaction = await details(request, reply)
       if (!interaction || interaction.uid !== request.params.uid) return expired(reply)
       const email = (request.body?.email ?? '').trim()
-      if (!/^[^@\s]+@[^@\s]+$/.test(email)) return html(reply, emailPage(interaction.uid, await emailClient(interaction.params.client_id), 'Enter a valid email.'), 400)
+      if (!/^[^@\s]+@[^@\s]+$/.test(email)) return html(reply, emailPage(langOf(request), interaction.uid, await emailClient(interaction.params.client_id), 'Enter a valid email.'), 400)
       const link = (code: string) => `${deps.oauth.issuer}/oauth/interaction/${interaction.uid}/code?code=${code}`
       try {
-        await sendCode(deps.db, deps.mailer, interaction.uid, email, link)
+        await sendCode(deps.db, deps.mailer, interaction.uid, email, link, langOf(request))
       } catch (error) {
         request.log.error(error, 'sign-in code not sent')
-        return html(reply, emailPage(interaction.uid, await emailClient(interaction.params.client_id), 'We couldn\'t send the code just now. Try again in a minute.'), 503)
+        return html(reply, emailPage(langOf(request), interaction.uid, await emailClient(interaction.params.client_id), 'We couldn\'t send the code just now. Try again in a minute.'), 503)
       }
-      return html(reply, codePage(interaction.uid, email))
+      return html(reply, codePage(langOf(request), interaction.uid, email))
     })
 
     const verify = async (request: FastifyRequest<{ Params: { uid: string } }>, reply: FastifyReply, code: string) => {
@@ -143,9 +146,9 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
       if (!interaction || interaction.uid !== request.params.uid) return expired(reply)
       const verified = await verifyCode(deps.db, interaction.uid, code)
       if (verified.kind === 'user') return finish(request, reply, { login: { accountId: verified.user_id } })
-      if (verified.kind === 'invite') return html(reply, joinPage(interaction.uid, verified.invite.household_name, verified.invite.inviter_name))
-      if (verified.kind === 'new') return html(reply, createPage(interaction.uid, verified.email))
-      return html(reply, codePage(interaction.uid, 'your email', 'That code is wrong or expired. Check it, or send a new one.'), 400)
+      if (verified.kind === 'invite') return html(reply, joinPage(langOf(request), interaction.uid, verified.invite.household_name, verified.invite.inviter_name))
+      if (verified.kind === 'new') return html(reply, createPage(langOf(request), interaction.uid, verified.email))
+      return html(reply, codePage(langOf(request), interaction.uid, 'your email', 'That code is wrong or expired. Check it, or send a new one.'), 400)
     }
     scope.post<{ Params: { uid: string }; Body: Form }>('/oauth/interaction/:uid/code', options, async (request, reply) => verify(request, reply, request.body?.code ?? ''))
     // The emailed link: works when opened in the browser that started sign-in.
@@ -157,7 +160,7 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
       const name = (request.body?.name ?? '').trim()
       const invite = await invitedHousehold(deps.db, interaction.uid)
       if (!invite) return expired(reply)
-      if (!name) return html(reply, joinPage(interaction.uid, invite.household_name, invite.inviter_name, 'Enter your name.'), 400)
+      if (!name) return html(reply, joinPage(langOf(request), interaction.uid, invite.household_name, invite.inviter_name, 'Enter your name.'), 400)
       const userId = await joinWithVerifiedEmail(deps.db, interaction.uid, name)
       if (!userId) return expired(reply)
       return finish(request, reply, { login: { accountId: userId } })
@@ -169,14 +172,14 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
       const email = await verifiedNewEmail(deps.db, interaction.uid)
       if (!email) return expired(reply)
       const input = { name: (request.body?.household ?? '').trim(), owner_name: (request.body?.name ?? '').trim(), currency: request.body?.currency ?? '', timezone: request.body?.timezone ?? '' }
-      if (!input.name || !input.owner_name) return html(reply, createPage(interaction.uid, email, 'Enter the household\'s name and yours.'), 400)
+      if (!input.name || !input.owner_name) return html(reply, createPage(langOf(request), interaction.uid, email, 'Enter the household\'s name and yours.'), 400)
       try {
-        const userId = await createWithVerifiedEmail(deps.db, interaction.uid, input)
+        const userId = await createWithVerifiedEmail(deps.db, interaction.uid, { ...input, language: langOf(request) })
         if (!userId) return expired(reply)
         return finish(request, reply, { login: { accountId: userId } })
       } catch (error) {
         request.log.warn(error, 'household not created')
-        return html(reply, createPage(interaction.uid, email, 'Check the currency and time zone, then try again.'), 400)
+        return html(reply, createPage(langOf(request), interaction.uid, email, 'Check the currency and time zone, then try again.'), 400)
       }
     })
 

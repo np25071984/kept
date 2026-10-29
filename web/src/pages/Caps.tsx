@@ -5,6 +5,7 @@ import { IconButton } from '../IconButton.js'
 import { formatMoney, parseAmount, toCents } from '../lib/money.js'
 import type { Cap } from '../lib/types.js'
 import { useAction, useLoad, useSession } from '../session.js'
+import { t } from '../i18n.js'
 
 // Preferences → Caps (docs/mockups/preferences.html): soft reminders with this month's or year's progress.
 export function CapsSection() {
@@ -13,12 +14,12 @@ export function CapsSection() {
   return (
     <section className="section" id="caps">
       <div className="section-head">
-        <h2>Caps</h2>
-        {mode === 'list' && <button onClick={() => setMode('add')}>Set a cap</button>}
+        <h2>{t('Caps')}</h2>
+        {mode === 'list' && <button onClick={() => setMode('add')}>{t('Set a cap')}</button>}
       </div>
-      <p className="muted small">Soft reminders: nothing is blocked. Your assistant mentions a cap once a purchase takes it past 80%.</p>
+      <p className="muted small">{t('Soft reminders: nothing is blocked. Your assistant mentions a cap once a purchase takes it past 80%.')}</p>
       {list.error && <p className="error">{list.error}</p>}
-      {list.data && list.data.length === 0 && mode !== 'add' && <p className="muted">No caps yet.</p>}
+      {list.data && list.data.length === 0 && mode !== 'add' && <p className="muted">{t('No caps yet.')}</p>}
       <ul className="list">
         {list.data?.map((cap) => mode === cap.id
           ? <li key={cap.id} className="list-row"><CapEditor cap={cap} onDone={(saved) => { setMode('list'); if (saved) list.reload() }} /></li>
@@ -39,16 +40,16 @@ function CapRow({ cap, onEdit, onChanged }: { cap: Cap; onEdit: () => void; onCh
     <li className="list-row">
       <div className="grow">
         <div className="row tight" style={{ justifyContent: 'space-between' }}>
-          <span>{cap.category ?? cap.cost_center} <span className="muted small">· per {cap.period}</span></span>
-          <span className="num small">{formatMoney(cap.spent, currency)} of {formatMoney(cap.amount, currency)}</span>
+          <span>{cap.category ?? cap.cost_center} <span className="muted small">· {t(cap.period === 'month' ? 'per month' : 'per year')}</span></span>
+          <span className="num small">{t('{spent} of {amount}', { spent: formatMoney(cap.spent, currency), amount: formatMoney(cap.amount, currency) })}</span>
         </div>
         <div className={`meter ${cap.state}`}><span style={{ width: `${Math.min(100, share * 100)}%` }} /></div>
-        <div className="small muted">{Math.round(share * 100)}% · {left >= 0 ? `${formatMoney(left, currency)} left` : `${formatMoney(-left, currency)} over`}{cap.state === 'close' && <> · <strong>close</strong></>}</div>
+        <div className="small muted">{Math.round(share * 100)}% · {left >= 0 ? t('{amount} left', { amount: formatMoney(left, currency) }) : t('{amount} over', { amount: formatMoney(-left, currency) })}{cap.state === 'close' && <> · <strong>{t('close')}</strong></>}</div>
         {error && <p className="error">{error}</p>}
       </div>
       <div className="row tight">
-        <IconButton icon={Pencil} label="Edit cap" onClick={onEdit} />
-        <IconButton icon={Trash2} label="Remove cap" danger disabled={busy} onClick={() => act(async () => { await api.deleteCap(cap.id); onChanged() })} />
+        <IconButton icon={Pencil} label={t('Edit cap')} onClick={onEdit} />
+        <IconButton icon={Trash2} label={t('Remove cap')} danger disabled={busy} onClick={() => act(async () => { await api.deleteCap(cap.id); onChanged() })} />
       </div>
     </li>
   )
@@ -73,18 +74,18 @@ function CapEditor({ cap, onDone }: { cap?: Cap; onDone: (saved: boolean) => voi
         <label>For
           {cap ? <input value={cap.category ?? cap.cost_center ?? ''} disabled /> : (
             <select value={form.target} onChange={(e) => setForm({ ...form, target: e.target.value })}>
-              <optgroup label="Categories">{categories.map((c) => <option key={c} value={`c:${c}`}>{c}</option>)}</optgroup>
-              {costCenters.length > 0 && <optgroup label="People & things">{costCenters.map((c) => <option key={c.name} value={`p:${c.name}`}>{c.name}</option>)}</optgroup>}
+              <optgroup label={t('Categories')}>{categories.map((c) => <option key={c} value={`c:${c}`}>{c}</option>)}</optgroup>
+              {costCenters.length > 0 && <optgroup label={t('People & things')}>{costCenters.map((c) => <option key={c.name} value={`p:${c.name}`}>{c.name}</option>)}</optgroup>}
             </select>
           )}
         </label>
-        <label>Up to<input inputMode="decimal" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="500" /></label>
-        <label>Per<select value={form.period} onChange={(e) => setForm({ ...form, period: e.target.value as 'month' | 'year' })}><option value="month">Month</option><option value="year">Year</option></select></label>
+        <label>{t('Up to')}<input inputMode="decimal" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="500" /></label>
+        <label>{t('Per')}<select value={form.period} onChange={(e) => setForm({ ...form, period: e.target.value as 'month' | 'year' })}><option value="month">{t('Month')}</option><option value="year">{t('Year')}</option></select></label>
       </div>
       {error && <p className="error">{error}</p>}
       <div className="row tight">
-        <button type="submit" className="primary" disabled={busy || cents == null || cents <= 0}>Save cap</button>
-        <button type="button" onClick={() => onDone(false)}>Cancel</button>
+        <button type="submit" className="primary" disabled={busy || cents == null || cents <= 0}>{t('Save cap')}</button>
+        <button type="button" onClick={() => onDone(false)}>{t('Cancel')}</button>
       </div>
     </form>
   )

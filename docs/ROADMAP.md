@@ -19,29 +19,6 @@ Real use, across assistants.
 
 **Gate:** one household logs a full month of spending through its assistants alone, and the month's summary matches its bank statements.
 
-## Phase 4 — Web UI
-
-Looking back, fixing and managing (`VISION.md` §4.C). Started before Phase 3's gate, so the month of real use has somewhere to review and fix what was logged.
-
-- [x] Sign-in with the emailed code (`IMPLEMENTATION.md` §5.4).
-- [x] Updates and My purchases pages, with editing, privacy and merging.
-- [ ] One sign-in for everyone: a verified email with no account and no invite is offered to create a household, on the web and in assistants (`VISION.md` §3.6). Owners invite and remove members.
-- [ ] Recurring page (repeats), with "Make it recurring" on a purchase.
-- [ ] My purchases as `docs/mockups/purchases.html` shows: paging, a merchant-or-item search, and a Filters panel (period, privacy, several categories with three-state subcategories, several people & things) with chips for what's on.
-- [ ] Navigation as the mockups show: My purchases, Recurring and a Reports menu (Mine, Household) in the header, the bell, and a user menu with Preferences, Settings and Sign out (`VISION.md` §4.C).
-- [ ] Lucide icons (`lucide-react`) where the mockups use them, following the rule in `docs/mockups/index.html`: icons for actions everyone recognises, words for the rest.
-- [ ] English and Russian (`VISION.md` §4.C): message catalogues for the web app, sign-in pages and emails, with plurals; a language menu in every page header (a POST to `/language`, saved to the account signed in and to a cookie signed out), starting from the browser's; dates and amounts through `Intl`; the starting categories in the owner's language; the playbook tells the agent to answer in the user's language. `docs/mockups/purchases-ru.html` shows the result.
-- [ ] Profile in Settings (name) and the household's name, currency and time zone.
-- [ ] Time zone search picker, as `docs/mockups/settings-household-details.html` shows, wherever a time zone is chosen: Create household and Settings → Household → General. Zones grouped by region, sorted by today's offset, searchable.
-- [x] Notes replace rules: personal notes loaded in full at the start, watched groups on their own, a new member asked what to watch (`VISION.md` §4.A, "Notes").
-- [ ] Notifications: Kept's open questions (possible duplicates, a cap passed, a recurring charge missing from a statement, an API key unused for a year) behind the bell and asked in chat one per conversation; recurring purchases logged on their date are announced in chat only (`VISION.md` §4.B, §4.C).
-- [ ] Caps: storage, API, tools, the playbook's reminders, the Preferences section and the line in Reports · Mine (`VISION.md` §4.A, "Caps").
-- [x] Household and Me pages: shared vocabulary, watched groups and notes, connecting an assistant, API keys.
-- [x] Mockups of every page, the spending graphs included (`docs/mockups/`).
-- [ ] Reports, Mine and Household, as `docs/mockups/reports*.html` show: this month, the per-month trend, and the period by category, people & things and merchant (`group_by=merchant` is new).
-
-**Gate:** every correction an agent conversation can make can also be made in the web UI.
-
 ## Later
 
 - [ ] Landing page at `/`, as `docs/mockups/landing.html` shows, and a privacy policy linked from it and the sign-in pages. Before sign-up opens to other households.

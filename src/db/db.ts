@@ -9,6 +9,7 @@ import * as householdTimezone from './migrations/005_household_timezone.js'
 import * as createHouseholdFn from './migrations/006_create_household.js'
 import * as caps from './migrations/007_caps.js'
 import * as questions from './migrations/008_questions.js'
+import * as language from './migrations/009_language.js'
 import type { Database } from './schema.js'
 
 // Dates stay 'YYYY-MM-DD' strings; JavaScript Date would shift them by the machine's time zone.
@@ -32,7 +33,7 @@ export async function inHousehold<T>(db: Db, householdId: string, fn: (tx: Tx) =
 export function migrator(db: Kysely<any>): Migrator {
   return new Migrator({
     db,
-    provider: { getMigrations: async () => ({ '001_initial': initial, '002_oauth': oauth, '003_memory': memory, '004_drop_cost_center_links': links, '005_household_timezone': householdTimezone, '006_create_household': createHouseholdFn, '007_caps': caps, '008_questions': questions }) },
+    provider: { getMigrations: async () => ({ '001_initial': initial, '002_oauth': oauth, '003_memory': memory, '004_drop_cost_center_links': links, '005_household_timezone': householdTimezone, '006_create_household': createHouseholdFn, '007_caps': caps, '008_questions': questions, '009_language': language }) },
   })
 }
 

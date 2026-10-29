@@ -21,6 +21,7 @@ export interface Database {
     name: string
     email: string
     role: 'owner' | 'member'
+    language: string | null
     introduced_at: Timestamp | null
     created_at: Generated<Date>
   }

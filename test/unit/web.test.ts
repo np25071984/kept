@@ -87,3 +87,13 @@ describe('recurring cadence', () => {
     expect(cadence({ frequency: 'yearly', interval: 1, anchor: '2026-03-03' })).toBe('Yearly on Mar 3')
   })
 })
+
+describe('amounts as typed', () => {
+  it('reads English and Russian decimal marks', async () => {
+    const { parseAmount } = await import('../../web/src/lib/money.js')
+    expect(parseAmount('1,234.50')).toBe(123450)
+    expect(parseAmount('12,50')).toBe(1250)
+    expect(parseAmount('1 234,5')).toBe(123450)
+    expect(parseAmount('$900')).toBe(90000)
+  })
+})

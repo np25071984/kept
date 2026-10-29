@@ -71,6 +71,7 @@ The costs are real. MCP is young and the spec still changes. Assistants support 
 | `email`        | String | Yes      | Sign-in for the web UI and OAuth2.                           |
 | `role`         | String | Yes      | `owner` or `member`. Owners invite and remove members.       |
 | `introduced_at` | Timestamp | No    | When the agent first introduced Kept to this member. Empty = run the introduction. |
+| `language`     | String | No       | `en` or `ru`, set from the language menu or at sign-up. Empty = the browser's. |
 
 **API Keys** (any number per user)
 
@@ -270,7 +271,7 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `POST`   | `/api/v1/updates/seen`      | Mark updates as shown.                                                                            |
 | `GET`    | `/api/v1/setup`             | The household's setup steps and whether the caller has been introduced.                          |
 | `PATCH`  | `/api/v1/setup`             | Save confirmed setup answers: the household's name, currency and time zone (owners), step states, the introduction. The response's `currency_locked` says the first purchase fixed the currency. |
-| `PATCH`  | `/api/v1/me`                | Change the caller's own name.                                                                     |
+| `PATCH`  | `/api/v1/me`                | Change the caller's own name or language (`en`, `ru`).                                            |
 | `GET`    | `/api/v1/members`           | The household's members and open invites.                                                         |
 | `PATCH`  | `/api/v1/members/{id}`      | Owners only: make someone an owner or a member. A household keeps at least one owner.             |
 | `DELETE` | `/api/v1/members/{id}`      | Owners only: remove a member and everything they logged; never the last owner.                    |
@@ -466,12 +467,13 @@ sequenceDiagram
 ```
 
 - **The code is typed, not clicked.** On a phone, the assistant's sign-in browser and the mail app's browser are different, so an emailed link arrives without the sign-in session. The email also carries a link, which works in the same browser. A code expires after 10 minutes or 5 wrong tries.
-- **Sign-in doesn't reveal accounts.** An email with no account and no open invite gets the same "check your email" page and no code.
+- **Sign-in doesn't reveal accounts.** Every email gets the same "check your email" page and a code.
 - **Invited people join by signing in.** Every email gets a code. A verified email with no account and no invite gets the create-household form and becomes its owner (`kept_create_household`). A verified email with an open invite and no account gets a page for their name, then joins as a `member`; their assistant then runs the new-member path of [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
 - **Tokens:** PKCE with S256 is required. Access tokens are opaque, bound to `<PUBLIC_URL>/mcp` and scope `kept`; a request with no scope gets `kept`. Refresh tokens rotate and don't end with the browser session, so the assistant stays connected.
 - **Metadata:** `/.well-known/oauth-authorization-server` serves the OAuth part of the OpenID document at `/.well-known/openid-configuration`: the `code` flow only, scope `kept`, and `protected_resources` pointing back to `/mcp`.
 - **The web UI** signs in as the built-in public client `kept-web` with PKCE, redirecting to `<PUBLIC_URL>/app/callback`. It skips the consent page, and asks with `prompt=login`, so every sign-in takes an emailed code and signing out on a shared computer holds. The refresh token stays in `localStorage` and the access token in memory; refreshes run under a Web Lock, because two tabs rotating one refresh token would revoke it.
 - **Clients created ahead of time:** Gemini asks for a client ID and secret instead of registering. Its redirect URI, shown under "Copy redirect URI" in its dialog, contains the member's Google account and Kept's host name, so each member creates their own client on the web UI's Me page (`POST /api/v1/connections/clients`); `create-client` does the same from the command line.
+- **Language:** the sign-in pages and the code email use the `kept_lang` cookie, else `Accept-Language`. The switch at the top of each page sets the cookie through `POST /language`; the web app sets it too, from the member's saved language. An invite email goes out in the inviter's language. Creating a household saves the page's language to the owner and seeds the starting categories in it.
 - **Connections** are a member's grants grouped by client. Disconnecting deletes the grants and their tokens.
 - **State** (clients, grants, sessions, codes, tokens) lives in `oauth_models`, and sign-in codes in `sign_in_codes`, hashed. Neither belongs to a household, so neither has row-level security. `SECURITY DEFINER` functions find a user or an open invite by email and a user's household before the household is known.
 

@@ -1,6 +1,7 @@
 import { createHash, randomInt } from 'node:crypto'
 import { sql } from 'kysely'
 import { inHousehold, type Db } from '../db/db.js'
+import type { Language } from '../domain/language.js'
 import { createHouseholdForEmail, joinHousehold, type Mailer } from '../ledger/households.js'
 
 // Members sign in with a six-digit code emailed to them (IMPLEMENTATION.md §6). The code is typed into the browser that
@@ -31,7 +32,7 @@ async function findInvite(db: Db, email: string): Promise<OpenInvite | null> {
 }
 
 // Every email gets a code, so the pages never reveal who has an account (VISION.md §3.6, "One way in").
-export async function sendCode(db: Db, mailer: Mailer, uid: string, email: string, link: (code: string) => string): Promise<void> {
+export async function sendCode(db: Db, mailer: Mailer, uid: string, email: string, link: (code: string) => string, language: Language = 'en'): Promise<void> {
   const address = email.trim().toLowerCase()
   const code = String(randomInt(0, 1_000_000)).padStart(6, '0')
   await db.deleteFrom('sign_in_codes').where('interaction_uid', '=', uid).execute()
@@ -39,7 +40,7 @@ export async function sendCode(db: Db, mailer: Mailer, uid: string, email: strin
     .insertInto('sign_in_codes')
     .values({ interaction_uid: uid, email: address, code_hash: hashCode(uid, code), expires_at: new Date(Date.now() + CODE_MINUTES * 60_000) })
     .execute()
-  await mailer.sendSignInCode({ to: address, code, link: link(code) })
+  await mailer.sendSignInCode({ to: address, code, link: link(code), language })
 }
 
 export type Verified = { kind: 'user'; user_id: string } | { kind: 'invite'; invite: OpenInvite; email: string } | { kind: 'new'; email: string } | { kind: 'invalid' }
@@ -79,7 +80,7 @@ export async function invitedHousehold(db: Db, uid: string): Promise<OpenInvite 
   return row ? findInvite(db, row.email) : null
 }
 // A verified email with no account and no invite creates a household and becomes its owner.
-export async function createWithVerifiedEmail(db: Db, uid: string, input: { name: string; owner_name: string; currency: string; timezone: string }): Promise<string | null> {
+export async function createWithVerifiedEmail(db: Db, uid: string, input: { name: string; owner_name: string; currency: string; timezone: string; language?: Language }): Promise<string | null> {
   const row = await db.selectFrom('sign_in_codes').select(['email', 'verified_at']).where('interaction_uid', '=', uid).where('verified_at', 'is not', null).executeTakeFirst()
   if (!row?.verified_at || Date.now() - new Date(row.verified_at).getTime() > JOIN_MINUTES * 60_000) return null
   if ((await findUser(db, row.email)) || (await findInvite(db, row.email))) return null

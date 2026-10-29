@@ -51,7 +51,7 @@ const query = (params: Record<string, string | undefined>) => {
 export const api = {
   setup: () => call<Setup>('GET', '/api/v1/setup'),
   updateSetup: (patch: { name?: string; currency?: string; timezone?: string }) => call<Setup>('PATCH', '/api/v1/setup', patch),
-  updateMe: (patch: { name?: string }) => call<Setup>('PATCH', '/api/v1/me', patch),
+  updateMe: (patch: { name?: string; language?: 'en' | 'ru' | null }) => call<Setup>('PATCH', '/api/v1/me', patch),
   recurring: () => call<{ repeats: Recurring[]; month: { month: string; total: number; to_come: number } }>('GET', '/api/v1/repeats'),
   makeRecurring: (body: { transaction_id: string; frequency: string; interval?: number; anchor?: string }) => call<Recurring>('POST', '/api/v1/repeats', body),
   updateRecurring: (id: string, patch: { amount?: number; frequency?: string; interval?: number; anchor?: string; ends_on?: string | null; paused?: boolean }) => call<Recurring>('PATCH', `/api/v1/repeats/${id}`, patch),

@@ -15,6 +15,7 @@ import { ReportsPage } from './pages/Reports.js'
 import { GeneralPage, HouseholdLayout, ProfilePage, SettingsLayout } from './pages/Settings.js'
 import { NotificationsPage } from './pages/Notifications.js'
 import { messageFor, SessionContext, SIGNED_OUT, useLoad, type Session } from './session.js'
+import { language, setLanguage, t } from './i18n.js'
 
 export function App() {
   return (
@@ -52,7 +53,7 @@ export function App() {
           <Route path="updates" element={<Navigate to="/notifications" replace />} />
           <Route path="household" element={<Navigate to="/settings/household" replace />} />
           <Route path="me" element={<Navigate to="/settings/assistants" replace />} />
-          <Route path="*" element={<p className="empty">There's nothing here.</p>} />
+          <Route path="*" element={<p className="empty">{t('There\'s nothing here.')}</p>} />
         </Route>
       </Routes>
     </BrowserRouter>
@@ -67,12 +68,12 @@ function Callback() {
       .then((returnTo) => navigate(returnTo, { replace: true }))
       .catch((e) => setError(messageFor(e)))
   }, [navigate])
-  if (!error) return <Centered><p className="muted">Signing you in…</p></Centered>
+  if (!error) return <Centered><p className="muted">{t('Signing you in…')}</p></Centered>
   return (
     <Centered>
-      <h1>Sign-in didn't finish</h1>
+      <h1>{t('Sign-in didn\'t finish')}</h1>
       <p className="error">{error}</p>
-      <button className="primary" onClick={() => signIn('/purchases')}>Sign in again</button>
+      <button className="primary" onClick={() => signIn('/purchases')}>{t('Sign in again')}</button>
     </Centered>
   )
 }
@@ -93,8 +94,8 @@ function SignInRedirect() {
   useEffect(() => {
     signIn(location.pathname + location.search).catch((e) => setError(messageFor(e)))
   }, [location])
-  if (!error) return <Centered><p className="muted">Taking you to sign-in…</p></Centered>
-  return <Centered><p className="error">{error}</p><button onClick={() => window.location.reload()}>Try again</button></Centered>
+  if (!error) return <Centered><p className="muted">{t('Taking you to sign-in…')}</p></Centered>
+  return <Centered><p className="error">{error}</p><button onClick={() => window.location.reload()}>{t('Try again')}</button></Centered>
 }
 
 function Shell() {
@@ -114,9 +115,18 @@ function SignedIn({ onSignOut }: { onSignOut: () => void }) {
   const questions = useLoad(() => api.questions(), [unseenVersion])
   const refreshUnseen = useCallback(() => setUnseenVersion((v) => v + 1), [])
 
-  if (base.error) return <Centered><p className="error">{base.error}</p><button onClick={base.reload}>Try again</button></Centered>
+  // The member's saved language wins over the browser's; switching reloads once with it.
+  const saved = base.data?.[0].you.language
+  useEffect(() => {
+    if (saved && saved !== language()) {
+      setLanguage(saved)
+      location.reload()
+    }
+  }, [saved])
+
+  if (base.error) return <Centered><p className="error">{base.error}</p><button onClick={base.reload}>{t('Try again')}</button></Centered>
   // A reload keeps the last data on screen, so editing the vocabulary doesn't flash the whole app.
-  if (!base.data) return <Centered><p className="muted">Loading…</p></Centered>
+  if (!base.data) return <Centered><p className="muted">{t('Loading…')}</p></Centered>
   const [setup, categories, costCenters] = base.data
   const session: Session = { setup, categories, costCenters, unseen: questions.data?.length ?? 0, refreshUnseen, refreshVocabulary: base.reload }
   return (

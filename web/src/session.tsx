@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type DependencyList } from 'react'
 import { ApiError, SignedOut } from './api.js'
+import { t } from './i18n.js'
 import type { CostCenter, Setup } from './lib/types.js'
 
 // What every signed-in page needs: who is signed in, the household's vocabulary, and the unseen-updates count.
@@ -26,7 +27,7 @@ export const SIGNED_OUT = 'kept:signed-out'
 export function messageFor(error: unknown): string {
   if (error instanceof ApiError) return error.message
   if (error instanceof Error) return error.message
-  return 'Something went wrong.'
+  return t('Something went wrong.')
 }
 
 export interface Loaded<T> {

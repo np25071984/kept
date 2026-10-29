@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { sql } from 'kysely'
 import { inHousehold, type Db, type Tx } from '../db/db.js'
 import { isTimeZone } from '../domain/dates.js'
+import { isLanguage, SEED_CATEGORIES_RU, type Language } from '../domain/language.js'
 import { SEED_CATEGORIES, SETUP_STEPS, STEP_STATES, initialSetup, nextStep, type SetupState } from '../domain/setup.js'
 import type { Caller } from './caller.js'
 import { ApiError, conflict, forbidden, invalid, notFound } from './errors.js'
@@ -56,7 +57,7 @@ export async function authenticate(db: Db, key: string): Promise<Caller | null> 
 }
 
 // A household created at sign-in by a verified email with no account and no invite (VISION.md §3.6, "One way in").
-export async function createHouseholdForEmail(db: Db, input: { name: string; currency: string; timezone: string; owner_name: string; email: string }) {
+export async function createHouseholdForEmail(db: Db, input: { name: string; currency: string; timezone: string; owner_name: string; email: string; language?: Language }) {
   const currency = validateCurrency(input.currency)
   const timezone = validateTimeZone(input.timezone)
   const name = input.name.trim()
@@ -65,7 +66,12 @@ export async function createHouseholdForEmail(db: Db, input: { name: string; cur
   const created = await sql<{ household_id: string; user_id: string }>`
     select * from kept_create_household(${name}, ${currency}, ${timezone}, ${JSON.stringify(initialSetup())}::jsonb, ${owner}, ${input.email})`.execute(db)
   const row = created.rows[0]!
-  await inHousehold(db, row.household_id, (tx) => tx.insertInto('categories').values(SEED_CATEGORIES.map((path) => ({ household_id: row.household_id, path }))).execute())
+  // The starting categories in the owner's language; the household renames or adds to them freely.
+  const seed = input.language === 'ru' ? SEED_CATEGORIES_RU : SEED_CATEGORIES
+  await inHousehold(db, row.household_id, async (tx) => {
+    await tx.insertInto('categories').values(seed.map((path) => ({ household_id: row.household_id, path }))).execute()
+    if (input.language) await tx.updateTable('users').set({ language: input.language }).where('id', '=', row.user_id).execute()
+  })
   return row
 }
 
@@ -89,11 +95,11 @@ export async function callerFor(db: Db, userId: string, householdId?: string): P
 
 export async function getSetup(tx: Tx, caller: Caller) {
   const household = await tx.selectFrom('households').select(['name', 'currency', 'timezone', 'setup']).executeTakeFirstOrThrow()
-  const user = await tx.selectFrom('users').select(['name', 'email', 'introduced_at', 'role']).where('id', '=', caller.user_id).executeTakeFirstOrThrow()
+  const user = await tx.selectFrom('users').select(['name', 'email', 'introduced_at', 'role', 'language']).where('id', '=', caller.user_id).executeTakeFirstOrThrow()
   const setup = { ...initialSetup(), ...household.setup } as SetupState
   return {
     household: { name: household.name, currency: household.currency, currency_locked: await hasPurchases(tx), timezone: household.timezone, steps: setup, next_step: nextStep(setup) },
-    you: { name: user.name, email: user.email, introduced: user.introduced_at != null, role: user.role },
+    you: { name: user.name, email: user.email, introduced: user.introduced_at != null, role: user.role, language: user.language },
   }
 }
 
@@ -103,7 +109,11 @@ async function hasPurchases(tx: Tx): Promise<boolean> {
 }
 
 // The caller's own profile (VISION.md §4.C, Settings → Profile).
-export async function updateMe(tx: Tx, caller: Caller, patch: { name?: string }) {
+export async function updateMe(tx: Tx, caller: Caller, patch: { name?: string; language?: string | null }) {
+  if (patch.language !== undefined) {
+    if (patch.language !== null && !isLanguage(patch.language)) throw invalid('invalid_language', 'Language is en or ru.')
+    await tx.updateTable('users').set({ language: patch.language }).where('id', '=', caller.user_id).execute()
+  }
   if (patch.name !== undefined) {
     const name = patch.name.trim()
     if (!name) throw invalid('invalid_name', 'Enter your name.')
@@ -153,8 +163,8 @@ export async function updateSetup(tx: Tx, caller: Caller, patch: SetupPatch) {
 
 export interface Mailer {
   // `connect` is the MCP address to add to an assistant; signing in there with the invited email joins the household.
-  sendInvite(input: { to: string; link: string; connect: string; inviter: string; household: string }): Promise<void>
-  sendSignInCode(input: { to: string; code: string; link: string }): Promise<void>
+  sendInvite(input: { to: string; link: string; connect: string; inviter: string; household: string; language?: Language }): Promise<void>
+  sendSignInCode(input: { to: string; code: string; link: string; language?: Language }): Promise<void>
 }
 
 export async function createInvite(tx: Tx, caller: Caller, email: string, mailer: Mailer, publicUrl: string) {
@@ -171,7 +181,9 @@ export async function createInvite(tx: Tx, caller: Caller, email: string, mailer
     .executeTakeFirstOrThrow()
   const household = await tx.selectFrom('households').select('name').executeTakeFirstOrThrow()
   const base = publicUrl.replace(/\/$/, '')
-  await mailer.sendInvite({ to: address, link: `${base}/invite#token=${token}`, connect: `${base}/mcp`, inviter: caller.name, household: household.name })
+  // In the inviter's language: the invited person's is unknown until they sign in.
+  const inviter = await tx.selectFrom('users').select('language').where('id', '=', caller.user_id).executeTakeFirst()
+  await mailer.sendInvite({ to: address, link: `${base}/invite#token=${token}`, connect: `${base}/mcp`, inviter: caller.name, household: household.name, language: isLanguage(inviter?.language) ? inviter.language : 'en' })
   return invite
 }
 

@@ -179,6 +179,26 @@ describe('OAuth2 for MCP clients', () => {
     expect(done.status).toBe(303)
   })
 
+  it('switches the sign-in pages to Russian and creates the household in it', async () => {
+    const { metadata, clientId } = await register()
+    const browser = new Browser()
+    const params = new URLSearchParams({ response_type: 'code', client_id: clientId, redirect_uri: REDIRECT, code_challenge: 'x'.repeat(43), code_challenge_method: 'S256', scope: 'kept' })
+    const page = await follow(browser, await browser.fetch(`${metadata.authorization_endpoint}?${params}`))
+    const uid = new URL(page.url).pathname.split('/')[3]!
+    const back = await browser.fetch('/language', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', referer: page.url }, body: 'lang=ru' })
+    expect(back.status).toBe(303)
+    expect(back.headers.get('location')).toBe(new URL(page.url).pathname)
+    const email = 'ru-newcomer@example.com'
+    expect(await (await browser.form(`/oauth/interaction/${uid}/email`, { email })).text()).toContain('Проверьте почту')
+    expect(h.codes.at(-1)!.language).toBe('ru')
+    await browser.form(`/oauth/interaction/${uid}/code`, { code: h.codes.at(-1)!.code })
+    await browser.form(`/oauth/interaction/${uid}/create`, { household: 'Ивановы', name: 'Аня', currency: 'RUB', timezone: 'Europe/Moscow' })
+    const owner = await h.owner.selectFrom('users').select(['language', 'household_id']).where('email', '=', email).executeTakeFirstOrThrow()
+    expect(owner.language).toBe('ru')
+    const categories = await h.owner.selectFrom('categories').select('path').where('household_id', '=', owner.household_id).execute()
+    expect(categories.map((c) => c.path)).toContain('Продукты')
+  })
+
   it('refuses a token that is not Kept\'s', async () => {
     expect((await fetch(`${base}/api/v1/setup`, { headers: { authorization: 'Bearer not-a-token' } })).status).toBe(401)
   })

@@ -1,4 +1,6 @@
+import type { Language } from '../domain/language.js'
 import { zoneOptions } from '../domain/timezones.js'
+import { tr } from '../i18n.js'
 
 // The sign-in and consent pages an assistant opens when a member connects Kept. Plain server-rendered HTML.
 
@@ -6,9 +8,15 @@ export function escape(value: string): string {
   return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 }
 
-function layout(title: string, body: string): string {
+// English · Русский at the top of every page; the choice is a cookie holding only the language (VISION.md §4.C).
+function switcher(lang: Language): string {
+  const option = (code: Language, name: string) => `<button type="submit" name="lang" value="${code}" lang="${code}" aria-pressed="${lang === code}">${name}</button>`
+  return `<form class="lang" method="post" action="/language" aria-label="${tr(lang, 'Language')}">${option('en', 'English')}${option('ru', 'Русский')}</form>`
+}
+
+function layout(lang: Language, title: string, body: string): string {
   return `<!doctype html>
-<html lang="en">
+<html lang="${lang}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -32,95 +40,102 @@ function layout(title: string, body: string): string {
   .brand { font-weight: 700; letter-spacing: 0.02em; color: var(--accent); margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
   .brand img { border-radius: 6px; }
   .hint { font-size: 13px; color: var(--muted); margin: 4px 0 12px; }
+  .lang { display: flex; gap: 4px; margin-left: auto; letter-spacing: 0; }
+  .lang button { width: auto; margin: 0; padding: 4px 8px; background: none; color: var(--muted); font-weight: 400; font-size: 13px; }
+  .lang button[aria-pressed="true"] { color: var(--fg); font-weight: 600; }
 </style>
 </head>
-<body><main><div class="brand"><img src="/app/icon.svg" width="24" height="24" alt="">Kept</div>${body}</main></body>
+<body><main><div class="brand"><img src="/app/icon.svg" width="24" height="24" alt="">Kept${switcher(lang)}</div>${body}</main></body>
 </html>`
 }
 
-const cancel = (uid: string) =>
-  `<form method="post" action="/oauth/interaction/${escape(uid)}/abort"><button class="secondary" type="submit">Cancel</button></form>`
+const cancel = (lang: Language, uid: string) =>
+  `<form method="post" action="/oauth/interaction/${escape(uid)}/abort"><button class="secondary" type="submit">${tr(lang, 'Cancel')}</button></form>`
 
 // clientName is null for Kept's own web app, which has nowhere to cancel back to.
-export function emailPage(uid: string, clientName: string | null, error?: string): string {
+// Error messages arrive in English and are shown in the page's language.
+const problem = (lang: Language, error?: string) => (error ? `<p class="error">${escape(tr(lang, error))}</p>` : '')
+
+export function emailPage(lang: Language, uid: string, clientName: string | null, error?: string): string {
   const intro = clientName
-    ? `${escape(clientName)} wants to use Kept as you. Enter the email you use with Kept, or the one you were invited with.`
-    : 'Review and fix what your assistant logged. Enter your email, or the one you were invited with, and we\'ll send you a code.'
-  return layout('Sign in', `
-<h1>Sign in to Kept</h1>
+    ? escape(tr(lang, '{client} wants to use Kept as you. Enter the email you use with Kept, or the one you were invited with.', { client: clientName }))
+    : escape(tr(lang, "Review and fix what your assistant logged. Enter your email, or the one you were invited with, and we'll send you a code."))
+  return layout(lang, tr(lang, 'Sign in'), `
+<h1>${tr(lang, 'Sign in to Kept')}</h1>
 <p>${intro}</p>
-${error ? `<p class="error">${escape(error)}</p>` : ''}
+${problem(lang, error)}
 <form method="post" action="/oauth/interaction/${escape(uid)}/email">
-  <label for="email">Email</label>
+  <label for="email">${tr(lang, 'Email')}</label>
   <input id="email" name="email" type="email" autocomplete="email" required autofocus>
-  <button type="submit">Email me a code</button>
+  <button type="submit">${tr(lang, 'Email me a code')}</button>
 </form>
-${clientName ? cancel(uid) : ''}`)
+${clientName ? cancel(lang, uid) : ''}`)
 }
 
-export function codePage(uid: string, email: string, error?: string): string {
-  return layout('Enter your code', `
-<h1>Check your email</h1>
-<p>If ${escape(email)} has a Kept account or an invite, we sent it a 6-digit code. It works for 10 minutes.</p>
-${error ? `<p class="error">${escape(error)}</p>` : ''}
+export function codePage(lang: Language, uid: string, email: string, error?: string): string {
+  return layout(lang, tr(lang, 'Enter your code'), `
+<h1>${tr(lang, 'Check your email')}</h1>
+<p>${escape(tr(lang, 'We sent a 6-digit code to {email}. It works for 10 minutes.', { email: email === 'your email' ? tr(lang, 'your email') : email }))}</p>
+${problem(lang, error)}
 <form method="post" action="/oauth/interaction/${escape(uid)}/code">
-  <label for="code">Code</label>
+  <label for="code">${tr(lang, 'Code')}</label>
   <input id="code" class="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" required autofocus>
-  <button type="submit">Sign in</button>
+  <button type="submit">${tr(lang, 'Sign in')}</button>
 </form>
 <form method="post" action="/oauth/interaction/${escape(uid)}/email">
   <input type="hidden" name="email" value="${escape(email)}">
-  <button class="secondary" type="submit">Send a new code</button>
+  <button class="secondary" type="submit">${tr(lang, 'Send a new code')}</button>
 </form>`)
 }
 
-export function joinPage(uid: string, household: string, inviter: string, error?: string): string {
-  return layout('Join your household', `
-<h1>Join ${escape(household)}</h1>
-<p>${escape(inviter)} invited you. Your purchases stay yours; the household shares categories, people &amp; things, and totals.</p>
-${error ? `<p class="error">${escape(error)}</p>` : ''}
+export function joinPage(lang: Language, uid: string, household: string, inviter: string, error?: string): string {
+  return layout(lang, tr(lang, 'Join your household'), `
+<h1>${escape(tr(lang, 'Join {household}', { household }))}</h1>
+<p>${escape(tr(lang, '{inviter} invited you. Your purchases stay yours; the household shares categories, people & things, and totals.', { inviter }))}</p>
+${problem(lang, error)}
 <form method="post" action="/oauth/interaction/${escape(uid)}/join">
-  <label for="name">Your name</label>
+  <label for="name">${tr(lang, 'Your name')}</label>
   <input id="name" name="name" autocomplete="given-name" required autofocus>
-  <button type="submit">Join</button>
+  <button type="submit">${tr(lang, 'Join')}</button>
 </form>
-${cancel(uid)}`)
+${cancel(lang, uid)}`)
 }
 
 // After the code, for an email with no account and no invite (docs/mockups/create-household.html).
-export function createPage(uid: string, email: string, error?: string): string {
-  const currencies = Intl.supportedValuesOf('currency').map((code) => `<option value="${code}"${code === 'USD' ? ' selected' : ''}>${code}</option>`).join('')
+export function createPage(lang: Language, uid: string, email: string, error?: string): string {
+  const preferred = lang === 'ru' ? 'RUB' : 'USD'
+  const currencies = Intl.supportedValuesOf('currency').map((code) => `<option value="${code}"${code === preferred ? ' selected' : ''}>${code}</option>`).join('')
   const groups = new Map<string, string[]>()
   for (const o of zoneOptions(Intl.supportedValuesOf('timeZone'), new Date())) groups.set(o.region, [...(groups.get(o.region) ?? []), `<option value="${escape(o.id)}">${escape(o.label)}</option>`])
   const zones = [...groups].map(([region, options]) => `<optgroup label="${escape(region)}">${options.join('')}</optgroup>`).join('')
-  return layout('Create your household', `
-<h1>Create your household</h1>
-<p>${escape(email)} isn't in a household yet. Joining someone else's? Ask them to invite this email, then sign in again.</p>
-${error ? `<p class="error">${escape(error)}</p>` : ''}
+  return layout(lang, tr(lang, 'Create your household'), `
+<h1>${tr(lang, 'Create your household')}</h1>
+<p>${escape(tr(lang, "{email} isn't in a household yet. Joining someone else's? Ask them to invite this email, then sign in again.", { email }))}</p>
+${problem(lang, error)}
 <form method="post" action="/oauth/interaction/${escape(uid)}/create">
-  <label for="household">Household name</label>
-  <input id="household" name="household" placeholder="The Smiths" required autofocus>
-  <label for="name">Your name</label>
+  <label for="household">${tr(lang, 'Household name')}</label>
+  <input id="household" name="household" placeholder="${escape(tr(lang, 'The Smiths'))}" required autofocus>
+  <label for="name">${tr(lang, 'Your name')}</label>
   <input id="name" name="name" autocomplete="given-name" required>
-  <label for="currency">Currency</label>
+  <label for="currency">${tr(lang, 'Currency')}</label>
   <select id="currency" name="currency">${currencies}</select>
-  <label for="timezone">Time zone</label>
+  <label for="timezone">${tr(lang, 'Time zone')}</label>
   <select id="timezone" name="timezone">${zones}</select>
-  <p class="hint">Currency can change until the first purchase.</p>
-  <button type="submit">Create household</button>
+  <p class="hint">${tr(lang, 'Currency can change until the first purchase.')}</p>
+  <button type="submit">${tr(lang, 'Create household')}</button>
 </form>
 <script>document.getElementById('timezone').value = Intl.DateTimeFormat().resolvedOptions().timeZone</script>
-${cancel(uid)}`)
+${cancel(lang, uid)}`)
 }
 
-export function consentPage(uid: string, clientName: string): string {
-  return layout('Allow access', `
-<h1>Allow ${escape(clientName)}?</h1>
-<p>${escape(clientName)} will be able to log and edit your purchases, read your spending and household totals, change the household's categories, and keep your notes and watched groups, as you.</p>
-<form method="post" action="/oauth/interaction/${escape(uid)}/consent"><button type="submit">Allow</button></form>
-${cancel(uid)}`)
+export function consentPage(lang: Language, uid: string, clientName: string): string {
+  return layout(lang, tr(lang, 'Allow access'), `
+<h1>${escape(tr(lang, 'Allow {client}?', { client: clientName }))}</h1>
+<p>${escape(tr(lang, "{client} will be able to log and edit your purchases, read your spending and household totals, change the household's categories, and keep your notes and watched groups, as you.", { client: clientName }))}</p>
+<form method="post" action="/oauth/interaction/${escape(uid)}/consent"><button type="submit">${tr(lang, 'Allow')}</button></form>
+${cancel(lang, uid)}`)
 }
 
-export function errorPage(message: string): string {
-  return layout('Something went wrong', `<h1>Something went wrong</h1><p>${escape(message)}</p><p>Go back to your assistant and connect Kept again.</p>`)
+export function errorPage(lang: Language, message: string): string {
+  return layout(lang, tr(lang, 'Something went wrong'), `<h1>${tr(lang, 'Something went wrong')}</h1><p>${escape(tr(lang, message))}</p><p>${tr(lang, 'Go back to your assistant and connect Kept again.')}</p>`)
 }

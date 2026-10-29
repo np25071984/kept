@@ -20,6 +20,16 @@ describe('emails', () => {
   })
 })
 
+describe('emails in Russian', () => {
+  it('translates the code and invite emails', () => {
+    expect(signInCodeEmail('042917', 'ru').subject).toBe('042 917 — ваш код для Kept')
+    const invite = inviteEmail({ connect: 'https://kept-ledger.com/mcp', inviter: 'Аня', household: 'Ивановы' }, 'ru')
+    expect(invite.subject).toBe('Аня приглашает вас в «Ивановы» в Kept')
+    expect(invite.html).toContain('<html lang="ru">')
+    expect(invite.html).toContain('войдите в браузере</a>')
+  })
+})
+
 describe('resendMailer', () => {
   it('posts the email to Resend and reports a refusal', async () => {
     const calls: { url: string; init: RequestInit }[] = []

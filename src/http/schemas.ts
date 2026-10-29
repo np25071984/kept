@@ -134,7 +134,7 @@ export const SetupPatch = Type.Object({
   introduced: Type.Optional(Type.Literal(true)),
 })
 
-export const MePatch = Type.Object({ name: Type.Optional(Type.String({ minLength: 1 })) })
+export const MePatch = Type.Object({ name: Type.Optional(Type.String({ minLength: 1 })), language: Type.Optional(Nullable(Type.Union([Type.Literal('en'), Type.Literal('ru')]))) })
 export const MemberPatch = Type.Object({ role: Type.Union([Type.Literal('owner'), Type.Literal('member')]) })
 export const InviteBody = Type.Object({ email: Type.String({ format: 'email' }) })
 export const AcceptBody = Type.Object({ token: Type.String({ minLength: 10 }), name: Type.String({ minLength: 1 }) })

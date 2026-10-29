@@ -13,7 +13,7 @@ export function resendMailer(input: { apiKey: string; from: string; fetch?: type
     if (!response.ok) throw new Error(`Resend refused the email (${response.status}): ${(await response.text()).slice(0, 200)}`)
   }
   return {
-    sendInvite: (invite) => send(invite.to, inviteEmail(invite)),
-    sendSignInCode: ({ to, code }) => send(to, signInCodeEmail(code)),
+    sendInvite: (invite) => send(invite.to, inviteEmail(invite, invite.language)),
+    sendSignInCode: ({ to, code, language }) => send(to, signInCodeEmail(code, language)),
   }
 }

@@ -1,3 +1,5 @@
+import { t } from '../i18n.js'
+
 // My purchases' filters (docs/mockups/purchases.html): kept in the URL, turned into API parameters and chips.
 // Categories are a three-state tree: `cats` are whole branches, `only` are parents whose own purchases count while
 // some of their subcategories don't.
@@ -142,14 +144,15 @@ export interface Chip {
 
 const PERIODS: Record<Exclude<Period, 'all'>, string> = { this_month: 'This month', last_month: 'Last month', this_year: 'This year', last_12: 'Last 12 months', custom: 'Custom dates' }
 
+
 export function chips(f: Filters, all: string[]): Chip[] {
   const out: Chip[] = []
-  if (f.period !== 'all') out.push({ label: f.period === 'custom' ? `${f.from || '…'} – ${f.to || '…'}` : PERIODS[f.period], remove: (x) => ({ ...x, period: 'all', from: '', to: '' }) })
-  if (f.privacy !== 'all') out.push({ label: f.privacy === 'private' ? 'Only private' : 'Shared', remove: (x) => ({ ...x, privacy: 'all' }) })
+  if (f.period !== 'all') out.push({ label: f.period === 'custom' ? `${f.from || '…'} – ${f.to || '…'}` : t(PERIODS[f.period]), remove: (x) => ({ ...x, period: 'all', from: '', to: '' }) })
+  if (f.privacy !== 'all') out.push({ label: t(f.privacy === 'private' ? 'Only private' : 'Shared'), remove: (x) => ({ ...x, privacy: 'all' }) })
   for (const p of f.only) {
     const left = all.filter((c) => under(c, p) && tick(c, f) === 'off' && tick(parent(c)!, f) !== 'off' && !f.only.includes(c))
       .filter((c) => !leftUnderOff(c, p, f))
-    const name = left.length ? `${p}, not ${left.map((c) => c.slice(p.length + 1)).join(', ')}` : p
+    const name = left.length ? t('{name}, not {rest}', { name: p, rest: left.map((c) => c.slice(p.length + 1)).join(', ') }) : p
     out.push({ label: name, remove: (x) => ({ ...x, only: x.only.filter((o) => o !== p && !under(o, p)), cats: x.cats.filter((c) => !under(c, p)) }) })
   }
   for (const c of f.cats) {
@@ -157,7 +160,7 @@ export function chips(f: Filters, all: string[]): Chip[] {
     out.push({ label: c, remove: (x) => ({ ...x, cats: x.cats.filter((y) => y !== c) }) })
   }
   for (const name of f.people) out.push({ label: name, remove: (x) => ({ ...x, people: x.people.filter((p) => p !== name) }) })
-  if (f.nobody) out.push({ label: 'Nobody in particular', remove: (x) => ({ ...x, nobody: false }) })
+  if (f.nobody) out.push({ label: t('Nobody in particular'), remove: (x) => ({ ...x, nobody: false }) })
   return out
 }
 

@@ -1,7 +1,9 @@
-import { Bell, ChevronDown } from 'lucide-react'
+import { Bell, ChevronDown, Globe } from 'lucide-react'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import { useSession } from './session.js'
+import { api } from './api.js'
+import { language, setLanguage, t, type Language } from './i18n.js'
 
 // The header every signed-in page shares (docs/mockups): pages for looking back, the bell, and the user menu.
 export function Header({ onSignOut }: { onSignOut: () => void }) {
@@ -12,23 +14,24 @@ export function Header({ onSignOut }: { onSignOut: () => void }) {
       <div className="topbar-inner">
         <span className="brand"><img src="/app/icon.svg" width="22" height="22" alt="" />Kept</span>
         <nav>
-          <NavLink to="/purchases">My purchases</NavLink>
-          <NavLink to="/recurring">Recurring</NavLink>
-          <Menu label="Reports" className="navmenu" active={pathname.startsWith('/reports')} align="left">
-            <NavLink to="/reports/mine" end={false}>Mine</NavLink>
-            <NavLink to="/reports/household" end={false}>Household</NavLink>
+          <NavLink to="/purchases">{t('My purchases')}</NavLink>
+          <NavLink to="/recurring">{t('Recurring')}</NavLink>
+          <Menu label={t('Reports')} className="navmenu" active={pathname.startsWith('/reports')} align="left">
+            <NavLink to="/reports/mine" end={false}>{t('Mine')}</NavLink>
+            <NavLink to="/reports/household" end={false}>{t('Household')}</NavLink>
           </Menu>
         </nav>
         <div className="right">
-          <NavLink to="/notifications" className="bell" aria-label={unseen ? `Notifications: ${unseen} waiting` : 'Notifications'} title="Notifications">
+          <LanguageMenu />
+          <NavLink to="/notifications" className="bell" aria-label={unseen ? t('Notifications: {n} waiting', { n: unseen }) : t('Notifications')} title={t('Notifications')}>
             <Bell size={18} aria-hidden="true" />
             {unseen > 0 && <span className="badge">{unseen}</span>}
           </NavLink>
           <Menu label={setup.you.name} className="usermenu" active={pathname.startsWith('/settings') || pathname.startsWith('/preferences')} align="right">
-            <NavLink to="/preferences">Preferences</NavLink>
-            <NavLink to="/settings" end={false}>Settings</NavLink>
+            <NavLink to="/preferences">{t('Preferences')}</NavLink>
+            <NavLink to="/settings" end={false}>{t('Settings')}</NavLink>
             <hr />
-            <button type="button" onClick={onSignOut}>Sign out</button>
+            <button type="button" onClick={onSignOut}>{t('Sign out')}</button>
           </Menu>
         </div>
       </div>
@@ -60,6 +63,28 @@ function Menu({ label, className, active, align, children }: { label: string; cl
     <details ref={ref} className={`${className}${active ? ' active' : ''}`}>
       <summary>{label}<ChevronDown size={14} aria-hidden="true" /></summary>
       <div className={`menu menu-${align}`}>{children}</div>
+    </details>
+  )
+}
+
+// The language menu (docs/mockups/index.html): saved to the account, so emails follow it too.
+function LanguageMenu() {
+  const ref = useRef<HTMLDetailsElement>(null)
+  const pick = async (lang: Language) => {
+    if (ref.current) ref.current.open = false
+    if (lang === language()) return
+    setLanguage(lang)
+    await api.updateMe({ language: lang }).catch(() => undefined)
+    location.reload()
+  }
+  return (
+    <details ref={ref} className="langmenu">
+      <summary aria-label={t('Language')}><Globe size={18} aria-hidden="true" /><span className="code">{language().toUpperCase()}</span></summary>
+      <div className="menu menu-right" role="menu">
+        {([['en', 'English'], ['ru', 'Русский']] as const).map(([code, name]) => (
+          <button key={code} type="button" role="menuitemradio" lang={code} aria-checked={language() === code} onClick={() => void pick(code)}>{name}</button>
+        ))}
+      </div>
     </details>
   )
 }

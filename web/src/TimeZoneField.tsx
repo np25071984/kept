@@ -1,6 +1,8 @@
+import { locale } from './i18n.js'
 import { ChevronDown, Search } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { searchZones, zoneOptions } from './lib/timezones.js'
+import { t } from './i18n.js'
 
 // A searchable time zone picker (docs/mockups/settings-household-details.html): grouped by region, sorted by today's
 // offset, typed to filter; ↑/↓ and Enter pick, Escape closes. Shows the time there, so a wrong pick shows at once.
@@ -42,7 +44,7 @@ export function TimeZoneField({ value, disabled, onChange }: { value: string; di
     else return
     e.preventDefault()
   }
-  const time = new Intl.DateTimeFormat(undefined, { timeZone: value, hour: 'numeric', minute: '2-digit' }).format(new Date())
+  const time = new Intl.DateTimeFormat(locale(), { timeZone: value, hour: 'numeric', minute: '2-digit' }).format(new Date())
 
   let region = ''
   return (
@@ -52,14 +54,14 @@ export function TimeZoneField({ value, disabled, onChange }: { value: string; di
         <span className="detail">{selected?.region}</span>
         <ChevronDown size={14} aria-hidden="true" />
       </button>
-      <span className="small muted">It's {time} there.</span>
+      <span className="small muted">{t("It's {time} there.", { time })}</span>
       {open && (
         <div className="picker-panel">
           <span className="search-field">
             <Search size={16} aria-hidden="true" />
-            <input autoFocus type="search" placeholder="Search time zones" aria-label="Search time zones" value={query} onChange={(e) => { setQuery(e.target.value); setActive(0) }} onKeyDown={onKey} />
+            <input autoFocus type="search" placeholder={t('Search time zones')} aria-label={t('Search time zones')} value={query} onChange={(e) => { setQuery(e.target.value); setActive(0) }} onKeyDown={onKey} />
           </span>
-          <ul ref={list} role="listbox" aria-label="Time zones">
+          <ul ref={list} role="listbox" aria-label={t('Time zones')}>
             {shown.map((o, i) => {
               const heading = o.region !== region ? (region = o.region) : null
               return [
@@ -70,7 +72,7 @@ export function TimeZoneField({ value, disabled, onChange }: { value: string; di
                 </li>,
               ]
             })}
-            {shown.length === 0 && <li className="region" role="presentation">No time zone matches "{query}"</li>}
+            {shown.length === 0 && <li className="region" role="presentation">{t('No time zone matches "{query}"', { query })}</li>}
           </ul>
         </div>
       )}
