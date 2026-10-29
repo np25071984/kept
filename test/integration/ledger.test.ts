@@ -82,7 +82,7 @@ describe('repeats', () => {
     expect(await runDueRepeats(h.db, new Date('2026-10-27T16:00:00Z'))).toBe(0)
 
     const updates = (await sam.get('/api/v1/updates')).body.updates
-    expect(updates).toEqual([expect.objectContaining({ kind: 'repeat_registered', text: 'Registered repeating Verizon expense, $50.00.' })])
+    expect(updates).toEqual([expect.objectContaining({ kind: 'repeat_registered', text: 'Logged your recurring Verizon bill, $50.00.' })])
     const created = (await sam.get(`/api/v1/transactions/${updates[0].transaction_id}`)).body
     expect(created).toMatchObject({ date: '2026-10-27', amount: 50, repeat_id: repeat.body.id })
     expect((await sam.get('/api/v1/repeats')).body.repeats[0].next_date).toBe('2026-11-27')

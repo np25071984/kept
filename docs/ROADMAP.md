@@ -26,12 +26,12 @@ Looking back, fixing and managing (`VISION.md` §4.C). Started before Phase 3's 
 - [x] Sign-in with the emailed code (`IMPLEMENTATION.md` §5.4).
 - [x] Updates and My purchases pages, with editing, privacy and merging.
 - [ ] One sign-in for everyone: a verified email with no account and no invite is offered to create a household, on the web and in assistants (`VISION.md` §3.6). Owners invite and remove members.
-- [ ] Repeats page.
+- [ ] Recurring page (repeats), with "Make it recurring" on a purchase.
 - [ ] Paging for My purchases, and filters for source, privacy and a merchant-or-item search.
-- [ ] Navigation as the mockups show: My purchases, Repeats and Spending in the header, the bell, and a user menu with Preferences, Settings and Sign out (`VISION.md` §4.C).
+- [ ] Navigation as the mockups show: My purchases, Recurring and Spending in the header, the bell, and a user menu with Preferences, Settings and Sign out (`VISION.md` §4.C).
 - [ ] Profile in Settings (name, time zone) and the household's name and currency.
 - [x] Notes replace rules: personal notes loaded in full at the start, watched groups on their own, a new member asked what to watch (`VISION.md` §4.A, "Notes").
-- [ ] Notifications: Kept's open questions (possible duplicates, a cap passed, a repeated charge missing from a statement, an API key unused for a year) behind the bell and asked in chat one per conversation; repeats logged on their date are announced in chat only (`VISION.md` §4.B, §4.C).
+- [ ] Notifications: Kept's open questions (possible duplicates, a cap passed, a recurring charge missing from a statement, an API key unused for a year) behind the bell and asked in chat one per conversation; recurring purchases logged on their date are announced in chat only (`VISION.md` §4.B, §4.C).
 - [ ] Caps: storage, API, tools, the playbook's reminders, the Preferences section and the Spending line (`VISION.md` §4.A, "Caps").
 - [x] Household and Me pages: shared vocabulary, watched groups and notes, connecting an assistant, API keys.
 - [x] Mockups of every page, the spending graphs included (`docs/mockups/`).

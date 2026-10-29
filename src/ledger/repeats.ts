@@ -189,10 +189,10 @@ export async function runDueRepeats(db: Db, now = new Date()): Promise<number> {
           },
           row.id,
         )
-        const label = (template.merchant ?? template.category ?? 'repeating').toString()
+        const label = (template.merchant ?? template.category ?? 'bill').toString()
         await tx
           .insertInto('updates')
-          .values({ household_id, user_id: row.user_id, kind: 'repeat_registered', text: `Registered repeating ${label} expense, ${formatAmount(toCents(template.amount), user.currency)}.`, transaction_id: transactionId })
+          .values({ household_id, user_id: row.user_id, kind: 'repeat_registered', text: `Logged your recurring ${label} bill, ${formatAmount(toCents(template.amount), user.currency)}.`, transaction_id: transactionId })
           .execute()
       }
       if (plan.finished) await tx.deleteFrom('repeats').where('id', '=', id).execute()

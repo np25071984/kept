@@ -285,36 +285,36 @@ Every transaction belongs to the member who logged it: `spent_by` comes from the
 
 ### 3.5 Repeating Spending: Phone, Rent, Subscriptions
 
-Any transaction can be set to **repeat**. The ledger then creates a copy on schedule, with the same amount, merchant, line items, cost centers and privacy, and the agent announces it.
+Any transaction can be set to **repeat**. The ledger then creates a copy on schedule, with the same amount, merchant, line items, cost centers and privacy, and the agent announces it. "Repeat" is Kept's internal term; users see "recurring", and the agent says "your recurring phone bill".
 
 > **User:** "Phone bill, $50. It's the same every month."
 >
-> **AI:** "Log $50 to Phone today, and repeat it on the 27th of every month?"
+> **AI:** "Log $50 to Phone today, and make it recurring on the 27th of every month?"
 >
 > **User:** "Yes."
 
 A month later, the next time the user talks to the agent:
 
-> **AI:** "Today I registered your repeating phone expense, $50."
+> **AI:** "Today I logged your recurring phone bill, $50."
 
 #### Setting up a repeat
 
-- **From any transaction.** In conversation ("make this monthly"), or with a Repeat button on any purchase in the web UI. Past transactions work too: "the gym from last month repeats."
+- **From any transaction.** In conversation ("make this monthly"), or with "Make it recurring" on any purchase in the web UI. Past transactions work too: "the gym from last month repeats."
 - **Common schedules:** weekly, every N weeks, monthly on a day, yearly on a date, with an optional end date or number of times. A day that doesn't exist in a month (the 31st) falls on the month's last day.
-- **The agent suggests repeats.** When the same merchant and amount shows up three times on a regular schedule, it offers: "Netflix has been $15.49 on the 3rd for three months. Make it a monthly repeat?"
+- **The agent suggests repeats.** When the same merchant and amount shows up three times on a regular schedule, it offers: "Netflix has been $15.49 on the 3rd for three months. Make it recurring, monthly?"
 
 #### What happens on the date
 
 - **The transaction is created and counted.** It appears in the history like any other, marked as repeated, with a link to its repeat.
-- **It is announced.** The ledger records an update ("Registered repeating phone expense, $50"). The agent reads updates at the start of the next conversation and mentions them in one line. In the web UI the purchase is marked as repeated. An assistant can't start a conversation on its own, so the announcement arrives when the user next talks to it; a messaging bot can deliver it the same day.
+- **It is announced.** The ledger records an update ("Logged your recurring phone bill, $50"). The agent reads updates at the start of the next conversation and mentions them in one line. In the web UI the purchase is marked as repeated. An assistant can't start a conversation on its own, so the announcement arrives when the user next talks to it; a messaging bot can deliver it the same day.
 - **The real charge still matches it.** When the agent later logs the bank charge, email or bill for the phone, it is [matched](#one-purchase-many-sources) to the repeated transaction instead of creating a duplicate. If the amount differs, the real amount wins.
 - **A repeat always uses the most recent real amount.** If electricity was $132 last month, next month's repeat is created at $132 and corrected when the bill arrives. A price change on a fixed bill works the same way: once the phone bill comes in at $55, the next repeat is $55. The agent mentions it instead of asking: "Phone was $55 this time, I'll use that going forward."
 
 #### Stopping and changing
 
-- "Stop the gym repeat," "the phone is $55 from now on," or "rent moves to the 1st" change the repeat from the next date. Transactions already created are kept.
-- When the agent reads a statement that should include a repeated charge and doesn't, it asks: "No Spotify charge this month. Did you cancel it?"
-- Every member sees their own repeats in the web UI with the next date and amount, and can pause, edit or stop them.
+- "Stop the gym," "the phone is $55 from now on," or "rent moves to the 1st" change the repeat from the next date. Transactions already created are kept.
+- When the agent reads a statement that should include a recurring charge and doesn't, it asks: "No Spotify charge this month. Did you cancel it?"
+- Every member sees their own repeats on the web UI's Recurring page with the next date and amount, and can pause, edit or stop them.
 
 ### 3.6 First Conversation: Setting Up
 
@@ -356,7 +356,7 @@ flowchart TD
 - **One question at a time, and interruptible.** If the user stops, the next conversation picks up at the first unanswered step and doesn't repeat the introduction.
 - **Nothing is saved before the summary is confirmed,** as with every other write.
 - **The starting categories are the same for every household:** Groceries, Eating out, Car, Housing, Health, Clothing, Travel and Other. There is no Kids category: a child is one of the people & things, and what a child costs is everything spent for them, across categories. The interview adds to them.
-- **Repeating bills aren't asked about.** They come up when one is logged ([Repeating Spending](#35-repeating-spending-phone-rent-subscriptions)).
+- **Recurring bills aren't asked about.** They come up when one is logged ([Repeating Spending](#35-repeating-spending-phone-rent-subscriptions)).
 - **One way in.** The web UI and every assistant start with the same sign-in: an email and a code. A verified email with no account and no invite is offered to create a household; with an invite, to join it.
 - **Invites come from Kept.** Only an owner can invite. Kept emails the invited person; they add Kept to their own assistant and sign in with that email, which joins them to the household, and their assistant runs the new-member path above.
 - **A new member doesn't set up the household again.** Their agent introduces Kept, names the shared cost centers and categories, and asks what they want to keep an eye on and whether anything should be logged as private: watched groups and notes are personal.
@@ -466,7 +466,7 @@ Kept delivers the playbook, not just the data, so every assistant behaves the sa
 | Setting up                  | The first conversation for a new household or a new member ([First Conversation](#36-first-conversation-setting-up)). |
 | Logging an expense          | The capture → infer → clarify → confirm flow.                                                            |
 | Catching up                 | Announces updates in one line each.                                                                      |
-| Open questions              | What Kept needs the user to decide: a possible duplicate, a cap passed, a repeated charge missing from a statement, an API key unused for a year. At most one per conversation, after the user's request is done, and none when the user is in a hurry. A "no" or "later" is an answer, so the question doesn't come back soon. The web UI lists the same questions under Notifications. |
+| Open questions              | What Kept needs the user to decide: a possible duplicate, a cap passed, a recurring charge missing from a statement, an API key unused for a year. At most one per conversation, after the user's request is done, and none when the user is in a hurry. A "no" or "later" is an answer, so the question doesn't come back soon. The web UI lists the same questions under Notifications. |
 
 [`IMPLEMENTATION.md` §5.2](IMPLEMENTATION.md#52-teaching-the-agent) says which MCP mechanism carries each one.
 
@@ -484,12 +484,12 @@ Any client needs a model that can read images, so the user can send a receipt ph
 
 The web UI is where each member reviews and fixes what the agent logged, and sees where the money goes. Logging itself stays in the chat; the UI is for looking back, correcting and managing the household.
 
-Every member signs in with their own account. The header holds the pages for looking back; a bell opens the open questions; the user menu holds what is set up once:
+Every member signs in with their own account. The header holds the pages for looking back (My purchases, Recurring, Spending); a bell opens the open questions; the user menu holds what is set up once:
 
 | Page                   | What it shows                                                                                       |
 | ---------------------- | --------------------------------------------------------------------------------------------------- |
 | **My purchases**       | The member's own purchase history, private ones included and marked. Search and filter by date, merchant, category, cost center, item and source. Open a purchase to see its line items, shares and sources (what was read from a receipt, email or bank charge), edit it, mark it private or delete it. |
-| **Repeats**            | The member's repeats with next date and amount. Pause, edit or stop them. Any purchase can be made to repeat from its detail view. |
+| **Recurring**          | The member's recurring bills and subscriptions (repeats) with next date and amount. Pause, edit or stop them. Any purchase can be made recurring from its detail view. |
 | **Spending**           | Graphs in two tabs. Mine: the member's own spending, private purchases included, with their watched groups and the caps past 80%. Household: every member's non-private purchases, by category, cost center and item, never by member. |
 | **Notifications**      | Behind the bell: Kept's open questions, with their answers as buttons (see [The AI Integration Layer](#b-the-ai-integration-layer)). The bell's count is the number unanswered. |
 | **Preferences**        | In the user menu: the member's watched groups and caps. |
