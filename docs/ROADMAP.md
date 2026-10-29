@@ -18,7 +18,7 @@ The playbook, delivered to any assistant.
 - [ ] Send email: pick a provider and replace the logging `Mailer` for sign-in codes and invites (`IMPLEMENTATION.md` §5.4, §6).
 - [x] Docker Compose deployment with Caddy: `Dockerfile` and `deploy/` (`IMPLEMENTATION.md` §6).
 - [x] Deploy on the VPS and create the first household (`DEVELOPMENT.md`).
-- [ ] Give the server a domain and set `KEPT_HOST`: Gemini rejects the `sslip.io` name, and a temporary Cloudflare quick tunnel stands in (`IMPLEMENTATION.md` §6).
+- [x] Give the server a domain and set `KEPT_HOST` (`IMPLEMENTATION.md` §6).
 
 **Gate:** Kept connects as a custom app in Gemini on the web, and the conversation in `VISION.md` §3.1 runs end to end from the Gemini phone app.
 
