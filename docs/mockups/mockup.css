@@ -4,18 +4,21 @@
   --bg: #fafaf7; --surface: #ffffff; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2db; --accent: #2f6b4f; --accent-fg: #fafaf7;
   --accent-soft: #e4efe8; --danger: #b3261e; --private: #7a4b00; --private-soft: #fbefd9; --note-bg: #fffbe6; --note-line: #e8d98a;
   --data: #2f6b4f; --data-soft: #a9cdb9; --ref: #6b6b66;
+  --chat-bg: #ece5dc; --chat-dot: #ddd3c6; --chat-out: #d9f2dc;
 }
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) {
     --bg: #161615; --surface: #1f1f1d; --fg: #ecece6; --muted: #a3a39c; --line: #34342f; --accent: #7cc4a0; --accent-fg: #10221a;
     --accent-soft: #1f3329; --danger: #f2a49c; --private: #f0c27a; --private-soft: #3a2d14; --note-bg: #2a2614; --note-line: #5a5020;
     --data: #7cc4a0; --data-soft: #35574a; --ref: #a3a39c;
+    --chat-bg: #12100e; --chat-dot: #1f1c18; --chat-out: #1f3a2c;
   }
 }
 :root[data-theme="dark"] {
   --bg: #161615; --surface: #1f1f1d; --fg: #ecece6; --muted: #a3a39c; --line: #34342f; --accent: #7cc4a0; --accent-fg: #10221a;
   --accent-soft: #1f3329; --danger: #f2a49c; --private: #f0c27a; --private-soft: #3a2d14; --note-bg: #2a2614; --note-line: #5a5020;
   --data: #7cc4a0; --data-soft: #35574a; --ref: #a3a39c;
+    --chat-bg: #12100e; --chat-dot: #1f1c18; --chat-out: #1f3a2c;
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
@@ -145,10 +148,23 @@ details.table-view summary { cursor: pointer; color: var(--accent); }
 }
 .hero { padding: 24px 0 8px; }
 .hero h1 { font-size: 30px; line-height: 1.2; margin-bottom: 10px; }
-.chat { display: grid; gap: 8px; }
-.bubble { max-width: 85%; padding: 8px 12px; border-radius: 14px; font-size: 14px; }
-.bubble.user { justify-self: end; background: var(--accent); color: var(--accent-fg); border-bottom-right-radius: 4px; }
-.bubble.ai { justify-self: start; background: var(--bg); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 32px; align-items: center; }
+@media (max-width: 720px) { .hero-grid { grid-template-columns: 1fr; } }
+.phone { width: 100%; max-width: 320px; justify-self: center; border: 1px solid var(--line); border-radius: 28px; overflow: hidden; background: var(--surface); box-shadow: 0 8px 24px rgb(0 0 0 / 0.08); }
+.phone-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 600; }
+.phone-head .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-size: 13px; }
+.phone-head .status { font-weight: 400; color: var(--muted); font-size: 12px; }
+.chat { display: grid; gap: 6px; padding: 14px 12px; min-height: 360px; align-content: end; background-color: var(--chat-bg); background-image: radial-gradient(var(--chat-dot) 1px, transparent 1px); background-size: 14px 14px; }
+.chat .day { justify-self: center; font-size: 11px; color: var(--muted); background: var(--surface); padding: 2px 10px; border-radius: 10px; margin-bottom: 4px; }
+.bubble { max-width: 80%; padding: 7px 10px 5px; border-radius: 14px; font-size: 14px; line-height: 1.35; box-shadow: 0 1px 1px rgb(0 0 0 / 0.08); }
+.bubble .time { display: block; text-align: right; font-size: 10px; opacity: 0.6; margin-top: 2px; }
+.bubble.user { justify-self: end; background: var(--chat-out); color: var(--fg); border-bottom-right-radius: 4px; }
+.bubble.ai { justify-self: start; background: var(--surface); border-bottom-left-radius: 4px; }
+.phone-input { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--line); }
+.phone-input span { flex: 1; padding: 7px 12px; border-radius: 18px; background: var(--bg); color: var(--muted); font-size: 13px; }
+.phone-input b { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-fg); display: grid; place-items: center; font-size: 13px; }
+.assistants { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.assistants span { padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-weight: 600; font-size: 14px; }
 .features { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 720px) { .features { grid-template-columns: 1fr; } }
 .footer { border-top: 1px solid var(--line); margin-top: 32px; padding-top: 16px; display: flex; flex-wrap: wrap; gap: 16px; }
