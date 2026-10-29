@@ -25,10 +25,12 @@ Looking back, fixing and managing (`VISION.md` §4.C). Started before Phase 3's 
 
 - [x] Sign-in with the emailed code (`IMPLEMENTATION.md` §5.4).
 - [x] Updates and My purchases pages, with editing, privacy and merging.
-- [ ] Household creation, and owners inviting and removing members.
+- [ ] One sign-in for everyone: a verified email with no account and no invite is offered to create a household, on the web and in assistants (`VISION.md` §3.6). Owners invite and remove members.
 - [ ] Repeats page.
 - [ ] Paging for My purchases, and filters for source, privacy and a merchant-or-item search.
 - [ ] Profile on the Me page (name, time zone) and household settings (name, currency).
+- [ ] Rules and notes are personal only: drop household-wide ones from the API, tools and playbook, and ask a new member what to watch (`VISION.md` §4.A, "Rules", "Notes").
+- [ ] Caps: storage, API, tools, the playbook's reminders and the My spending card (`VISION.md` §4.A, "Caps").
 - [x] Household and Me pages: shared vocabulary, rules and notes, connecting an assistant, API keys.
 - [x] Mockups of every page, the spending graphs included (`docs/mockups/`).
 - [ ] My spending and Household spending pages, as `docs/mockups/my-spending.html` and `household-spending.html` show.
@@ -37,5 +39,4 @@ Looking back, fixing and managing (`VISION.md` §4.C). Started before Phase 3's 
 
 ## Later
 
-- [ ] Spending caps: "I don't want to spend more than $1,000 on groceries this month." A cap per category, cost center or member per month or year; the agent says how much is left when logging and warns when one is close or crossed. Design it in `VISION.md` first.
 - [ ] Siri through App Intents in a native iOS app (`VISION.md` §4.B, "Other clients"). Not before Phase 3's gate.

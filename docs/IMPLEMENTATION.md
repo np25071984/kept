@@ -200,7 +200,7 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `cost_center_id` | UUID    | Yes      |                                                                    |
 | `share`          | Decimal | No       | Fraction of the line item amount (0–1). Empty = even split of the remainder. |
 
-**Household Rules** (the household's playbook; see [Household Rules](VISION.md#household-rules))
+**Household Rules** (the household's playbook; see [Household Rules](VISION.md#rules))
 
 | Field        | Type   | Required | Notes                                                                                   |
 | ------------ | ------ | -------- | --------------------------------------------------------------------------------------- |
@@ -214,7 +214,7 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `text`       | Text   | Yes      | The rule in the user's words, e.g. "Always ask about nuts at Whole Foods".              |
 | `created_by` | UUID   | Yes      | Set from the authenticated identity.                                                    |
 
-**Household Notes** (the agent's shared memory; see [Household Notes](VISION.md#household-notes))
+**Household Notes** (the agent's shared memory; see [Household Notes](VISION.md#notes))
 
 | Field          | Type                       | Required | Notes                                                                  |
 | -------------- | -------------------------- | -------- | ---------------------------------------------------------------------- |

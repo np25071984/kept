@@ -3,29 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Create a household · Kept mockup</title>
+<title>After the code: no household yet · Kept mockup</title>
 <link rel="stylesheet" href="mockup.css">
 </head>
 <body>
-<main class="page"><p><a href="index.html">← All screens</a></p><div class="layout"><div><h1 style="margin-bottom:16px">Create a household</h1>
+<main class="page"><p><a href="index.html">← All screens</a></p><div class="layout"><div><h1 style="margin-bottom:16px">After the code: no household yet</h1>
 <div class="steps-strip">
-  <div class="screen"><div class="cap">1 · Email</div><div class="brand">Kept</div><h2 style="margin:8px 0">Create a household</h2>
-    <p class="muted small">Enter your email; we'll send a code to make sure it's yours.</p>
-    <label>Email<input value="sam@example.com"></label><p></p><button class="primary" style="width:100%">Email me a code</button></div>
-  <div class="screen"><div class="cap">2 · Code</div><div class="brand">Kept</div><h2 style="margin:8px 0">Check your email</h2>
-    <p class="muted small">We sent a 6-digit code to sam@example.com. It works for 10 minutes.</p>
-    <label>Code<input class="code-input" value="318 055"></label><p></p><button class="primary" style="width:100%">Continue</button></div>
-  <div class="screen"><div class="cap">3 · Household</div><div class="brand">Kept</div><h2 style="margin:8px 0">About your household</h2>
+  <div class="screen"><div class="cap">Code verified, no account</div><div class="brand">Kept</div><h2 style="margin:8px 0">Welcome to Kept</h2>
+    <p class="muted small">sam@example.com isn't in a household yet.</p>
+    <a class="button primary" href="#create" style="width:100%;text-align:center">Create a household</a><p></p>
+    <p class="small muted">Joining someone's household? Ask them to invite sam@example.com, then sign in again.</p></div>
+  <div class="screen" id="create"><div class="cap">Create</div><div class="brand">Kept</div><h2 style="margin:8px 0">About your household</h2>
     <label>Household name<input value="The Smiths"></label><p></p>
     <label>Your name<input value="Sam"></label><p></p>
     <div class="grid"><label>Currency<select><option>USD — US dollar</option></select></label><label>Time zone<select><option>America/New_York</option></select></label></div>
     <p class="small muted" style="margin-top:8px">Currency can change until the first purchase.</p>
     <button class="primary" style="width:100%">Create household</button></div>
-  <div class="screen"><div class="cap">4 · Connect</div><div class="brand">Kept</div><h2 style="margin:8px 0">Now connect your assistant</h2>
+  <div class="screen"><div class="cap">Web: next step</div><div class="brand">Kept</div><h2 style="margin:8px 0">Now connect your assistant</h2>
     <p class="muted small">Add this address to Claude, ChatGPT or Gemini as a custom connector, then say "Set up Kept".</p>
     <div class="copyable"><code>https://kept-ledger.com/mcp</code><button>Copy</button></div><p></p>
-    <p class="small muted">Gemini also asks for a client ID: set it up on the Me page.</p>
-    <a class="button primary" href="me.html" style="width:100%;text-align:center">Go to Me</a></div>
-</div></div><aside class="notes"><h2>Design notes</h2><ul><li>Replaces the <code>create-household</code> command for new users.</li><li>An email that already has an account gets "You already have a household: sign in instead" after the code, not before, so the email step reveals nothing.</li><li>Starting categories are the fixed seed (<code>VISION.md</code> §3.6); the assistant's first conversation does the rest of setup, so this form stays four fields.</li><li>Abuse limit: codes per email and per IP per hour, as for sign-in.</li></ul></aside></div></main>
+    <a class="button primary" href="me-assistants.html" style="width:100%;text-align:center">Step-by-step for my assistant</a></div>
+</div></div><aside class="notes"><h2>Design notes</h2><ul><li>Shown only after the code, so nobody learns whether an email has an account.</li><li>The same two steps run when the sign-in came from an assistant; it then continues to consent and the assistant's first conversation does the rest of setup.</li><li>Four fields only: starting categories are the fixed seed, and people &amp; things come from the first conversation (<code>VISION.md</code> §3.6).</li><li>Replaces the <code>create-household</code> command for new users.</li></ul></aside></div></main>
 </body>
 </html>
