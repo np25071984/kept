@@ -164,6 +164,34 @@ export function registerTools(server: McpServer, rest: Rest) {
     annotations: write,
   }, async (args) => result(await rest('POST', '/api/v1/categories', args)))
 
+  server.registerTool('rename_category', {
+    title: 'Rename a category',
+    description: 'Fix a category\'s name or move it under another parent ("Gas" to "Car/Fuel"), after the user said yes to that change on its own. Purchases, rules, notes and repeats keep it; subcategories move with it.',
+    inputSchema: { path: z.string(), new_path: z.string() },
+    annotations: write,
+  }, async (args) => result(await rest('PATCH', '/api/v1/categories', args)))
+
+  server.registerTool('delete_category', {
+    title: 'Delete a category',
+    description: 'Delete a category nothing uses, after the user said yes. If purchases, subcategories, rules, notes or repeats still use it, Kept refuses and says which: offer to move them (edit_transaction, rename_category) or to rename instead.',
+    inputSchema: { path: z.string() },
+    annotations: destroy,
+  }, async ({ path }) => result(await rest('DELETE', `/api/v1/categories${query({ path })}`)))
+
+  server.registerTool('rename_cost_center', {
+    title: 'Rename a cost center',
+    description: 'Fix a cost center\'s name ("Iva" to "Ivy"), after the user said yes to that change on its own. Purchases, rules, notes and repeats keep it.',
+    inputSchema: { name: z.string(), new_name: z.string() },
+    annotations: write,
+  }, async (args) => result(await rest('PATCH', '/api/v1/cost-centers', args)))
+
+  server.registerTool('delete_cost_center', {
+    title: 'Delete a cost center',
+    description: 'Delete a cost center nothing uses, after the user said yes. If purchases, rules, notes or repeats still use it, Kept refuses and says which: offer to move them with edit_transaction, or to rename instead.',
+    inputSchema: { name: z.string() },
+    annotations: destroy,
+  }, async ({ name }) => result(await rest('DELETE', `/api/v1/cost-centers${query({ name })}`)))
+
   server.registerTool('get_rules', {
     title: 'Get rules',
     description: 'Rules for this merchant, category or bill account, and the one that wins for each kind. Apply them before guessing from history.',

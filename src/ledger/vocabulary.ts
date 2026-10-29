@@ -1,5 +1,10 @@
+import { sql } from 'kysely'
 import type { Tx } from '../db/db.js'
 import { similarNames } from '../domain/names.js'
+import {
+  categoryRenamer, checkCategoryRename, checkCostCenterRename, costCenterRenamer, mentions, renamePath, renameRuleParams, renameTemplate, usageProblem,
+  type Problem, type Renamer,
+} from '../domain/renames.js'
 import { isValidCategoryPath, parentPath } from '../domain/setup.js'
 import type { Caller } from './caller.js'
 import { conflict, invalid } from './errors.js'
@@ -97,4 +102,99 @@ export async function addCostCenter(tx: Tx, caller: Caller, input: { name: strin
     await tx.insertInto('cost_center_categories').values([...new Set(categoryIds)].map((category_id) => ({ household_id: caller.household_id, cost_center_id: id, category_id }))).execute()
   }
   return { name, kind: input.kind.trim(), categories: (input.categories ?? []).map((path) => vocabulary.categoryPath(vocabulary.categoryId(path))).sort() }
+}
+// Renames and deletes (IMPLEMENTATION.md §2). A rename keeps every link; a delete only goes through when nothing uses the name.
+
+function fail(problem: Problem): never {
+  throw problem.code.endsWith('_exists') || problem.code === 'in_use' ? conflict(problem.code, problem.message) : invalid(problem.code, problem.message)
+}
+
+async function rewriteText(tx: Tx, renamer: Renamer, checkedGroups: boolean): Promise<void> {
+  for (const rule of await tx.selectFrom('rules').select(['id', 'params']).execute()) {
+    const params = renameRuleParams(rule.params, renamer)
+    if (JSON.stringify(params) !== JSON.stringify(rule.params)) await tx.updateTable('rules').set({ params: JSON.stringify(params) }).where('id', '=', rule.id).execute()
+  }
+  for (const repeat of await tx.selectFrom('repeats').select(['id', 'template']).execute()) {
+    const template = renameTemplate(repeat.template, renamer)
+    if (JSON.stringify(template) !== JSON.stringify(repeat.template)) await tx.updateTable('repeats').set({ template: JSON.stringify(template) }).where('id', '=', repeat.id).execute()
+  }
+  if (!checkedGroups) return
+  const checked = await tx.selectFrom('transactions').select(['id', 'checked_groups']).where(sql<number>`cardinality(checked_groups)`, '>', 0).execute()
+  for (const row of checked) {
+    const groups = row.checked_groups.map((group) => renamer.category(group))
+    if (groups.some((group, i) => group !== row.checked_groups[i])) await tx.updateTable('transactions').set({ checked_groups: groups }).where('id', '=', row.id).execute()
+  }
+}
+
+// Rules and repeats whose params or template mention the name, for the delete check.
+async function textMentions(tx: Tx, renamer: Renamer): Promise<{ rules: Set<string>; repeats: number }> {
+  const rules = (await tx.selectFrom('rules').select(['id', 'params']).execute()).filter((rule) => mentions(renamer, { params: rule.params }))
+  const repeats = (await tx.selectFrom('repeats').select('template').execute()).filter((repeat) => mentions(renamer, { template: repeat.template }))
+  return { rules: new Set(rules.map((rule) => rule.id)), repeats: repeats.length }
+}
+
+export async function renameCategory(tx: Tx, path: string, newPath: string): Promise<{ path: string }> {
+  const from = path.trim()
+  const to = newPath.trim()
+  const categories = await tx.selectFrom('categories').select(['id', 'path']).execute()
+  const problem = checkCategoryRename(from, to, categories.map((c) => c.path))
+  if (problem) fail(problem)
+  const stored = categories.find((c) => c.path.toLowerCase() === from.toLowerCase())!.path
+  for (const category of categories) {
+    const renamed = renamePath(category.path, stored, to)
+    if (renamed !== category.path) await tx.updateTable('categories').set({ path: renamed }).where('id', '=', category.id).execute()
+  }
+  await rewriteText(tx, categoryRenamer(stored, to), true)
+  return { path: to }
+}
+
+export async function deleteCategory(tx: Tx, path: string): Promise<void> {
+  const categories = await tx.selectFrom('categories').select(['id', 'path']).execute()
+  const category = categories.find((c) => c.path.toLowerCase() === path.trim().toLowerCase())
+  if (!category) throw invalid('unknown_category', `There is no category "${path}".`)
+  const purchases = await tx
+    .selectFrom('transactions')
+    .select((eb) => eb.fn.countAll<string>().as('count'))
+    .where((eb) => eb.or([eb('main_category_id', '=', category.id), eb.exists(eb.selectFrom('line_items').select('id').whereRef('line_items.transaction_id', '=', 'transactions.id').where('line_items.category_id', '=', category.id))]))
+    .executeTakeFirstOrThrow()
+  const linkedRules = await tx.selectFrom('rules').select('id').where('category_id', '=', category.id).execute()
+  const text = await textMentions(tx, categoryRenamer(category.path, '\0'))
+  const notes = await tx.selectFrom('note_categories').select((eb) => eb.fn.countAll<string>().as('count')).where('category_id', '=', category.id).executeTakeFirstOrThrow()
+  const problem = usageProblem('Category', category.path, {
+    purchases: Number(purchases.count),
+    subcategories: categories.filter((c) => c.path.toLowerCase().startsWith(`${category.path.toLowerCase()}/`)).length,
+    rules: new Set([...linkedRules.map((rule) => rule.id), ...text.rules]).size,
+    notes: Number(notes.count),
+    repeats: text.repeats,
+  })
+  if (problem) fail(problem)
+  await tx.deleteFrom('categories').where('id', '=', category.id).execute()
+}
+
+export async function renameCostCenter(tx: Tx, name: string, newName: string): Promise<{ name: string }> {
+  const from = name.trim()
+  const to = newName.trim()
+  const centers = await tx.selectFrom('cost_centers').select(['id', 'name']).execute()
+  const problem = checkCostCenterRename(from, to, centers.map((c) => c.name))
+  if (problem) fail(problem)
+  const center = centers.find((c) => c.name.toLowerCase() === from.toLowerCase())!
+  await tx.updateTable('cost_centers').set({ name: to }).where('id', '=', center.id).execute()
+  await rewriteText(tx, costCenterRenamer(center.name, to), false)
+  return { name: to }
+}
+
+export async function deleteCostCenter(tx: Tx, name: string): Promise<void> {
+  const center = await tx.selectFrom('cost_centers').select(['id', 'name']).where((eb) => eb(eb.fn('lower', ['name']), '=', name.trim().toLowerCase())).executeTakeFirst()
+  if (!center) throw invalid('unknown_cost_center', `There is no cost center "${name}".`)
+  const purchases = await tx
+    .selectFrom('line_item_cost_centers')
+    .innerJoin('line_items', 'line_items.id', 'line_item_cost_centers.line_item_id')
+    .select((eb) => eb.fn.count<string>('line_items.transaction_id').distinct().as('count'))
+    .where('line_item_cost_centers.cost_center_id', '=', center.id)
+    .executeTakeFirstOrThrow()
+  const text = await textMentions(tx, costCenterRenamer(center.name, '\0'))
+  const notes = await tx.selectFrom('note_cost_centers').select((eb) => eb.fn.countAll<string>().as('count')).where('cost_center_id', '=', center.id).executeTakeFirstOrThrow()
+  const problem = usageProblem('Cost center', center.name, { purchases: Number(purchases.count), rules: text.rules.size, notes: Number(notes.count), repeats: text.repeats })
+  if (problem) fail(problem)
+  await tx.deleteFrom('cost_centers').where('id', '=', center.id).execute()
 }

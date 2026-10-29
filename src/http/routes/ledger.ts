@@ -3,10 +3,10 @@ import { createRepeat, listRepeats, stopRepeat, updateRepeat } from '../../ledge
 import { deleteRule, getRules, saveRule } from '../../ledger/rules.js'
 import { getSummary } from '../../ledger/summary.js'
 import { getUpdates, markSeen } from '../../ledger/updates.js'
-import { addCategory, addCostCenter, listCategories, listCostCenters } from '../../ledger/vocabulary.js'
+import { addCategory, addCostCenter, deleteCategory, deleteCostCenter, listCategories, listCostCenters, renameCategory, renameCostCenter } from '../../ledger/vocabulary.js'
 import type { App, RouteDeps } from '../app.js'
 import {
-  CategoryBody, CostCenterBody, CostCenterQuery, IdParams, NoteBody, NotePatch, NoteQuery, RepeatBody, RepeatPatch, RuleBody, RuleQuery,
+  CategoryBody, CategoryQuery, CategoryRename, CostCenterBody, CostCenterName, CostCenterQuery, CostCenterRename, IdParams, NoteBody, NotePatch, NoteQuery, RepeatBody, RepeatPatch, RuleBody, RuleQuery,
   SeenBody, SummaryQuery, UpdatesQuery,
 } from '../schemas.js'
 
@@ -22,6 +22,17 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
     return run(request, (tx, caller) => addCategory(tx, caller, request.body.path))
   })
 
+  app.patch('/api/v1/categories', {
+    schema: { tags: ['vocabulary'], summary: 'Rename or move a category. Purchases, rules, notes and repeats keep pointing at it.', body: CategoryRename },
+  }, async (request) => run(request, (tx) => renameCategory(tx, request.body.path, request.body.new_path)))
+
+  app.delete('/api/v1/categories', {
+    schema: { tags: ['vocabulary'], summary: 'Delete a category nothing uses: no purchases, subcategories, rules, notes or repeats.', querystring: CategoryQuery },
+  }, async (request, reply) => {
+    await run(request, (tx) => deleteCategory(tx, request.query.path))
+    return reply.status(204).send()
+  })
+
   app.get('/api/v1/cost-centers', {
     schema: { tags: ['vocabulary'], summary: 'The household\'s cost centers, optionally those linked to a category or its parent.', querystring: CostCenterQuery },
   }, async (request) => ({ cost_centers: await run(request, (tx) => listCostCenters(tx, request.query.category)) }))
@@ -31,6 +42,17 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   }, async (request, reply) => {
     reply.status(201)
     return run(request, (tx, caller) => addCostCenter(tx, caller, request.body))
+  })
+
+  app.patch('/api/v1/cost-centers', {
+    schema: { tags: ['vocabulary'], summary: 'Rename a cost center. Purchases, rules, notes and repeats keep pointing at it.', body: CostCenterRename },
+  }, async (request) => run(request, (tx) => renameCostCenter(tx, request.body.name, request.body.new_name)))
+
+  app.delete('/api/v1/cost-centers', {
+    schema: { tags: ['vocabulary'], summary: 'Delete a cost center nothing uses: no purchases, rules, notes or repeats.', querystring: CostCenterName },
+  }, async (request, reply) => {
+    await run(request, (tx) => deleteCostCenter(tx, request.query.name))
+    return reply.status(204).send()
   })
 
   app.get('/api/v1/rules', {

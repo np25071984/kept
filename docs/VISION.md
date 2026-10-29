@@ -105,7 +105,7 @@ A name that isn't in the household is usually a typo, so the AI asks about it on
 
 > **AI:** "There's no Iva in the household. Did you mean Ivy, or is Iva someone new?"
 
-The ledger refuses an unknown name instead of creating it, and suggests the existing names it resembles.
+The ledger refuses an unknown name instead of creating it, and suggests the existing names it resembles. A wrong name already saved is renamed, which keeps every purchase under it; a name is deleted only once nothing uses it.
 
 An expense can be spent for more than one cost center. For example, a single car insurance bill that covers both cars is logged once with both the Hyundai and the Kia in `spent_for`. See [Splitting Shared Expenses](#splitting-shared-expenses) for how the amount is divided.
 

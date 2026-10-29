@@ -93,7 +93,9 @@ Every table carries a `household_id` for [row-level security](#4-security), incl
 | `household_id` | UUID   | Yes      |                                      |
 | `path`         | String | Yes      | Groceries, Groceries/Alcohol, Car/Fuel |
 
-Line items, cost centers, rules and notes store a link to the category's `id`, so renaming a category ("Car/Fuel" to "Car/Gas") doesn't break anything that uses it. The API and MCP tools accept and return the `path`, which is what the agent and the user see. The AI picks from this list and asks before adding a new one, so the household doesn't end up with "Car/Fuel", "Gas" and "Fuel" side by side. A write naming an unknown category or cost center fails with `unknown_category` or `unknown_cost_center`, listing the `known` names and the `similar` ones: a typo, swapped letters, a shorter form or another form of the word ([`VISION.md` §3.1](VISION.md#step-4-clarify-the-cost-center)). A new household starts with the fixed seed in [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
+Line items, cost centers, rules and notes store a link to the category's `id`, so renaming a category ("Car/Fuel" to "Car/Gas") doesn't break anything that uses it. The API and MCP tools accept and return the `path`, which is what the agent and the user see. The AI picks from this list and asks before adding a new one, so the household doesn't end up with "Car/Fuel", "Gas" and "Fuel" side by side. A write naming an unknown category or cost center fails with `unknown_category` or `unknown_cost_center`, listing the `known` names and the `similar` ones: a typo, swapped letters, a shorter form or another form of the word ([`VISION.md` §3.1](VISION.md#step-4-clarify-the-cost-center)).
+
+Renaming a category or cost center keeps every link. Rule params, repeat templates and `checked_groups` hold paths and names as text, so a rename rewrites them, and a category's subcategories move with it. A delete fails with `409 in_use`, naming the counts, while any purchase, subcategory, rule, note or repeat uses the name; links from cost centers to the category go with it. A new household starts with the fixed seed in [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
 
 **Invites**
 
@@ -237,8 +239,12 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `DELETE` | `/api/v1/transactions/{id}` | Delete one of the caller's transactions.                                                          |
 | `GET`  | `/api/v1/cost-centers`        | List the household's cost centers (cars, homes, kids, pets), optionally filtered by category.     |
 | `POST`   | `/api/v1/cost-centers`      | Add a cost center for the household.                                                              |
+| `PATCH`  | `/api/v1/cost-centers`      | Rename a cost center: `{"name", "new_name"}`.                                                     |
+| `DELETE` | `/api/v1/cost-centers?name=` | Delete a cost center nothing uses.                                                               |
 | `GET`    | `/api/v1/categories`        | List the household's categories and subcategories.                                                |
 | `POST`   | `/api/v1/categories`        | Add a category or subcategory for the household.                                                  |
+| `PATCH`  | `/api/v1/categories`        | Rename or move a category with its subcategories: `{"path", "new_path"}`.                         |
+| `DELETE` | `/api/v1/categories?path=`  | Delete a category nothing uses.                                                                   |
 | `GET`    | `/api/v1/rules`             | List household rules, optionally filtered to those matching a merchant, category and the current user. |
 | `POST`   | `/api/v1/rules`             | Save a rule (track an item, set a default category or split, mark a store as mixed).              |
 | `DELETE` | `/api/v1/rules/{id}`        | Remove a rule, e.g. "stop tracking nuts".                                                         |
@@ -380,6 +386,10 @@ The MCP server is stateless Streamable HTTP at `POST /mcp`, in the same process 
 | `get_summary`         | `GET /api/v1/expenses/summary` | Totals by category, cost center or item for a period, with coverage for watched groups. |
 | `add_cost_center`     | `POST /api/v1/cost-centers`    | Add a cost center the user confirmed.                                     |
 | `add_category`        | `POST /api/v1/categories`      | Add a category or subcategory the user confirmed.                         |
+| `rename_cost_center`  | `PATCH /api/v1/cost-centers`   | Fix a cost center's name the user confirmed.                              |
+| `delete_cost_center`  | `DELETE /api/v1/cost-centers`  | Delete a cost center nothing uses, after the user confirmed.              |
+| `rename_category`     | `PATCH /api/v1/categories`     | Rename or move a category the user confirmed.                             |
+| `delete_category`     | `DELETE /api/v1/categories`    | Delete a category nothing uses, after the user confirmed.                 |
 | `update_setup`        | `PATCH /api/v1/setup`          | Save confirmed setup answers and mark steps `done` or `later`.            |
 | `invite_member`       | `POST /api/v1/invites`         | Invite a member by email, after the user confirms. Owners only.           |
 | `get_playbook`        | `GET /api/v1/rules`, `/categories`, `/cost-centers`, `/setup` | The question playbook plus the household's categories, cost centers, rules and setup state in one call. Called before the first question; when setup is incomplete or the caller hasn't been introduced, the playbook tells the agent to run the first conversation. |

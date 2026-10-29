@@ -37,9 +37,10 @@ describe('MCP server', () => {
     expect(client.getInstructions()).toContain('Call get_playbook before the first question about money')
     const tools = (await client.listTools()).tools.map((t) => t.name).sort()
     expect(tools).toEqual([
-      'add_category', 'add_cost_center', 'add_source', 'delete_note', 'delete_rule', 'delete_transaction', 'edit_transaction', 'get_notes',
-      'get_playbook', 'get_rules', 'get_summary', 'get_updates', 'invite_member', 'list_cost_centers', 'list_repeats', 'list_transactions',
-      'log_transaction', 'merge_transactions', 'save_note', 'save_rule', 'set_repeat', 'stop_repeat', 'update_note', 'update_repeat', 'update_setup',
+      'add_category', 'add_cost_center', 'add_source', 'delete_category', 'delete_cost_center', 'delete_note', 'delete_rule', 'delete_transaction',
+      'edit_transaction', 'get_notes', 'get_playbook', 'get_rules', 'get_summary', 'get_updates', 'invite_member', 'list_cost_centers', 'list_repeats',
+      'list_transactions', 'log_transaction', 'merge_transactions', 'rename_category', 'rename_cost_center', 'save_note', 'save_rule', 'set_repeat',
+      'stop_repeat', 'update_note', 'update_repeat', 'update_setup',
     ])
     expect((await client.listPrompts()).prompts.map((p) => p.name).sort()).toEqual(['catch_up', 'log_expense', 'setup_household'])
     const resource = await client.readResource({ uri: 'kept://household' })

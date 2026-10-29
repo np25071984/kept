@@ -30,6 +30,48 @@ describe('dates', () => {
   })
 })
 
+describe('renaming and deleting vocabulary', () => {
+  it('renames a cost center everywhere and deletes one only when nothing uses it', async () => {
+    const c = client(h, (await newHousehold(h, 'Rename people')).api_key)
+    await c.post('/api/v1/cost-centers', { name: 'Iva', kind: 'Child' })
+    await c.post('/api/v1/cost-centers', { name: 'Maya', kind: 'Child' })
+    const shirt = await c.post('/api/v1/transactions', { amount: 10.79, merchant: 'Old Navy', category: 'Clothing', spent_for: [{ cost_center: 'Iva' }] })
+    await c.post('/api/v1/rules', { kind: 'set_spent_for', merchant: 'Old Navy', params: { spent_for: [{ cost_center: 'Iva' }] }, text: 'Old Navy is for Iva.' })
+
+    const blocked = await c.delete('/api/v1/cost-centers?name=Iva')
+    expect(blocked.status).toBe(409)
+    expect(blocked.body.error.message).toContain('1 purchase, 1 rule')
+
+    expect((await c.patch('/api/v1/cost-centers', { name: 'iva', new_name: 'Ivy' })).body).toEqual({ name: 'Ivy' })
+    expect((await c.get(`/api/v1/transactions/${shirt.body.transaction.id}`)).body.line_items[0].spent_for).toEqual([{ cost_center: 'Ivy', share: null }])
+    expect((await c.get('/api/v1/rules')).body.rules[0].params).toEqual({ spent_for: [{ cost_center: 'Ivy' }] })
+    expect((await c.patch('/api/v1/cost-centers', { name: 'Ivy', new_name: 'maya' })).status).toBe(409)
+
+    expect((await c.delete('/api/v1/cost-centers?name=Maya')).status).toBe(204)
+    expect((await c.get('/api/v1/cost-centers')).body.cost_centers.map((cc: { name: string }) => cc.name)).toEqual(['Ivy'])
+  })
+
+  it('moves a category with its subcategories and watched groups, and deletes only an unused one', async () => {
+    const c = client(h, (await newHousehold(h, 'Rename categories')).api_key)
+    await c.post('/api/v1/categories', { path: 'Groceries/Alcohol' })
+    await c.post('/api/v1/rules', { kind: 'watch', params: { category: 'Groceries/Alcohol' }, text: 'Keep an eye on alcohol.' })
+    const shop = await c.post('/api/v1/transactions', { amount: 30, merchant: 'Kroger', category: 'Groceries', checked_groups: ['Groceries/Alcohol'] })
+
+    expect((await c.patch('/api/v1/categories', { path: 'groceries', new_path: 'Food' })).body).toEqual({ path: 'Food' })
+    const paths = (await c.get('/api/v1/categories')).body.categories.map((cat: { path: string }) => cat.path)
+    expect(paths).toEqual(expect.arrayContaining(['Food', 'Food/Alcohol']))
+    expect(paths).not.toContain('Groceries')
+    const moved = (await c.get(`/api/v1/transactions/${shop.body.transaction.id}`)).body
+    expect(moved).toMatchObject({ checked_groups: ['Food/Alcohol'], line_items: [{ category: 'Food' }] })
+    expect((await c.get('/api/v1/rules')).body.rules[0].params).toEqual({ category: 'Food/Alcohol' })
+
+    expect((await c.delete('/api/v1/categories?path=Food')).body.error.message).toContain('1 purchase, 1 subcategory')
+    expect((await c.delete('/api/v1/categories?path=Food/Alcohol')).body.error.message).toContain('1 rule')
+    expect((await c.patch('/api/v1/categories', { path: 'Food', new_path: 'Travel' })).status).toBe(409)
+    expect((await c.delete('/api/v1/categories?path=Travel')).status).toBe(204)
+  })
+})
+
 describe('repeats', () => {
   it('registers the next occurrence and announces it', async () => {
     const phone = await sam.post('/api/v1/transactions', { date: '2026-09-27', amount: 50, merchant: 'Verizon', category: 'Phone' })
