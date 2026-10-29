@@ -1,6 +1,7 @@
 import type { Language } from '../domain/language.js'
 import { zoneOptions } from '../domain/timezones.js'
 import { tr } from '../i18n.js'
+import { siteHeader } from '../http/siteHeader.js'
 import { ZONE_PICKER_SCRIPT, ZONE_PICKER_STYLE } from './zonePicker.js'
 
 // The sign-in and consent pages an assistant opens when a member connects Kept. Plain server-rendered HTML.
@@ -9,12 +10,8 @@ export function escape(value: string): string {
   return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 }
 
-// English · Русский at the top of every page; the choice is a cookie holding only the language (VISION.md §4.C).
-function switcher(lang: Language): string {
-  const option = (code: Language, name: string) => `<button type="submit" name="lang" value="${code}" lang="${code}" aria-pressed="${lang === code}">${name}</button>`
-  return `<form class="lang" method="post" action="/language" aria-label="${tr(lang, 'Language')}">${option('en', 'English')}${option('ru', 'Русский')}</form>`
-}
-
+// The palette, header and language menu come from /app/site.css and siteHeader, as on the landing page and in the
+// web app; the form sits in a card narrow enough to read on a phone.
 function layout(lang: Language, title: string, body: string): string {
   return `<!doctype html>
 <html lang="${lang}">
@@ -24,30 +21,28 @@ function layout(lang: Language, title: string, body: string): string {
 <title>${escape(title)} · Kept</title>
 <link rel="icon" href="/app/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/app/apple-touch-icon.png">
+<link rel="stylesheet" href="/app/site.css">
 <style>
-  :root { color-scheme: light dark; --bg: #fafaf7; --fg: #1d1d1b; --muted: #6b6b66; --line: #d9d9d2; --accent: #2f6b4f; }
-  @media (prefers-color-scheme: dark) { :root { --bg: #161615; --fg: #ecece6; --muted: #a3a39c; --line: #3a3a37; --accent: #7cc4a0; } }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, -apple-system, sans-serif; }
-  main { max-width: 420px; margin: 0 auto; padding: 48px 16px; }
-  h1 { font-size: 22px; margin: 0 0 8px; }
-  p { color: var(--muted); margin: 0 0 20px; }
-  label { display: block; font-weight: 600; margin: 16px 0 6px; }
-  input, select { width: 100%; padding: 12px; font: inherit; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: inherit; }
-  input.code { letter-spacing: 0.3em; font-size: 22px; text-align: center; }
-  button { width: 100%; margin-top: 20px; padding: 12px; font: inherit; font-weight: 600; border: 0; border-radius: 8px; background: var(--accent); color: var(--bg); cursor: pointer; }
-  button.secondary { background: transparent; color: var(--muted); border: 1px solid var(--line); margin-top: 10px; }
-  .error { color: #c0392b; }
-  .brand { font-weight: 700; letter-spacing: 0.02em; color: var(--accent); margin-bottom: 24px; display: flex; align-items: center; gap: 8px; }
-  .brand img { border-radius: 6px; }
-${ZONE_PICKER_STYLE}
+  body { font-size: 16px; }
+  main { max-width: 480px; margin: 0 auto; padding: 40px 16px 64px; }
+  .signin { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 28px 24px; }
+  .signin h1 { margin: 0 0 8px; }
+  .signin p { color: var(--muted); margin: 0 0 20px; }
+  .signin label { display: block; font-size: 15px; font-weight: 600; color: var(--fg); margin: 16px 0 6px; }
+  .signin input, .signin select { padding: 12px; background: var(--bg); }
+  .signin input.code { letter-spacing: 0.3em; font-size: 22px; text-align: center; }
+  .signin button:not(.picker-trigger) { width: 100%; margin-top: 20px; padding: 12px; font-weight: 600; border: 0; background: var(--accent); color: var(--accent-fg); }
+  .signin button.secondary { background: transparent; color: var(--muted); border: 1px solid var(--line); margin-top: 10px; }
+  .signin .error { color: var(--danger); }
   .hint { font-size: 13px; color: var(--muted); margin: 4px 0 12px; }
-  .lang { display: flex; gap: 4px; margin-left: auto; letter-spacing: 0; }
-  .lang button { width: auto; margin: 0; padding: 4px 8px; background: none; color: var(--muted); font-weight: 400; font-size: 13px; }
-  .lang button[aria-pressed="true"] { color: var(--fg); font-weight: 600; }
+  @media (max-width: 480px) { main { padding: 16px 8px 40px; } .signin { padding: 22px 16px; } }
+${ZONE_PICKER_STYLE}
 </style>
 </head>
-<body><main><div class="brand"><img src="/app/icon.svg" width="24" height="24" alt="">Kept${switcher(lang)}</div>${body}</main></body>
+<body>
+${siteHeader(lang)}
+<main><div class="signin">${body}</div></main>
+</body>
 </html>`
 }
 

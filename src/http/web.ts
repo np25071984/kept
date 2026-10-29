@@ -1,4 +1,5 @@
 import { existsSync, statSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import fastifyStatic from '@fastify/static'
@@ -11,6 +12,7 @@ import { LANDING_CSP, landingPage } from './landing.js'
 const here = dirname(fileURLToPath(import.meta.url))
 // dist/http/web.js finds dist/web; running from src finds the last build.
 const ROOTS = [resolve(here, '../web'), resolve(here, '../../dist/web')]
+const SITE_CSS = [resolve(here, '../../web/public/site.css'), ...ROOTS.map((root) => join(root, 'site.css'))]
 
 // The app loads only its own files and calls only this origin; sign-in is a navigation, which CSP doesn't restrict.
 const CSP = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
@@ -20,6 +22,13 @@ function isFile(path: string): boolean {
 }
 
 export async function webRoutes(app: App, webRoot?: string) {
+  // The shared stylesheet, also used by the landing and sign-in pages: from source while developing, so edits show
+  // without a build, else from the build.
+  app.get('/app/site.css', { config: { public: true }, schema: { hide: true } }, async (_request, reply) => {
+    const file = SITE_CSS.find(isFile)
+    if (!file) return reply.status(404).send()
+    return reply.type('text/css; charset=utf-8').header('cache-control', 'no-cache').send(await readFile(file))
+  })
   app.get('/', { config: { public: true }, schema: { hide: true } }, async (request, reply) =>
     reply
       .type('text/html; charset=utf-8')

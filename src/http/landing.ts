@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import type { Language } from '../domain/language.js'
 import { tr } from '../i18n.js'
 import { escape } from '../oauth/pages.js'
+import { siteHeader } from './siteHeader.js'
 import { CHAT_SCRIPT, CHAT_STYLE, chatData, conversations } from './landingChat.js'
 
 // The page at / (VISION.md §4.C): what Kept is, what happens to the data, which assistants it works with.
@@ -12,38 +13,18 @@ const SCRIPT = "try { if (localStorage.getItem('kept.refresh_token')) location.r
 
 const hash = (script: string) => `'sha256-${createHash('sha256').update(script).digest('base64')}'`
 
-export const LANDING_CSP = `default-src 'none'; style-src 'unsafe-inline'; script-src ${hash(SCRIPT)} ${hash(CHAT_SCRIPT)}; img-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'`
+export const LANDING_CSP = `default-src 'none'; style-src 'self' 'unsafe-inline'; script-src ${hash(SCRIPT)} ${hash(CHAT_SCRIPT)}; img-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'`
 
+// What only this page needs; the palette, header and menus come from /app/site.css.
 const STYLE = `
-:root { color-scheme: light dark; --bg: #fafaf7; --surface: #fff; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2db; --accent: #2f6b4f; --accent-fg: #fafaf7; --accent-soft: #e4efe8; --chat-bg: #ece5dc; --chat-dot: #ddd3c6; --chat-out: #d9f2dc; }
-@media (prefers-color-scheme: dark) { :root { --bg: #161615; --surface: #1f1f1d; --fg: #ecece6; --muted: #a3a39c; --line: #34342f; --accent: #7cc4a0; --accent-fg: #10221a; --accent-soft: #1f3329; --chat-bg: #12100e; --chat-dot: #1f1c18; --chat-out: #1f3a2c; } }
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-h1 { font-size: 30px; line-height: 1.2; margin: 0 0 10px; }
-h2 { font-size: 16px; margin: 0 0 12px; }
+:root { --chat-bg: #ece5dc; --chat-dot: #ddd3c6; --chat-out: #d9f2dc; }
+@media (prefers-color-scheme: dark) { :root { --chat-bg: #12100e; --chat-dot: #1f1c18; --chat-out: #1f3a2c; } }
+h2 { margin: 0 0 12px; }
 h3 { font-size: 14px; margin: 0 0 6px; }
-p { margin: 0 0 12px; }
-a { color: var(--accent); }
-.muted { color: var(--muted); }
-.small { font-size: 13px; }
-.topbar { background: var(--surface); border-bottom: 1px solid var(--line); }
-.topbar-inner { max-width: 1040px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-.brand { font-weight: 700; letter-spacing: 0.02em; color: var(--accent); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
-.brand img { border-radius: 6px; }
-nav { display: flex; gap: 2px; flex: 1; flex-wrap: wrap; }
-nav a { white-space: nowrap; padding: 6px 10px; border-radius: 8px; text-decoration: none; color: var(--fg); font-size: 14px; }
-.right { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; margin-left: auto; }
-@media (max-width: 720px) { nav { order: 3; flex-basis: 100%; } }
-.langmenu { position: relative; }
-.langmenu summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; border-radius: 8px; }
-.langmenu summary::-webkit-details-marker { display: none; }
-.langmenu .code { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; }
-.langmenu form { position: absolute; right: 0; top: calc(100% + 4px); z-index: 10; min-width: 160px; display: grid; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.12); }
-.langmenu button { text-align: left; border: 0; background: none; padding: 7px 10px; border-radius: 6px; font: inherit; color: var(--fg); cursor: pointer; }
-.langmenu button:hover { background: var(--bg); }
-.langmenu button[aria-checked="true"] { color: var(--accent); font-weight: 600; }
-main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
+@media (max-width: 720px) { .topbar nav { order: 3; flex-basis: 100%; } }
+main { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
 section { margin-bottom: 28px; }
+.hero h1 { font-size: 30px; line-height: 1.2; margin: 0 0 10px; }
 .hero { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; align-items: center; padding: 24px 0 8px; }
 @media (max-width: 720px) { .hero { grid-template-columns: 1fr; } }
 .demo { justify-self: center; width: 100%; max-width: 360px; }
@@ -65,11 +46,9 @@ section { margin-bottom: 28px; }
 footer { border-top: 1px solid var(--line); margin-top: 32px; padding-top: 16px; display: flex; flex-wrap: wrap; gap: 16px; }
 `
 
-const GLOBE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>'
 
 export function landingPage(lang: Language): string {
   const t = (text: string) => escape(tr(lang, text))
-  const option = (code: Language, name: string) => `<button type="submit" role="menuitemradio" name="lang" value="${code}" lang="${code}" aria-checked="${lang === code}">${name}</button>`
   const chats = conversations(lang)
   const first = chats[0]!
   return `<!doctype html>
@@ -81,18 +60,15 @@ export function landingPage(lang: Language): string {
 <meta name="description" content="${t("Kept teaches the AI you already use to track your household's spending: what to ask, how to file it, and what to remember. No forms, no bank logins.")}">
 <link rel="icon" href="/app/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/app/apple-touch-icon.png">
+<link rel="stylesheet" href="/app/site.css">
 <script>${SCRIPT}</script>
 <style>${STYLE}${CHAT_STYLE}</style>
 </head>
 <body>
-<header class="topbar"><div class="topbar-inner">
-  <a class="brand" href="/"><img src="/app/icon.svg" width="22" height="22" alt="">Kept</a>
-  <nav><a href="#how">${t('How it works')}</a><a href="#privacy">${t('Your data')}</a><a href="#assistants">${t('Assistants')}</a></nav>
-  <span class="right">
-    <details class="langmenu"><summary aria-label="${t('Language')}">${GLOBE}<span class="code">${lang.toUpperCase()}</span></summary><form method="post" action="/language" role="menu">${option('en', 'English')}${option('ru', 'Русский')}</form></details>
-    <a href="/app/">${t('Sign in')}</a>
-  </span>
-</div></header>
+${siteHeader(lang, {
+  nav: `<a href="#how">${t('How it works')}</a><a href="#privacy">${t('Your data')}</a><a href="#assistants">${t('Assistants')}</a>`,
+  end: `<a href="/app/">${t('Sign in')}</a>`,
+})}
 <main>
 <section class="hero">
   <div>

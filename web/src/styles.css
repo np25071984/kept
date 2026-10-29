@@ -1,48 +1,12 @@
-/* Same palette as the sign-in pages (src/oauth/pages.ts). */
-:root {
-  color-scheme: light dark;
-  --bg: #fafaf7; --surface: #ffffff; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2db; --accent: #2f6b4f; --accent-fg: #fafaf7;
-  --accent-soft: #e4efe8; --danger: #b3261e; --private: #7a4b00; --private-soft: #fbefd9;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #161615; --surface: #1f1f1d; --fg: #ecece6; --muted: #a3a39c; --line: #34342f; --accent: #7cc4a0; --accent-fg: #10221a;
-    --accent-soft: #1f3329; --danger: #f2a49c; --private: #f0c27a; --private-soft: #3a2d14;
-  }
-}
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-h1 { font-size: 22px; margin: 0; }
-h2 { font-size: 16px; margin: 24px 0 8px; }
-a { color: var(--accent); }
-p { margin: 0 0 12px; }
-.muted { color: var(--muted); }
-.small { font-size: 13px; }
+/* The web app's own styles; the palette, base elements, header and menus are in /app/site.css (web/public/site.css). */
 .error { color: var(--danger); margin: 8px 0; }
 .empty { color: var(--muted); padding: 32px 0; text-align: center; }
-.brand { font-weight: 700; letter-spacing: 0.02em; color: var(--accent); display: inline-flex; align-items: center; gap: 8px; }
-.brand img { border-radius: 6px; }
 
-button, select, input { font: inherit; color: inherit; }
-button { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; }
-button:disabled { opacity: 0.55; cursor: default; }
-button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
-button.danger { color: var(--danger); }
-button.link { border: 0; background: none; padding: 4px; color: var(--accent); }
-input, select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); min-width: 0; width: 100%; }
-label, .field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
-label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 14px; color: var(--fg); }
-label.check input { width: auto; }
 .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
 
 .centered { max-width: 440px; margin: 0 auto; padding: 72px 16px; display: flex; flex-direction: column; gap: 16px; }
 .centered .brand { font-size: 20px; }
 
-.topbar { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 1; }
-.topbar-inner { max-width: 960px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-.topbar nav { display: flex; gap: 4px; flex: 1; align-items: center; }
-.topbar nav a { padding: 6px 10px; border-radius: 8px; text-decoration: none; color: var(--fg); display: inline-flex; gap: 6px; align-items: center; }
-.topbar nav a.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .badge { background: var(--accent); color: var(--accent-fg); border-radius: 999px; font-size: 12px; padding: 0 7px; font-weight: 600; }
 .me { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 14px; }
 
@@ -135,21 +99,9 @@ textarea { font: inherit; color: inherit; padding: 8px 10px; border: 1px solid v
 code { font-size: 13px; }
 
 /* Header menus, the bell and tabs. */
-.topbar .right { display: flex; align-items: center; gap: 8px; }
 .bell { position: relative; display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; color: var(--fg); }
 .bell.active { background: var(--accent-soft); color: var(--accent); }
 .bell .badge { position: absolute; top: -2px; right: -4px; }
-.navmenu, .usermenu, .langmenu { position: relative; font-size: 14px; }
-.navmenu summary, .usermenu summary, .langmenu summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; border-radius: 8px; white-space: nowrap; }
-.navmenu summary::-webkit-details-marker, .usermenu summary::-webkit-details-marker, .langmenu summary::-webkit-details-marker { display: none; }
-.navmenu.active summary, .usermenu.active summary { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-.menu { position: absolute; top: calc(100% + 4px); z-index: 10; min-width: 170px; display: grid; padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.12); }
-.menu-left { left: 0; }
-.menu-right { right: 0; }
-.menu a, .menu button { padding: 7px 10px; border-radius: 6px; text-decoration: none; color: var(--fg); border: 0; background: none; text-align: left; font: inherit; cursor: pointer; }
-.menu a:hover, .menu button:hover { background: var(--bg); }
-.menu a.active, .menu button[aria-checked="true"] { color: var(--accent); font-weight: 600; }
-.menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
 .segmented { display: flex; width: fit-content; max-width: 100%; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); margin-bottom: 20px; }
 .segmented a { padding: 6px 12px; text-decoration: none; color: var(--fg); font-size: 14px; border-left: 1px solid var(--line); white-space: nowrap; }
 .segmented a:first-child { border-left: 0; }

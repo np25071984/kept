@@ -100,7 +100,7 @@ export const ZONE_PICKER_SCRIPT = `(() => {
 
 export const ZONE_PICKER_STYLE = `
   .picker { position: relative; }
-  .picker-trigger { display: flex; gap: 8px; align-items: center; margin: 0; padding: 12px; text-align: left; white-space: nowrap; overflow: hidden; font-weight: 400; background: transparent; color: inherit; border: 1px solid var(--line); }
+  .picker-trigger { display: flex; width: 100%; gap: 8px; align-items: center; margin: 0; padding: 12px; text-align: left; white-space: nowrap; overflow: hidden; font-weight: 400; background: transparent; color: inherit; border: 1px solid var(--line); }
   .picker-trigger[aria-expanded="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
   .picker-trigger .detail { margin-left: auto; color: var(--muted); font-size: 13px; }
   .picker-panel { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 20; padding: 6px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 12px 32px rgb(0 0 0 / 0.16); }
