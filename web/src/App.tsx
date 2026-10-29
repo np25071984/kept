@@ -10,6 +10,7 @@ import { MembersPage } from './pages/Members.js'
 import { PreferencesPage } from './pages/Preferences.js'
 import { PurchasePage } from './pages/Purchase.js'
 import { PurchasesPage } from './pages/Purchases.js'
+import { RecurringPage } from './pages/Recurring.js'
 import { GeneralPage, HouseholdLayout, ProfilePage, SettingsLayout } from './pages/Settings.js'
 import { UpdatesPage } from './pages/Updates.js'
 import { messageFor, SessionContext, SIGNED_OUT, useLoad, type Session } from './session.js'
@@ -23,7 +24,7 @@ export function App() {
           <Route index element={<Navigate to="/purchases" replace />} />
           <Route path="purchases" element={<PurchasesPage />} />
           <Route path="purchases/:id" element={<PurchasePage />} />
-          <Route path="recurring" element={<p className="empty">Recurring bills will show here.</p>} />
+          <Route path="recurring" element={<RecurringPage />} />
           <Route path="reports/*" element={<p className="empty">Reports will show here.</p>} />
           <Route path="notifications" element={<UpdatesPage />} />
           <Route path="preferences" element={<PreferencesPage />} />

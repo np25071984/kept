@@ -86,6 +86,7 @@ describe('repeats', () => {
     const created = (await sam.get(`/api/v1/transactions/${updates[0].transaction_id}`)).body
     expect(created).toMatchObject({ date: '2026-10-27', amount: 50, repeat_id: repeat.body.id })
     expect((await sam.get('/api/v1/repeats')).body.repeats[0].next_date).toBe('2026-11-27')
+    expect((await sam.get('/api/v1/repeats')).body).toMatchObject({ repeats: [{ last: { amount: 50 } }], month: { to_come: expect.any(Number) } })
 
     expect((await sam.post('/api/v1/updates/seen', { ids: [updates[0].id] })).body.marked).toBe(1)
     expect((await sam.get('/api/v1/updates')).body.updates).toEqual([])

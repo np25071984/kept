@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dueOccurrences, occurrence, occurrenceAfter } from '../../src/domain/repeats.js'
+import { dueOccurrences, occurrence, occurrenceAfter, stillToCome } from '../../src/domain/repeats.js'
 
 describe('occurrence', () => {
   it('moves the 31st to the last day of shorter months', () => {
@@ -44,5 +44,16 @@ describe('dueOccurrences', () => {
     const plan = dueOccurrences({ ...repeat, ends_on: '2026-10-01' }, '2026-11-01')
     expect(plan.dates).toEqual(['2026-09-27'])
     expect(plan.finished).toBe(true)
+  })
+})
+
+describe('stillToCome', () => {
+  const monthly = { frequency: 'monthly' as const, interval: 1, anchor: '2026-01-27', next_date: '2026-10-27', ends_on: null, remaining: null, paused: false, amount: 5500 }
+  it('sums what active repeats log for the rest of the month', () => {
+    expect(stillToCome([monthly], '2026-10-05')).toBe(5500)
+    expect(stillToCome([{ ...monthly, next_date: '2026-11-27' }], '2026-10-29')).toBe(0)
+    expect(stillToCome([{ ...monthly, paused: true }], '2026-10-05')).toBe(0)
+    const weekly = { ...monthly, frequency: 'weekly' as const, anchor: '2026-10-02', next_date: '2026-10-16', amount: 1000 }
+    expect(stillToCome([weekly], '2026-10-16')).toBe(3000)
   })
 })

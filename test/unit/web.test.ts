@@ -76,3 +76,14 @@ describe('household vocabulary', () => {
     expect(watchBody({ category: '', item: '' })).toBeNull()
   })
 })
+
+describe('recurring cadence', () => {
+  it('reads like the mockup', async () => {
+    const { cadence, ordinal } = await import('../../web/src/lib/recurring.js')
+    expect([1, 2, 3, 11, 12, 13, 21, 27].map(ordinal)).toEqual(['1st', '2nd', '3rd', '11th', '12th', '13th', '21st', '27th'])
+    expect(cadence({ frequency: 'monthly', interval: 1, anchor: '2026-01-27' })).toBe('Monthly on the 27th')
+    expect(cadence({ frequency: 'monthly', interval: 6, anchor: '2026-04-20' })).toBe('Every 6 months')
+    expect(cadence({ frequency: 'weekly', interval: 2, anchor: '2026-10-30' })).toBe('Every 2 weeks on Friday')
+    expect(cadence({ frequency: 'yearly', interval: 1, anchor: '2026-03-03' })).toBe('Yearly on Mar 3')
+  })
+})

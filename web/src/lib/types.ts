@@ -52,6 +52,22 @@ export interface Setup {
   you: { name: string; email: string; role: 'owner' | 'member' }
 }
 
+export interface Recurring {
+  id: string
+  frequency: 'weekly' | 'monthly' | 'yearly'
+  interval: number
+  anchor: string
+  next_date: string
+  ends_on: string | null
+  remaining: number | null
+  paused: boolean
+  amount: number
+  merchant: string | null
+  category: string | null
+  spent_for: string[]
+  last: { amount: number; date: string } | null
+}
+
 export interface Member {
   id: string
   name: string

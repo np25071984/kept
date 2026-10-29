@@ -4,7 +4,7 @@ import type { RepeatTemplate } from '../db/schema.js'
 import { addDays, isLocalDate, todayIn } from '../domain/dates.js'
 import { resizeLines, type Line } from '../domain/lines.js'
 import { formatAmount, fromCents, toCents } from '../domain/money.js'
-import { dueOccurrences, occurrenceAfter, occurrenceOnOrAfter, type Frequency, type Schedule } from '../domain/repeats.js'
+import { dueOccurrences, occurrenceAfter, occurrenceOnOrAfter, stillToCome, type Frequency, type Schedule } from '../domain/repeats.js'
 import type { Caller } from './caller.js'
 import { invalid, notFound, unwrap } from './errors.js'
 import { getTransaction, insertTransaction } from './transactions.js'
@@ -26,11 +26,24 @@ export interface RepeatView {
   amount: number
   merchant: string | null
   category: string | null
+  spent_for: string[]
+  last: { amount: number; date: string } | null
 }
 
-export async function listRepeats(tx: Tx, caller: Caller): Promise<RepeatView[]> {
-  const rows = await tx.selectFrom('repeats').selectAll().where('user_id', '=', caller.user_id).orderBy('next_date').execute()
-  return rows.map(view)
+export async function listRepeats(tx: Tx, caller: Caller, now = new Date()) {
+  const rows = await tx.selectFrom('repeats').selectAll().where('user_id', '=', caller.user_id).orderBy('paused').orderBy('next_date').execute()
+  const logged = rows.length
+    ? await tx.selectFrom('transactions').select(['repeat_id', 'amount', 'date']).where('spent_by', '=', caller.user_id).where('repeat_id', 'in', rows.map((r) => r.id)).orderBy('date', 'desc').execute()
+    : []
+  const today = todayIn(caller.timezone, now)
+  const month = today.slice(0, 7)
+  const repeats = rows.map((row) => {
+    const last = logged.find((t) => t.repeat_id === row.id)
+    return { ...view(row), last: last ? { amount: fromCents(toCents(Number(last.amount))), date: last.date } : null }
+  })
+  const loggedCents = logged.filter((t) => t.date.startsWith(month)).reduce((sum, t) => sum + toCents(Number(t.amount)), 0)
+  const toCome = stillToCome(rows.map((r) => ({ ...r, amount: toCents(r.template.amount) })), today)
+  return { repeats, month: { month, total: fromCents(loggedCents + toCome), to_come: fromCents(toCome) } }
 }
 
 function view(row: { id: string; frequency: Frequency; interval: number; anchor: string; next_date: string; ends_on: string | null; remaining: number | null; paused: boolean; template: RepeatTemplate }): RepeatView {
@@ -46,6 +59,8 @@ function view(row: { id: string; frequency: Frequency; interval: number; anchor:
     amount: row.template.amount,
     merchant: row.template.merchant,
     category: row.template.category ?? row.template.line_items.find((l) => l.is_rest)?.category ?? row.template.line_items[0]?.category ?? null,
+    spent_for: [...new Set(row.template.line_items.flatMap((l) => (l.spent_for ?? []).map((e) => e.cost_center)))],
+    last: null,
   }
 }
 

@@ -246,7 +246,7 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `DELETE` | `/api/v1/notes/{id}`        | Delete a note.                                                                                    |
 | `POST`   | `/api/v1/transactions/{id}/sources` | Attach a source (what the agent read from a photo, document or email) to one of the caller's transactions, e.g. a receipt added later. |
 | `POST`   | `/api/v1/transactions/{id}/merge` | Merge another of the caller's transactions into this one, keeping both sets of sources.     |
-| `GET`    | `/api/v1/repeats`           | List the caller's repeats with their next date and amount.                                        |
+| `GET`    | `/api/v1/repeats`           | The caller's repeats with next date, amount, who they're for and the last purchase each logged, plus this `month`'s recurring `total` and how much is still `to_come`. |
 | `POST`   | `/api/v1/repeats`           | Make a transaction repeat on a schedule.                                                          |
 | `PATCH`  | `/api/v1/repeats/{id}`      | Change the amount, schedule or end date from the next occurrence, or pause it.                    |
 | `DELETE` | `/api/v1/repeats/{id}`      | Stop repeating. Transactions already created are kept.                                            |

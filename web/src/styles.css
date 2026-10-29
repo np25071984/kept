@@ -216,3 +216,4 @@ a.tag { position: relative; z-index: 1; text-decoration: none; display: inline-f
   .topbar nav { order: 3; flex-basis: 100%; }
   .topbar .right { margin-left: auto; }
 }
+.amount-col { display: grid; justify-items: end; gap: 2px; }

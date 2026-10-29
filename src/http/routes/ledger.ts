@@ -99,8 +99,8 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.get('/api/v1/repeats', {
-    schema: { tags: ['repeats'], summary: 'The caller\'s repeats with their next date and amount.' },
-  }, async (request) => ({ repeats: await run(request, (tx, caller) => listRepeats(tx, caller)) }))
+    schema: { tags: ['repeats'], summary: 'The caller\'s repeats with their next date, amount and last logged purchase, and this month\'s recurring total with how much is still to come.' },
+  }, async (request) => run(request, (tx, caller) => listRepeats(tx, caller)))
 
   app.post('/api/v1/repeats', {
     schema: { tags: ['repeats'], summary: 'Make a transaction repeat. It is the first occurrence.', body: RepeatBody },

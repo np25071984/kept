@@ -71,3 +71,9 @@ export function dueOccurrences(repeat: RepeatState, today: LocalDate): DuePlan {
 function isFinished(endsOn: LocalDate | null, remaining: number | null, next: LocalDate): boolean {
   return (remaining != null && remaining <= 0) || (endsOn != null && next > endsOn)
 }
+// What active repeats still log this month after `today`'s run: each occurrence from its next date to the month's end.
+export function stillToCome(repeats: (RepeatState & { amount: number })[], today: LocalDate): number {
+  const { year, month } = parts(today)
+  const monthEnd = fromParts(year, month, daysInMonth(year, month))
+  return repeats.reduce((sum, r) => sum + dueOccurrences(r, monthEnd).dates.filter((d) => d >= today).length * r.amount, 0)
+}

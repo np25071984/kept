@@ -1,5 +1,5 @@
 import { accessToken } from './auth.js'
-import type { ApiKey, Connection, CostCenter, Invite, Member, Note, Setup, Transaction, Update, Watch } from './lib/types.js'
+import type { ApiKey, Connection, CostCenter, Invite, Member, Note, Recurring, Setup, Transaction, Update, Watch } from './lib/types.js'
 
 // The REST API (IMPLEMENTATION.md §3), with the signed-in member's token.
 
@@ -52,6 +52,10 @@ export const api = {
   setup: () => call<Setup>('GET', '/api/v1/setup'),
   updateSetup: (patch: { name?: string; currency?: string; timezone?: string }) => call<Setup>('PATCH', '/api/v1/setup', patch),
   updateMe: (patch: { name?: string }) => call<Setup>('PATCH', '/api/v1/me', patch),
+  recurring: () => call<{ repeats: Recurring[]; month: { month: string; total: number; to_come: number } }>('GET', '/api/v1/repeats'),
+  makeRecurring: (body: { transaction_id: string; frequency: string; interval?: number; anchor?: string }) => call<Recurring>('POST', '/api/v1/repeats', body),
+  updateRecurring: (id: string, patch: { amount?: number; frequency?: string; interval?: number; anchor?: string; ends_on?: string | null; paused?: boolean }) => call<Recurring>('PATCH', `/api/v1/repeats/${id}`, patch),
+  deleteRecurring: (id: string) => call<void>('DELETE', `/api/v1/repeats/${id}`),
   members: () => call<{ members: Member[]; invites: Invite[] }>('GET', '/api/v1/members'),
   setRole: (id: string, role: 'owner' | 'member') => call('PATCH', `/api/v1/members/${id}`, { role }),
   removeMember: (id: string) => call<void>('DELETE', `/api/v1/members/${id}`),

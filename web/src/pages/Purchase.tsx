@@ -14,7 +14,7 @@ export function PurchasePage() {
   const back = (useLocation().state as { back?: string } | null)?.back
   const backTo = `/purchases${back ? `?${back}` : ''}`
   const loaded = useLoad(() => api.transaction(id), [id])
-  const [mode, setMode] = useState<'view' | 'edit' | 'merge' | 'delete'>('view')
+  const [mode, setMode] = useState<'view' | 'edit' | 'merge' | 'delete' | 'recur'>('view')
   const [saved, setSaved] = useState<Transaction | null>(null)
   const t = saved?.id === id ? saved : loaded.data
 
@@ -32,6 +32,7 @@ export function PurchasePage() {
       {mode === 'view' && <Actions t={t} setMode={setMode} onSaved={done} />}
       {mode === 'merge' && <Merge t={t} onDone={done} />}
       {mode === 'delete' && <Delete t={t} backTo={backTo} onCancel={() => setMode('view')} />}
+      {mode === 'recur' && <MakeRecurring t={t} onDone={(made) => { if (made) setSaved({ ...t, repeat_id: made }); setMode('view') }} />}
     </>
   )
 }
@@ -44,7 +45,7 @@ function Details({ t }: { t: Transaction }) {
       <div className="purchase-head">
         <div>
           <h1>{t.merchant ?? 'No merchant'}</h1>
-          <p className="muted">{formatDate(t.date)}{t.timezone !== setup.household.timezone && ` · ${t.timezone}`}{t.repeat_id && ' · Repeats'}</p>
+          <p className="muted">{formatDate(t.date)}{t.timezone !== setup.household.timezone && ` · ${t.timezone}`}{t.repeat_id && <> · <Link to={`/recurring#${t.repeat_id}`}>Logged by a recurring bill</Link></>}</p>
         </div>
         <div className="purchase-amount">
           {formatMoney(t.amount, currency)}
@@ -85,17 +86,47 @@ function LineRow({ line, currency }: { line: Line; currency: string }) {
   )
 }
 
-function Actions({ t, setMode, onSaved }: { t: Transaction; setMode: (mode: 'edit' | 'merge' | 'delete') => void; onSaved: (t: Transaction) => void }) {
+function Actions({ t, setMode, onSaved }: { t: Transaction; setMode: (mode: 'edit' | 'merge' | 'delete' | 'recur') => void; onSaved: (t: Transaction) => void }) {
   const { busy, error, act } = useAction()
   const togglePrivate = () => act(async () => onSaved(await api.updateTransaction(t.id, { private: !t.private })))
   return (
     <div className="actions">
       <button className="primary" onClick={() => setMode('edit')}>Edit</button>
       <button onClick={togglePrivate} disabled={busy}>{t.private ? 'Share with the household' : 'Make private'}</button>
+      {!t.repeat_id && <button onClick={() => setMode('recur')}>Make it recurring…</button>}
       <button onClick={() => setMode('merge')}>Same as another purchase…</button>
       <button className="danger" onClick={() => setMode('delete')}>Delete</button>
       {error && <p className="error">{error}</p>}
       <p className="muted small">{t.private ? 'Only you see this purchase; household totals leave it out.' : 'Its amount counts in household totals; only you see the purchase itself.'}</p>
+    </div>
+  )
+}
+
+// "Make it recurring" (docs/mockups/purchase.html): this purchase is the first one; the schedule starts from its date.
+function MakeRecurring({ t, onDone }: { t: Transaction; onDone: (repeatId?: string) => void }) {
+  const [every, setEvery] = useState('monthly:1')
+  const { busy, error, act } = useAction()
+  const save = async () => {
+    const [frequency, interval] = every.split(':')
+    let made: string | undefined
+    if (await act(async () => { made = (await api.makeRecurring({ transaction_id: t.id, frequency: frequency!, interval: Number(interval) })).id })) onDone(made)
+  }
+  return (
+    <div className="panel">
+      <div className="row">
+        <label>Recur every
+          <select value={every} onChange={(e) => setEvery(e.target.value)}>
+            <option value="weekly:1">Week</option><option value="weekly:2">2 weeks</option><option value="monthly:1">Month</option>
+            <option value="monthly:3">3 months</option><option value="monthly:6">6 months</option><option value="yearly:1">Year</option>
+          </select>
+        </label>
+      </div>
+      <p className="small muted">Starting from {formatDate(t.date)}. Kept logs it on each date and tells you; the real charge still matches it.</p>
+      <div className="row">
+        <button className="primary" onClick={save} disabled={busy}>Make it recurring</button>
+        <button onClick={() => onDone()}>Cancel</button>
+      </div>
+      {error && <p className="error">{error}</p>}
     </div>
   )
 }
