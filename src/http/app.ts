@@ -11,6 +11,7 @@ import { oauthRoutes, protectedResourceMetadataUrl } from '../oauth/routes.js'
 import { householdRoutes } from './routes/household.js'
 import { ledgerRoutes } from './routes/ledger.js'
 import { transactionRoutes } from './routes/transactions.js'
+import { webRoutes } from './web.js'
 import { mcpRoutes } from '../mcp/server.js'
 
 declare module 'fastify' {
@@ -27,6 +28,8 @@ export interface AppDeps {
   mailer: Mailer
   publicUrl: string
   logger?: boolean
+  // The built web UI; defaults to dist/web.
+  webRoot?: string
 }
 
 export type App = FastifyInstance<any, any, any, any, TypeBoxTypeProvider>
@@ -98,5 +101,6 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   householdRoutes(app, routeDeps)
   mcpRoutes(app)
   oauthRoutes(app, { db: deps.db, mailer: deps.mailer, oauth })
+  await webRoutes(app, deps.webRoot)
   return app
 }

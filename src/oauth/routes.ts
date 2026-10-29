@@ -3,7 +3,7 @@ import type { Db } from '../db/db.js'
 import type { App } from '../http/app.js'
 import type { Mailer } from '../ledger/households.js'
 import { codePage, consentPage, emailPage, errorPage, joinPage } from './pages.js'
-import { SCOPE, type OAuth } from './provider.js'
+import { SCOPE, WEB_CLIENT_ID, type OAuth } from './provider.js'
 import { invitedHousehold, joinWithVerifiedEmail, sendCode, verifyCode } from './signin.js'
 
 // OAuth2 endpoints for MCP clients (IMPLEMENTATION.md §5, §6): protected resource metadata, oidc-provider's endpoints, and
@@ -98,10 +98,27 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
     }
     const expired = (reply: FastifyReply) => html(reply, errorPage('This sign-in has expired.'), 400)
 
+    type Interaction = Awaited<ReturnType<typeof provider.interactionDetails>>
+    const consent = async (request: FastifyRequest, reply: FastifyReply, interaction: Interaction) => {
+      const accountId = interaction.session?.accountId
+      if (!accountId) return expired(reply)
+      const grant = interaction.grantId
+        ? (await provider.Grant.find(interaction.grantId))!
+        : new provider.Grant({ accountId, clientId: String(interaction.params.client_id) })
+      const missing = interaction.prompt.details as { missingOIDCScope?: string[]; missingOIDCClaims?: string[]; missingResourceScopes?: Record<string, string[]> }
+      if (missing.missingOIDCScope) grant.addOIDCScope(missing.missingOIDCScope.join(' '))
+      if (missing.missingOIDCClaims) grant.addOIDCClaims(missing.missingOIDCClaims)
+      for (const [indicator, scopes] of Object.entries(missing.missingResourceScopes ?? {})) grant.addResourceScope(indicator, scopes.join(' '))
+      const grantId = await grant.save()
+      return finish(request, reply, { consent: interaction.grantId ? {} : { grantId } }, true)
+    }
+
     scope.get<{ Params: { uid: string } }>('/oauth/interaction/:uid', options, async (request, reply) => {
       const interaction = await details(request, reply)
       if (!interaction || interaction.uid !== request.params.uid) return expired(reply)
       if (interaction.prompt.name === 'login') return html(reply, emailPage(interaction.uid, await clientName(interaction.params.client_id)))
+      // Kept's own web UI needs no permission to act as the member who just signed in.
+      if (interaction.params.client_id === WEB_CLIENT_ID) return consent(request, reply, interaction)
       return html(reply, consentPage(interaction.uid, await clientName(interaction.params.client_id)))
     })
 
@@ -147,17 +164,7 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
     scope.post<{ Params: { uid: string } }>('/oauth/interaction/:uid/consent', options, async (request, reply) => {
       const interaction = await details(request, reply)
       if (!interaction || interaction.uid !== request.params.uid || interaction.prompt.name !== 'consent') return expired(reply)
-      const accountId = interaction.session?.accountId
-      if (!accountId) return expired(reply)
-      const grant = interaction.grantId
-        ? (await provider.Grant.find(interaction.grantId))!
-        : new provider.Grant({ accountId, clientId: String(interaction.params.client_id) })
-      const missing = interaction.prompt.details as { missingOIDCScope?: string[]; missingOIDCClaims?: string[]; missingResourceScopes?: Record<string, string[]> }
-      if (missing.missingOIDCScope) grant.addOIDCScope(missing.missingOIDCScope.join(' '))
-      if (missing.missingOIDCClaims) grant.addOIDCClaims(missing.missingOIDCClaims)
-      for (const [indicator, scopes] of Object.entries(missing.missingResourceScopes ?? {})) grant.addResourceScope(indicator, scopes.join(' '))
-      const grantId = await grant.save()
-      return finish(request, reply, { consent: interaction.grantId ? {} : { grantId } }, true)
+      return consent(request, reply, interaction)
     })
 
     scope.post<{ Params: { uid: string } }>('/oauth/interaction/:uid/abort', options, async (request, reply) => {

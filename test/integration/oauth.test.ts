@@ -1,4 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto'
+import { mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -21,7 +24,9 @@ beforeAll(async () => {
   await h.app.close()
   const port = new URL(probe).port
   base = `http://127.0.0.1:${port}`
-  app = await buildApp({ db: h.db, mailer: { sendInvite: async (i) => { h.invites.push(i) }, sendSignInCode: async (c) => { h.codes.push(c) } }, publicUrl: base })
+  const webRoot = mkdtempSync(join(tmpdir(), 'kept-web-'))
+  writeFileSync(join(webRoot, 'index.html'), '<div id="root"></div>')
+  app = await buildApp({ db: h.db, mailer: { sendInvite: async (i) => { h.invites.push(i) }, sendSignInCode: async (c) => { h.codes.push(c) } }, publicUrl: base, webRoot })
   await app.listen({ port: Number(port), host: '127.0.0.1' })
   ownerEmail = `owner-${Date.now()}@example.com`
   ownerKey = (await newHousehold(h, 'The Smiths', ownerEmail)).api_key
@@ -186,5 +191,39 @@ describe('OAuth2 for MCP clients', () => {
     })
     const setup = await (await fetch(`${base}/api/v1/setup`, { headers: { authorization: `Bearer ${tokens.access_token}` } })).json()
     expect(setup).toMatchObject({ household: { name: 'The Smiths' }, you: { role: 'member', timezone: 'Europe/London', introduced: false } })
+  })
+
+  it('signs a member in to the web UI without a consent page, and serves the app', async () => {
+    const callbackUrl = `${base}/app/callback`
+    const verifier = randomBytes(32).toString('base64url')
+    const browser = new Browser()
+    const params = new URLSearchParams({
+      response_type: 'code', client_id: 'kept-web', redirect_uri: callbackUrl, scope: 'kept', state: 'web', prompt: 'login',
+      code_challenge: createHash('sha256').update(verifier).digest('base64url'), code_challenge_method: 'S256',
+    })
+    let page = await browser.fetch(`/oauth/authorize?${params}`)
+    while (page.status >= 300 && page.status < 400) page = await browser.fetch(page.headers.get('location')!)
+    expect(await page.text()).toContain('Sign in to Kept')
+    const uid = new URL(page.url).pathname.split('/')[3]!
+    await browser.form(`/oauth/interaction/${uid}/email`, { email: ownerEmail })
+    page = await browser.form(`/oauth/interaction/${uid}/code`, { code: h.codes.at(-1)!.code })
+    while (page.status >= 300 && page.status < 400 && !page.headers.get('location')!.startsWith(callbackUrl)) page = await browser.fetch(page.headers.get('location')!)
+    const callback = new URL(page.headers.get('location')!)
+    expect(callback.searchParams.get('state')).toBe('web')
+
+    const token = await fetch(`${base}/oauth/token`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'authorization_code', code: callback.searchParams.get('code')!, redirect_uri: callbackUrl, client_id: 'kept-web', code_verifier: verifier }),
+    })
+    const tokens = await token.json()
+    expect(tokens.refresh_token).toEqual(expect.any(String))
+    const setup = await (await fetch(`${base}/api/v1/setup`, { headers: { authorization: `Bearer ${tokens.access_token}` } })).json()
+    expect(setup.you).toMatchObject({ email: ownerEmail, name: 'Sam', role: 'owner' })
+
+    // Any path the app routes itself gets the page, with a policy that allows only the app's own files.
+    const app = await fetch(`${base}/app/purchases/123`)
+    expect(app.headers.get('content-security-policy')).toContain("script-src 'self'")
+    expect(await app.text()).toContain('<div id="root">')
   })
 })

@@ -75,11 +75,11 @@ export async function callerFor(db: Db, userId: string, householdId?: string): P
 
 export async function getSetup(tx: Tx, caller: Caller) {
   const household = await tx.selectFrom('households').select(['name', 'currency', 'setup']).executeTakeFirstOrThrow()
-  const user = await tx.selectFrom('users').select(['introduced_at', 'role', 'timezone']).where('id', '=', caller.user_id).executeTakeFirstOrThrow()
+  const user = await tx.selectFrom('users').select(['name', 'email', 'introduced_at', 'role', 'timezone']).where('id', '=', caller.user_id).executeTakeFirstOrThrow()
   const setup = { ...initialSetup(), ...household.setup } as SetupState
   return {
     household: { name: household.name, currency: household.currency, steps: setup, next_step: nextStep(setup) },
-    you: { introduced: user.introduced_at != null, role: user.role, timezone: user.timezone },
+    you: { name: user.name, email: user.email, introduced: user.introduced_at != null, role: user.role, timezone: user.timezone },
   }
 }
 

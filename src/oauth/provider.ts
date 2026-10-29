@@ -8,6 +8,15 @@ import { errorPage } from './pages.js'
 // and get an opaque access token bound to the MCP address plus a refresh token.
 
 export const SCOPE = 'kept'
+// The web UI signs in as this built-in public client; it skips the consent page (IMPLEMENTATION.md §5.4).
+export const WEB_CLIENT_ID = 'kept-web'
+// Where Vite serves the web UI during development (DEVELOPMENT.md).
+const DEV_WEB_ORIGIN = 'http://localhost:5173'
+
+export function webRedirectUris(issuer: string): string[] {
+  const local = ['localhost', '127.0.0.1'].includes(new URL(issuer).hostname)
+  return [`${issuer}/app/callback`, ...(local ? [`${DEV_WEB_ORIGIN}/app/callback`] : [])]
+}
 
 export interface OAuth {
   provider: Provider
@@ -44,6 +53,16 @@ export function createOAuth(db: Db, keys: OAuthKeys, publicUrl: string): OAuth {
     },
     // Authorization code only, as OAuth 2.1 and MCP clients expect; no implicit or hybrid flows.
     responseTypes: ['code'],
+    clients: [
+      {
+        client_id: WEB_CLIENT_ID,
+        client_name: 'Kept',
+        token_endpoint_auth_method: 'none',
+        grant_types: ['authorization_code', 'refresh_token'],
+        response_types: ['code'],
+        redirect_uris: webRedirectUris(issuer),
+      },
+    ],
     clientDefaults: { grant_types: ['authorization_code', 'refresh_token'], response_types: ['code'], token_endpoint_auth_method: 'none' },
     pkce: { required: () => true },
     // Assistants stay connected: tokens don't end with the browser session, and refreshing doesn't need offline_access.
