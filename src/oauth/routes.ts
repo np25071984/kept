@@ -92,6 +92,7 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
       }
     }
     const clientName = async (clientId: unknown) => (await provider.Client.find(String(clientId)))?.clientName ?? 'Your assistant'
+    const emailClient = async (clientId: unknown) => (clientId === WEB_CLIENT_ID ? null : clientName(clientId))
     const finish = async (request: FastifyRequest, reply: FastifyReply, result: Parameters<typeof provider.interactionResult>[2], merge = false) => {
       const location = await provider.interactionResult(request.raw, reply.raw, result, { mergeWithLastSubmission: merge })
       return reply.status(303).header('location', location).send()
@@ -116,7 +117,7 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
     scope.get<{ Params: { uid: string } }>('/oauth/interaction/:uid', options, async (request, reply) => {
       const interaction = await details(request, reply)
       if (!interaction || interaction.uid !== request.params.uid) return expired(reply)
-      if (interaction.prompt.name === 'login') return html(reply, emailPage(interaction.uid, await clientName(interaction.params.client_id)))
+      if (interaction.prompt.name === 'login') return html(reply, emailPage(interaction.uid, await emailClient(interaction.params.client_id)))
       // Kept's own web UI needs no permission to act as the member who just signed in.
       if (interaction.params.client_id === WEB_CLIENT_ID) return consent(request, reply, interaction)
       return html(reply, consentPage(interaction.uid, await clientName(interaction.params.client_id)))
@@ -126,13 +127,13 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
       const interaction = await details(request, reply)
       if (!interaction || interaction.uid !== request.params.uid) return expired(reply)
       const email = (request.body?.email ?? '').trim()
-      if (!/^[^@\s]+@[^@\s]+$/.test(email)) return html(reply, emailPage(interaction.uid, await clientName(interaction.params.client_id), 'Enter a valid email.'), 400)
+      if (!/^[^@\s]+@[^@\s]+$/.test(email)) return html(reply, emailPage(interaction.uid, await emailClient(interaction.params.client_id), 'Enter a valid email.'), 400)
       const link = (code: string) => `${deps.oauth.issuer}/oauth/interaction/${interaction.uid}/code?code=${code}`
       try {
         await sendCode(deps.db, deps.mailer, interaction.uid, email, link)
       } catch (error) {
         request.log.error(error, 'sign-in code not sent')
-        return html(reply, emailPage(interaction.uid, await clientName(interaction.params.client_id), 'We couldn\'t send the code just now. Try again in a minute.'), 503)
+        return html(reply, emailPage(interaction.uid, await emailClient(interaction.params.client_id), 'We couldn\'t send the code just now. Try again in a minute.'), 503)
       }
       return html(reply, codePage(interaction.uid, email))
     })

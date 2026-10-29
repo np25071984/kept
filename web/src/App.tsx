@@ -55,15 +55,15 @@ function Centered({ children }: { children: React.ReactNode }) {
   )
 }
 
-function SignInScreen() {
+// Signed out: straight to the email page, coming back to the page that was asked for.
+function SignInRedirect() {
   const location = useLocation()
-  return (
-    <Centered>
-      <h1>Your purchases, as your assistant logged them</h1>
-      <p className="muted">Review and fix what was logged. Sign in with the email you use with Kept; we'll send you a code.</p>
-      <button className="primary" onClick={() => signIn(location.pathname + location.search)}>Sign in</button>
-    </Centered>
-  )
+  const [error, setError] = useState<string | null>(null)
+  useEffect(() => {
+    signIn(location.pathname + location.search).catch((e) => setError(messageFor(e)))
+  }, [location])
+  if (!error) return <Centered><p className="muted">Taking you to sign-in…</p></Centered>
+  return <Centered><p className="error">{error}</p><button onClick={() => window.location.reload()}>Try again</button></Centered>
 }
 
 function Shell() {
@@ -73,7 +73,7 @@ function Shell() {
     window.addEventListener(SIGNED_OUT, onSignedOut)
     return () => window.removeEventListener(SIGNED_OUT, onSignedOut)
   }, [])
-  if (!signedIn) return <SignInScreen />
+  if (!signedIn) return <SignInRedirect />
   return <SignedIn onSignOut={() => signOut().finally(() => setSignedIn(false))} />
 }
 

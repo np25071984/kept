@@ -229,7 +229,9 @@ describe('OAuth2 for MCP clients', () => {
     })
     let page = await browser.fetch(`/oauth/authorize?${params}`)
     while (page.status >= 300 && page.status < 400) page = await browser.fetch(page.headers.get('location')!)
-    expect(await page.text()).toContain('Sign in to Kept')
+    const email = await page.text()
+    expect(email).toContain('Review and fix what your assistant logged')
+    expect(email).not.toContain('Cancel')
     const uid = new URL(page.url).pathname.split('/')[3]!
     await browser.form(`/oauth/interaction/${uid}/email`, { email: ownerEmail })
     page = await browser.form(`/oauth/interaction/${uid}/code`, { code: h.codes.at(-1)!.code })

@@ -77,7 +77,8 @@ export async function signIn(returnTo: string): Promise<void> {
     // Always ask for the emailed code, so signing out here also ends the sign-in on a shared computer.
     prompt: 'login',
   })
-  location.assign(`${authorization_endpoint}?${params}`)
+  // Replace, so Back from the email page leaves the app instead of landing here and redirecting again.
+  location.replace(`${authorization_endpoint}?${params}`)
 }
 
 // Finishes sign-in on /app/callback and returns where to go next.

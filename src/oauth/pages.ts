@@ -35,17 +35,21 @@ function layout(title: string, body: string): string {
 const cancel = (uid: string) =>
   `<form method="post" action="/oauth/interaction/${escape(uid)}/abort"><button class="secondary" type="submit">Cancel</button></form>`
 
-export function emailPage(uid: string, clientName: string, error?: string): string {
+// clientName is null for Kept's own web app, which has nowhere to cancel back to.
+export function emailPage(uid: string, clientName: string | null, error?: string): string {
+  const intro = clientName
+    ? `${escape(clientName)} wants to use Kept as you. Enter the email you use with Kept, or the one you were invited with.`
+    : 'Review and fix what your assistant logged. Enter your email, or the one you were invited with, and we\'ll send you a code.'
   return layout('Sign in', `
 <h1>Sign in to Kept</h1>
-<p>${escape(clientName)} wants to use Kept as you. Enter the email you use with Kept, or the one you were invited with.</p>
+<p>${intro}</p>
 ${error ? `<p class="error">${escape(error)}</p>` : ''}
 <form method="post" action="/oauth/interaction/${escape(uid)}/email">
   <label for="email">Email</label>
   <input id="email" name="email" type="email" autocomplete="email" required autofocus>
   <button type="submit">Email me a code</button>
 </form>
-${cancel(uid)}`)
+${clientName ? cancel(uid) : ''}`)
 }
 
 export function codePage(uid: string, email: string, error?: string): string {
