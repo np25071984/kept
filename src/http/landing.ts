@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import type { Language } from '../domain/language.js'
 import { tr } from '../i18n.js'
 import { escape } from '../oauth/pages.js'
+import { CHAT_SCRIPT, CHAT_STYLE, chatData, conversations } from './landingChat.js'
 
 // The page at / (VISION.md §4.C): what Kept is, what happens to the data, which assistants it works with.
 // Plain server-rendered HTML with no tracking; the only cookie is the language the switch sets.
@@ -9,7 +10,9 @@ import { escape } from '../oauth/pages.js'
 // A visitor already signed in on this browser goes straight to the app.
 const SCRIPT = "try { if (localStorage.getItem('kept.refresh_token')) location.replace('/app/') } catch {}"
 
-export const LANDING_CSP = `default-src 'none'; style-src 'unsafe-inline'; script-src 'sha256-${createHash('sha256').update(SCRIPT).digest('base64')}'; img-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'`
+const hash = (script: string) => `'sha256-${createHash('sha256').update(script).digest('base64')}'`
+
+export const LANDING_CSP = `default-src 'none'; style-src 'unsafe-inline'; script-src ${hash(SCRIPT)} ${hash(CHAT_SCRIPT)}; img-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'`
 
 const STYLE = `
 :root { color-scheme: light dark; --bg: #fafaf7; --surface: #fff; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2db; --accent: #2f6b4f; --accent-fg: #fafaf7; --accent-soft: #e4efe8; --chat-bg: #ece5dc; --chat-dot: #ddd3c6; --chat-out: #d9f2dc; }
@@ -43,16 +46,11 @@ main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
 section { margin-bottom: 28px; }
 .hero { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 32px; align-items: center; padding: 24px 0 8px; }
 @media (max-width: 720px) { .hero { grid-template-columns: 1fr; } }
-.phone { width: 100%; max-width: 320px; justify-self: center; border: 1px solid var(--line); border-radius: 28px; overflow: hidden; background: var(--surface); box-shadow: 0 8px 24px rgb(0 0 0 / 0.08); }
+.demo { justify-self: center; width: 100%; max-width: 320px; }
+.phone { width: 100%; border: 1px solid var(--line); border-radius: 28px; overflow: hidden; background: var(--surface); box-shadow: 0 8px 24px rgb(0 0 0 / 0.08); }
 .phone-head { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 600; }
 .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-size: 13px; }
 .status { font-weight: 400; color: var(--muted); font-size: 12px; }
-.chat { display: grid; gap: 6px; padding: 14px 12px; min-height: 360px; align-content: end; background-color: var(--chat-bg); background-image: radial-gradient(var(--chat-dot) 1px, transparent 1px); background-size: 14px 14px; }
-.day { justify-self: center; font-size: 11px; color: var(--muted); background: var(--surface); padding: 2px 10px; border-radius: 10px; margin-bottom: 4px; }
-.bubble { max-width: 80%; padding: 7px 10px 5px; border-radius: 14px; font-size: 14px; line-height: 1.35; box-shadow: 0 1px 1px rgb(0 0 0 / 0.08); }
-.bubble .time { display: block; text-align: right; font-size: 10px; opacity: 0.6; margin-top: 2px; }
-.bubble.user { justify-self: end; background: var(--chat-out); border-bottom-right-radius: 4px; }
-.bubble.ai { justify-self: start; background: var(--surface); border-bottom-left-radius: 4px; }
 .phone-input { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--line); }
 .phone-input span { flex: 1; padding: 7px 12px; border-radius: 18px; background: var(--bg); color: var(--muted); font-size: 13px; }
 .phone-input b { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-fg); display: grid; place-items: center; font-size: 13px; }
@@ -72,7 +70,8 @@ const GLOBE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" strok
 export function landingPage(lang: Language): string {
   const t = (text: string) => escape(tr(lang, text))
   const option = (code: Language, name: string) => `<button type="submit" role="menuitemradio" name="lang" value="${code}" lang="${code}" aria-checked="${lang === code}">${name}</button>`
-  const bubble = (who: 'user' | 'ai', text: string, time: string) => `<div class="bubble ${who}">${t(text)}<span class="time">${time}</span></div>`
+  const chats = conversations(lang)
+  const first = chats[0]!
   return `<!doctype html>
 <html lang="${lang}">
 <head>
@@ -83,7 +82,7 @@ export function landingPage(lang: Language): string {
 <link rel="icon" href="/app/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/app/apple-touch-icon.png">
 <script>${SCRIPT}</script>
-<style>${STYLE}</style>
+<style>${STYLE}${CHAT_STYLE}</style>
 </head>
 <body>
 <header class="topbar"><div class="topbar-inner">
@@ -100,18 +99,17 @@ export function landingPage(lang: Language): string {
     <h1>${t('Tell your assistant what you spent. Kept keeps the books.')}</h1>
     <p class="muted">${t("Kept teaches the AI you already use to track your household's spending: what to ask, how to file it, and what to remember. No forms, no bank logins.")}</p>
   </div>
-  <div class="phone" aria-label="${t('Example conversation')}">
-    <div class="phone-head"><span class="avatar">AI</span><div>${t('Your assistant')}<div class="status">${t('with Kept')}</div></div></div>
-    <div class="chat">
-      <div class="day">${t('Today')}</div>
-      ${bubble('user', '$60 gas at Shell', '8:14')}
-      ${bubble('ai', 'For the Kia, like your last fill-up?', '8:14')}
-      ${bubble('user', 'Yes', '8:15')}
-      ${bubble('ai', 'Logged $60.00 to Car/Fuel for the Kia.', '8:15')}
-      ${bubble('user', 'How much did the Kia cost us this year?', '8:16')}
-      ${bubble('ai', '$2,140: fuel $910, insurance $940, repairs $290.', '8:16')}
+  <div class="demo">
+    <div class="phone">
+      <div class="phone-head"><span class="avatar">AI</span><div>${t('Your assistant')}<div class="status">${t('with Kept')}</div></div></div>
+      <div class="chat" id="chat" aria-hidden="true">
+        <div class="day">${t('Today')}</div>
+        ${first.messages.map((m) => `<div class="bubble ${m.who}"><div class="text">${escape(m.text)}</div><span class="time">${m.time}</span></div>`).join('')}
+      </div>
+      <div class="phone-input" aria-hidden="true"><span id="chat-input">${t('Message')}</span><b>↑</b></div>
     </div>
-    <div class="phone-input"><span>${t('Message')}</span><b>↑</b></div>
+    <div class="convs" role="group" aria-label="${t('Example conversations')}">${chats.map((c, i) => `<button type="button" data-conv="${i}" aria-pressed="${i === 0}">${escape(c.label)}</button>`).join('')}</div>
+    <div class="sr-only">${chats.map((c) => `<p>${escape(c.label)}: ${c.messages.map((m) => `${m.who === 'user' ? t('You') : t('Assistant')}: ${escape(m.text)}`).join(' ')}</p>`).join('')}</div>
   </div>
 </section>
 <section id="how">
@@ -136,6 +134,8 @@ export function landingPage(lang: Language): string {
 </section>
 <footer class="small muted"><span>Kept</span><a href="mailto:support@kept-ledger.com">support@kept-ledger.com</a></footer>
 </main>
+<script type="application/json" id="chat-data">${chatData(lang)}</script>
+<script>${CHAT_SCRIPT}</script>
 </body>
 </html>`
 }

@@ -22,6 +22,5 @@ Real use, across assistants.
 ## Later
 
 - [ ] A privacy policy, linked from the landing page and the sign-in pages. Before sign-up opens to other households.
-- [ ] Animated chat on the landing page, showing how Kept works: conversations take turns (a typed purchase, a spoken one, a receipt photo), each message appearing in order with a typing indicator before the assistant's replies. With reduced motion, the finished conversations show without animation.
 - [ ] Screenshots of the spending graphs on the landing page, from both reports with sample data.
 - [ ] Siri through App Intents in a native iOS app (`VISION.md` §4.B, "Other clients"). Not before Phase 3's gate.
