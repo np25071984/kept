@@ -10,6 +10,8 @@ describe('landing page', () => {
     expect(ru).toContain('Расскажите ассистенту, что потратили.')
     expect(ru).toContain('value="ru" lang="ru" aria-checked="true"')
     expect(landingPage('en')).toContain('Tell your assistant what you spent.')
+    expect(ru).toContain('/app/landing/chart-ru-dark-narrow.png')
+    expect(landingPage('en')).toContain('<img src="/app/landing/chart-en-light.png"')
   })
 
   it('allows only its own inline scripts', () => {

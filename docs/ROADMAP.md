@@ -22,5 +22,4 @@ Real use, across assistants.
 ## Later
 
 - [ ] A privacy policy, linked from the landing page and the sign-in pages. Before sign-up opens to other households.
-- [ ] Screenshots of the spending graphs on the landing page, from both reports with sample data.
 - [ ] Siri through App Intents in a native iOS app (`VISION.md` §4.B, "Other clients"). Not before Phase 3's gate.

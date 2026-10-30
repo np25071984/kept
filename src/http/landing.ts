@@ -50,6 +50,10 @@ section { margin-bottom: 28px; }
 .list li + li { border-top: 1px solid var(--line); }
 .assistants { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
 .assistants span { padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-weight: 600; font-size: 14px; }
+.report-shot img { display: block; width: 100%; height: auto; }
+/* Anchored sections clear the sticky header. */
+section[id] { scroll-margin-top: 72px; }
+@media (max-width: 720px) { section[id] { scroll-margin-top: 150px; } }
 footer { border-top: 1px solid var(--line); margin-top: 32px; padding-top: 16px; display: flex; flex-wrap: wrap; gap: 16px; }
 `
 
@@ -109,6 +113,16 @@ ${siteHeader(lang, {
     <div class="card"><h3>${t('One question, a good guess')}</h3><p class="small muted">${t('"Groceries, like last Saturday?" Kept tells your assistant when to ask, when to stay quiet, and always to confirm before saving.')}</p></div>
     <div class="card"><h3>${t('See where it goes')}</h3><p class="small muted">${t('Per car, per kid, per month. Ask in the chat, or review and fix everything on the web.')}</p></div>
   </div>
+</section>
+<section id="reports">
+  <h2>${t('Where the money goes')}</h2>
+  <p class="muted">${t('Month by month for the whole household: everyone\'s purchases except private ones, never broken down by member.')}</p>
+  <picture class="report-shot">
+    <source srcset="/app/landing/chart-${lang}-dark-narrow.png" media="(max-width: 600px) and (prefers-color-scheme: dark)" width="404" height="298">
+    <source srcset="/app/landing/chart-${lang}-light-narrow.png" media="(max-width: 600px)" width="404" height="298">
+    <source srcset="/app/landing/chart-${lang}-dark.png" media="(prefers-color-scheme: dark)" width="944" height="392">
+    <img src="/app/landing/chart-${lang}-light.png" width="944" height="392" loading="lazy" alt="${t('Kept\'s monthly spending chart for a household: twelve months of bars, a dashed line for the average, and this month so far.')}">
+  </picture>
 </section>
 <section id="privacy">
   <h2>${t('Your data')}</h2>

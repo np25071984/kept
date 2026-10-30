@@ -160,11 +160,13 @@ function MonthChart({ months: all, average, money, currency }: { months: { month
   const step = 10 ** Math.floor(Math.log10(max))
   const unit = max / step > 5 ? step : step / 2
   const ceiling = Math.ceil(max / unit) * unit
-  const W = 640, H = 210, left = 44, base = 184, height = 170
-  const y = (v: number) => base - (v / ceiling) * height
-  const slot = (W - left) / months.length
   const ticks = Array.from({ length: Math.round(ceiling / unit) + 1 }, (_, i) => i * unit)
   const label = (v: number) => new Intl.NumberFormat(locale(), { style: 'currency', currency, notation: 'compact', maximumFractionDigits: 1 }).format(v)
+  // Room for the longest axis label at 11px: "$3.5K" needs little, "3,5 тыс. $" more.
+  const left = Math.max(44, 10 + 6.2 * Math.max(...ticks.map((v) => label(v).length)))
+  const W = 640, H = 210, base = 184, height = 170
+  const y = (v: number) => base - (v / ceiling) * height
+  const slot = (W - left) / months.length
   return (
     <>
       <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={t('Spending per month')}>
