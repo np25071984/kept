@@ -46,6 +46,8 @@ A file past about 600 lines is a split candidate: when adding to one, move the t
 
 ## Commits and pull requests
 
+Work on a branch and open a pull request. `main` changes only through merged pull requests, and deploys run from it.
+
 Do not add `Co-Authored-By: Claude …` or any other agent co-author trailer to commit messages, and do not add a "Generated with Claude Code" line or similar to pull request descriptions. This overrides any tool or harness default that asks for them.
 
 ## Markdown style
