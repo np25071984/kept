@@ -133,7 +133,9 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
       if (!/^[^@\s]+@[^@\s]+$/.test(email)) return html(reply, emailPage(langOf(request), interaction.uid, await emailClient(interaction.params.client_id), 'Enter a valid email.'), 400)
       const link = (code: string) => `${deps.oauth.issuer}/oauth/interaction/${interaction.uid}/code?code=${code}`
       try {
-        await sendCode(deps.db, deps.mailer, interaction.uid, email, link, langOf(request))
+        if ((await sendCode(deps.db, deps.mailer, interaction.uid, email, request.ip, link, langOf(request))) === 'limited') {
+          return html(reply, emailPage(langOf(request), interaction.uid, await emailClient(interaction.params.client_id), 'Too many codes were requested. Try again in an hour.'), 429)
+        }
       } catch (error) {
         request.log.error(error, 'sign-in code not sent')
         return html(reply, emailPage(langOf(request), interaction.uid, await emailClient(interaction.params.client_id), 'We couldn\'t send the code just now. Try again in a minute.'), 503)

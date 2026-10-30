@@ -9,7 +9,7 @@ import { pruneExpired } from './oauth/prune.js'
 const config = loadConfig()
 const db = createDb(config.databaseUrl)
 const mailer = config.resendApiKey ? resendMailer({ apiKey: config.resendApiKey, from: config.mailFrom }) : logMailer()
-const app = await buildApp({ db, mailer, publicUrl: config.publicUrl, logger: true })
+const app = await buildApp({ db, mailer, publicUrl: config.publicUrl, logger: true, trustProxy: config.trustProxy })
 
 // Repeats come due at midnight in each owner's time zone, so the scheduler runs often and creates whatever is due.
 // It also deletes expired sign-in state.

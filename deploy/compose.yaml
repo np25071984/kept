@@ -29,6 +29,8 @@ services:
       PUBLIC_URL: https://${KEPT_HOST:?}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       MAIL_FROM: ${MAIL_FROM:-}
+      # Caddy sets X-Forwarded-For to the client's address.
+      TRUST_PROXY: 1
 
   caddy:
     image: caddy:2

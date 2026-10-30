@@ -12,6 +12,7 @@ const RU: Record<string, string> = {
   Cancel: 'Отмена',
   'Enter a valid email.': 'Введите правильный email.',
   "We couldn't send the code just now. Try again in a minute.": 'Не удалось отправить код. Попробуйте через минуту.',
+  'Too many codes were requested. Try again in an hour.': 'Запрошено слишком много кодов. Попробуйте через час.',
   'Enter your code': 'Введите код',
   'Check your email': 'Проверьте почту',
   'We sent a 6-digit code to {email}. It works for 10 minutes.': 'Мы отправили 6-значный код на {email}. Он действует 10 минут.',

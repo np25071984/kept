@@ -29,6 +29,8 @@ export interface AppDeps {
   mailer: Mailer
   publicUrl: string
   logger?: boolean
+  // Proxy hops whose X-Forwarded-For is trusted for request.ip; 0 trusts none.
+  trustProxy?: number
   // The built web UI; defaults to dist/web.
   webRoot?: string
 }
@@ -41,7 +43,7 @@ export interface RouteDeps extends AppDeps {
 }
 
 export async function buildApp(deps: AppDeps): Promise<App> {
-  const app = Fastify({ logger: deps.logger ?? false }).withTypeProvider<TypeBoxTypeProvider>()
+  const app = Fastify({ logger: deps.logger ?? false, trustProxy: (_address: string, hop: number) => hop < (deps.trustProxy ?? 0) }).withTypeProvider<TypeBoxTypeProvider>()
 
   await app.register(swagger, {
     openapi: {

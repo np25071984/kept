@@ -180,6 +180,12 @@ export interface Database {
     verified_at: Timestamp | null
     created_at: Generated<Date>
   }
+  sign_in_requests: {
+    id: Generated<string>
+    email: string
+    ip: string
+    created_at: Generated<Date>
+  }
 }
 
 // The transaction a repeat creates, in the same shape POST /transactions accepts.

@@ -7,6 +7,8 @@ export interface Config {
   // Without a Resend key, emails are written to the log.
   resendApiKey: string | null
   mailFrom: string
+  // Behind Caddy, 1: the client's address is the one the proxy puts in X-Forwarded-For. 0 when nothing is in front.
+  trustProxy: number
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -23,5 +25,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     schedulerIntervalMs: Number(env.SCHEDULER_INTERVAL_MS ?? 15 * 60_000),
     resendApiKey: env.RESEND_API_KEY || null,
     mailFrom: env.MAIL_FROM || `Kept <noreply@${new URL(env.PUBLIC_URL ?? 'http://localhost').hostname}>`,
+    trustProxy: Number(env.TRUST_PROXY ?? 0),
   }
 }
