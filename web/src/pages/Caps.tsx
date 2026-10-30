@@ -15,7 +15,7 @@ export function CapsSection() {
     <section className="section" id="caps">
       <div className="section-head">
         <h2>{t('Caps')}</h2>
-        {mode === 'list' && <IconButton icon={Plus} label={t('Set a cap')} onClick={() => setMode('add')} />}
+        {mode === 'list' && <IconButton icon={Plus} label={t('Set a cap')} primary onClick={() => setMode('add')} />}
       </div>
       <p className="muted small">{t('Soft reminders: nothing is blocked. Your assistant mentions a cap once a purchase takes it past 80%.')}</p>
       {list.error && <p className="error">{list.error}</p>}

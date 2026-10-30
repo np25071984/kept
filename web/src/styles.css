@@ -112,6 +112,8 @@ code { font-size: 13px; }
 .icon-btn { display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--muted); cursor: pointer; }
 .icon-btn:hover { background: var(--bg); color: var(--fg); }
 .icon-btn.danger { color: var(--muted); }
+.icon-btn.outlined { border: 1px solid var(--accent); color: var(--accent); }
+.icon-btn.outlined:hover { background: var(--accent-soft); color: var(--accent); }
 .icon-btn.danger:hover { color: var(--danger); }
 .form { display: grid; gap: 14px; max-width: 520px; }
 .form label > .small { margin-top: 2px; }

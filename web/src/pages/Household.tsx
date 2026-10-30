@@ -15,7 +15,7 @@ export function CategoriesPage() {
     <section className="section">
       <div className="section-head">
         <p className="muted small" style={{ margin: 0 }}>{t('Up to three levels. Renaming keeps every purchase in it; a category can be deleted once nothing uses it.')}</p>
-        {!adding && <IconButton icon={Plus} label={t('Add category')} onClick={() => setAdding(true)} />}
+        {!adding && <IconButton icon={Plus} label={t('Add category')} primary onClick={() => setAdding(true)} />}
       </div>
       <ul className="list">
         {adding && <li className="list-row"><NewCategory parent={null} onDone={() => setAdding(false)} /></li>}
@@ -98,7 +98,7 @@ export function PeoplePage() {
     <section className="section">
       <div className="section-head">
         <p className="muted small" style={{ margin: 0 }}>{t('Who and what money is spent for. The kind tells your assistant which purchases each one could be for: fuel for a Car, rent for a Home.')}</p>
-        {!adding && <IconButton icon={Plus} label={t('Add a person or thing')} onClick={() => setAdding(true)} />}
+        {!adding && <IconButton icon={Plus} label={t('Add a person or thing')} primary onClick={() => setAdding(true)} />}
       </div>
       {adding && <CostCenterEditor onDone={() => setAdding(false)} />}
       <ul className="list">

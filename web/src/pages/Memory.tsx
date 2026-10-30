@@ -20,7 +20,7 @@ export function WatchingSection() {
     <section className="section">
       <div className="section-head">
         <h2>{t('Watching')}</h2>
-        {!adding && <IconButton icon={Plus} label={t('Watch something')} onClick={() => setAdding(true)} />}
+        {!adding && <IconButton icon={Plus} label={t('Watch something')} primary onClick={() => setAdding(true)} />}
       </div>
       <p className="muted small">{t('Your assistant asks about these where they\'re bought.')}</p>
       {watches.error && <p className="error">{watches.error}</p>}
@@ -94,7 +94,7 @@ export function NotesSection() {
     <section className="section">
       <div className="section-head">
         <h2>{t('Assistant notes')}</h2>
-        {!adding && <IconButton icon={Plus} label={t('Add a note')} onClick={() => setAdding(true)} />}
+        {!adding && <IconButton icon={Plus} label={t('Add a note')} primary onClick={() => setAdding(true)} />}
       </div>
       <p className="muted small">{t('What your assistants remember about your spending, in your words. They read every note before asking anything.')}</p>
       {notes.error && <p className="error">{notes.error}</p>}
