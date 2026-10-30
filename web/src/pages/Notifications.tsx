@@ -56,6 +56,12 @@ function QuestionCard({ q, onAnswered }: { q: Question; onAnswered: () => void }
           <div className="row">{button('stop', 'Cancelled: stop it')}{button('still_paying', 'Still paying')}</div>
         </>
       )}
+      {q.kind === 'connect' && (
+        <>
+          <p><strong>{tr('Connect your assistant.')}</strong> {tr('Then you log purchases by telling it: a sentence, a receipt photo or a statement.')}</p>
+          <div className="row"><Link className="button primary" to="/settings/assistants">{tr('Connect an assistant')}</Link></div>
+        </>
+      )}
       {q.kind === 'unused_key' && (
         <>
           <p><strong>{tr('Unused key.')}</strong> {q.key.last_used_at ? tr('"{name}" hasn\'t been used since {date}.', { name: q.key.name, date: new Date(q.key.last_used_at).toLocaleDateString(locale(), { month: 'long', year: 'numeric' }) }) : tr('"{name}" has never been used.', { name: q.key.name })}</p>

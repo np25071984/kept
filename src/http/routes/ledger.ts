@@ -79,7 +79,7 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.get('/api/v1/questions', {
-    schema: { tags: ['questions'], summary: 'Kept\'s open questions for the caller, most important first: possible duplicates, caps passed, recurring charges missing from a statement, API keys unused for a year.' },
+    schema: { tags: ['questions'], summary: 'Kept\'s open questions for the caller, most important first: connecting an assistant, possible duplicates, caps passed, recurring charges missing from a statement, API keys unused for a year.' },
   }, async (request) => ({ questions: await run(request, (tx, caller) => listQuestions(tx, caller)) }))
 
   app.post('/api/v1/questions/:id/answer', {

@@ -1,6 +1,8 @@
+import { sql } from 'kysely'
 import type { Tx } from '../db/db.js'
 import { todayIn } from '../domain/dates.js'
-import { ANSWERS, capPeriodKey, keyUnused, parseQuestionId, questionId, sortQuestions, type QuestionKind } from '../domain/questions.js'
+import { ANSWERS, capPeriodKey, keyUnused, needsAssistant, parseQuestionId, questionId, sortQuestions, type QuestionKind } from '../domain/questions.js'
+import { WEB_CLIENT_ID } from '../oauth/provider.js'
 import { deleteCap, listCaps } from './caps.js'
 import type { Caller } from './caller.js'
 import { invalid, notFound } from './errors.js'
@@ -11,6 +13,7 @@ import { loadViews, mergeTransactions, type TransactionView } from './transactio
 // Kept's open questions for the caller (VISION.md §4.B, "Open questions"): Notifications on the web, one per conversation in chat.
 
 export type Question =
+  | { id: string; kind: 'connect'; created_at: string }
   | { id: string; kind: 'duplicate'; created_at: string; first: TransactionView; later: TransactionView }
   | { id: string; kind: 'cap'; created_at: string; cap: { id: string; name: string; amount: number; spent: number; period: 'month' | 'year' } }
   | { id: string; kind: 'missing_charge'; created_at: string; text: string; repeat_id: string }
@@ -43,6 +46,10 @@ export async function listQuestions(tx: Tx, caller: Caller, now = new Date()): P
     if (!keyUnused(k, now)) continue
     questions.push({ id: questionId('unused_key', key.id), kind: 'unused_key', created_at: (k.last_used_at ?? k.created_at).toISOString(), key: { id: key.id, name: key.name, last_used_at: k.last_used_at?.toISOString() ?? null } })
   }
+  const grants = await tx.selectFrom('oauth_models').select(sql<string>`payload->>'clientId'`.as('client_id'))
+    .where('name', '=', 'Grant').where(sql`payload->>'accountId'`, '=', caller.user_id)
+    .where((eb) => eb.or([eb('expires_at', 'is', null), eb('expires_at', '>', now)])).execute()
+  if (needsAssistant(grants.map((g) => g.client_id), WEB_CLIENT_ID, keys.length)) questions.push({ id: questionId('connect', caller.user_id), kind: 'connect', created_at: now.toISOString() })
   return sortQuestions(questions)
 }
 
@@ -52,6 +59,7 @@ export async function answerQuestion(tx: Tx, caller: Caller, id: string, answer:
   if (!ANSWERS[parsed.kind].includes(answer)) throw invalid('invalid_answer', `Answer with one of: ${ANSWERS[parsed.kind].join(', ')}.`)
   const resolve = () => tx.updateTable('updates').set({ resolved_at: now, seen_at: now }).where('id', '=', parsed.id).where('user_id', '=', caller.user_id).execute()
   const kinds: Record<QuestionKind, () => Promise<unknown>> = {
+    connect: async () => undefined,
     duplicate: async () => {
       const u = await tx.selectFrom('updates').select(['transaction_id', 'other_transaction_id']).where('id', '=', parsed.id).where('user_id', '=', caller.user_id).executeTakeFirst()
       if (!u?.transaction_id || !u.other_transaction_id) throw notFound('Question')

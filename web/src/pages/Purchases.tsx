@@ -16,7 +16,7 @@ const todayIn = (zone: string) => new Intl.DateTimeFormat('en-CA', { timeZone: z
 
 // The member's own purchases: a search, a Filters panel with chips for what's on, grouped by month, paged.
 export function PurchasesPage() {
-  const { setup, categories } = useSession()
+  const { setup, categories, needsAssistant } = useSession()
   const [params, setParams] = useSearchParams()
   const filters = fromParams(params)
   const key = params.toString()
@@ -53,19 +53,21 @@ export function PurchasesPage() {
   const currency = setup.household.currency
   const items = page?.items ?? []
   const active = chips(filters, categories)
+  // Nothing logged and nothing to log with: only the card that says how to start.
+  const starting = !key && needsAssistant && page?.count === 0
   return (
     <>
       <div className="page-head">
         <h1>{tr('My purchases')}</h1>
-        {page && <p className="muted">{plural(page.count, ['{n} purchase', '{n} purchases'], ['{n} покупка', '{n} покупки', '{n} покупок'])} · {formatMoney(page.total, currency)}</p>}
+        {page && !starting && <p className="muted">{plural(page.count, ['{n} purchase', '{n} purchases'], ['{n} покупка', '{n} покупки', '{n} покупок'])} · {formatMoney(page.total, currency)}</p>}
       </div>
-      <div className="filterbar">
+      {!starting && <div className="filterbar">
         <span className="search-field grow">
           <Search size={16} aria-hidden="true" />
           <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr('Search merchant or item')} aria-label={tr('Search merchant or item')} />
         </span>
         <FiltersMenu filters={filters} categories={categories} count={page?.count} onChange={apply} />
-      </div>
+      </div>}
       {active.length > 0 && (
         <div className="fchips">
           {active.map((chip) => (
@@ -76,7 +78,13 @@ export function PurchasesPage() {
       )}
       {error && <p className="error">{error}</p>}
       {loading && !page && <p className="muted">{tr('Loading…')}</p>}
-      {page && items.length === 0 && <p className="empty">{tr(key ? 'No purchases match.' : 'Nothing logged yet. Tell your assistant about a purchase and it shows up here.')}</p>}
+      {page && items.length === 0 && (starting ? (
+        <div className="connect-card">
+          <h2>{tr('Connect your assistant')}</h2>
+          <p className="muted">{tr('Kept works through the AI you already use. Tell it what you spent, send it a receipt photo or a statement, and the purchases show up here.')}</p>
+          <Link className="button primary" to="/settings/assistants">{tr('Connect an assistant')}</Link>
+        </div>
+      ) : <p className="empty">{tr(key ? 'No purchases match.' : 'Nothing logged yet. Tell your assistant about a purchase and it shows up here.')}</p>)}
       {items.length > 0 && (
         <ul className={`purchases${loading ? ' stale' : ''}`}>
           {byMonth(items).map(([month, list]) => [

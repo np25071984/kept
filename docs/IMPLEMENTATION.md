@@ -252,7 +252,7 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `GET`    | `/api/v1/watches`           | List the caller's watched groups.                                                                 |
 | `POST`   | `/api/v1/watches`           | Watch a category or an item. Watching one already watched returns it.                             |
 | `DELETE` | `/api/v1/watches/{id}`      | Stop watching, e.g. "stop tracking snacks".                                                       |
-| `GET`    | `/api/v1/questions`         | Kept's open questions for the caller, most important first: possible duplicates, caps passed, recurring charges missing from a statement, API keys unused for a year. |
+| `GET`    | `/api/v1/questions`         | Kept's open questions for the caller, most important first: connecting an assistant, possible duplicates, caps passed, recurring charges missing from a statement, API keys unused for a year. The first is worked out on each request, true while the caller has no assistant connected and no API key, and has no answers. |
 | `POST`   | `/api/v1/questions/{id}/answer` | Answer one: `merge` or `different`; `remove` or `keep`; `stop` or `still_paying`; `revoke` or `keep`. "Keep" on a cap silences it for the period; on a key, for a year. |
 | `POST`   | `/api/v1/repeats/{id}/missing` | Record that a statement lacked this recurring charge, as an open question. |
 | `GET`    | `/api/v1/caps`              | The caller's caps with `spent` this month or year (own purchases, private included) and `state`: `under`, `close` (from 80%) or `over`. |

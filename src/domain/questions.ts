@@ -1,15 +1,17 @@
 // Kept's open questions (VISION.md §4.B, "Open questions"): what the member decides, most important first.
 
-export type QuestionKind = 'duplicate' | 'cap' | 'missing_charge' | 'unused_key'
+export type QuestionKind = 'connect' | 'duplicate' | 'cap' | 'missing_charge' | 'unused_key'
 
+// Connecting is done in Settings, so that question has no answers: it goes away once an assistant is connected.
 export const ANSWERS: Record<QuestionKind, string[]> = {
+  connect: [],
   duplicate: ['merge', 'different'],
   cap: ['remove', 'keep'],
   missing_charge: ['stop', 'still_paying'],
   unused_key: ['revoke', 'keep'],
 }
 
-const ORDER: QuestionKind[] = ['duplicate', 'cap', 'missing_charge', 'unused_key']
+const ORDER: QuestionKind[] = ['connect', 'duplicate', 'cap', 'missing_charge', 'unused_key']
 
 export function questionId(kind: QuestionKind, id: string): string {
   return `${kind}:${id}`
@@ -23,6 +25,12 @@ export function parseQuestionId(value: string): { kind: QuestionKind; id: string
 
 export function sortQuestions<T extends { kind: QuestionKind; created_at: string }>(questions: T[]): T[] {
   return [...questions].sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind) || b.created_at.localeCompare(a.created_at))
+}
+
+// A member with no assistant connected and no API key has nothing to log with yet. The web app's own sign-in
+// doesn't count. An assistant or a script calling Kept always has one or the other, so chat never sees this.
+export function needsAssistant(clientIds: string[], webClientId: string, activeKeys: number): boolean {
+  return activeKeys === 0 && clientIds.every((id) => id === webClientId)
 }
 
 const YEAR_MS = 365 * 86_400_000

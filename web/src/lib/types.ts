@@ -69,6 +69,7 @@ export interface Recurring {
 }
 
 export type Question =
+  | { id: string; kind: 'connect'; created_at: string }
   | { id: string; kind: 'duplicate'; created_at: string; first: Transaction; later: Transaction }
   | { id: string; kind: 'cap'; created_at: string; cap: { id: string; name: string; amount: number; spent: number; period: 'month' | 'year' } }
   | { id: string; kind: 'missing_charge'; created_at: string; text: string; repeat_id: string }

@@ -172,6 +172,10 @@ a.tag { position: relative; z-index: 1; text-decoration: none; display: inline-f
 .meter { height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; margin: 6px 0 4px; }
 .meter > span { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
 .meter.over > span { background: var(--danger); }
+a.button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
+.connect-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 24px; text-align: center; margin-top: 8px; }
+.connect-card h2 { margin: 0 0 8px; }
+.connect-card p { max-width: 460px; margin: 0 auto 16px; }
 a.button { display: inline-block; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); text-decoration: none; color: inherit; }
 
 /* Reports. */

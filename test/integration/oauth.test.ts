@@ -248,6 +248,35 @@ describe('OAuth2 for MCP clients', () => {
     expect(await page.text()).toContain('<html lang="ru">')
   })
 
+  it('asks a member who signed up on the web to connect an assistant, until one is connected', async () => {
+    const callbackUrl = `${base}/app/callback`
+    const verifier = randomBytes(32).toString('base64url')
+    const browser = new Browser()
+    const params = new URLSearchParams({
+      response_type: 'code', client_id: 'kept-web', redirect_uri: callbackUrl, scope: 'kept', state: 'web', prompt: 'login',
+      code_challenge: createHash('sha256').update(verifier).digest('base64url'), code_challenge_method: 'S256',
+    })
+    let page = await browser.fetch(`/oauth/authorize?${params}`)
+    while (page.status >= 300 && page.status < 400) page = await browser.fetch(page.headers.get('location')!)
+    const uid = new URL(page.url).pathname.split('/')[3]!
+    const email = 'web-only@example.com'
+    await browser.form(`/oauth/interaction/${uid}/email`, { email })
+    await browser.form(`/oauth/interaction/${uid}/code`, { code: h.codes.at(-1)!.code })
+    page = await browser.form(`/oauth/interaction/${uid}/create`, { household: 'The Webbs', name: 'Wes', currency: 'USD', timezone: 'America/Chicago' })
+    while (page.status >= 300 && page.status < 400 && !page.headers.get('location')!.startsWith(callbackUrl)) page = await browser.fetch(page.headers.get('location')!)
+    const code = new URL(page.headers.get('location')!).searchParams.get('code')!
+    const tokens = await (await fetch(`${base}/oauth/token`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'authorization_code', code, redirect_uri: callbackUrl, client_id: 'kept-web', code_verifier: verifier }),
+    })).json()
+    const questions = async () => (await (await fetch(`${base}/api/v1/questions`, { headers: { authorization: `Bearer ${tokens.access_token}` } })).json()).questions
+    expect(await questions()).toEqual([expect.objectContaining({ kind: 'connect' })])
+    const key = await fetch(`${base}/api/v1/api-keys`, { method: 'POST', headers: { authorization: `Bearer ${tokens.access_token}`, 'content-type': 'application/json' }, body: JSON.stringify({ name: 'Script' }) })
+    expect(key.status).toBe(201)
+    expect(await questions()).toEqual([])
+  })
+
   it('signs a member in to the web UI without a consent page, and serves the app', async () => {
     const callbackUrl = `${base}/app/callback`
     const verifier = randomBytes(32).toString('base64url')

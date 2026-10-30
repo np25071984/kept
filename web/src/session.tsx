@@ -10,6 +10,8 @@ export interface Session {
   categories: string[]
   costCenters: CostCenter[]
   unseen: number
+  // No assistant connected yet: My purchases and Notifications point to Settings → Assistants & keys.
+  needsAssistant: boolean
   refreshUnseen: () => void
   refreshVocabulary: () => void
 }

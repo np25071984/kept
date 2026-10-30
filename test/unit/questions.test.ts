@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { capPeriodKey, keyUnused, parseQuestionId, questionId, sortQuestions } from '../../src/domain/questions.js'
+import { capPeriodKey, keyUnused, needsAssistant, parseQuestionId, questionId, sortQuestions } from '../../src/domain/questions.js'
 
 describe('open questions', () => {
   it('round-trips ids and rejects unknown kinds', () => {
@@ -23,5 +23,17 @@ describe('open questions', () => {
   it('silences a cap for its current period', () => {
     expect(capPeriodKey('month', '2026-10-29')).toBe('2026-10')
     expect(capPeriodKey('year', '2026-10-29')).toBe('2026')
+  })
+
+  it('asks to connect an assistant while there is none and no API key', () => {
+    expect(needsAssistant([], 'kept-web', 0)).toBe(true)
+    expect(needsAssistant(['kept-web', 'kept-web'], 'kept-web', 0)).toBe(true)
+    expect(needsAssistant(['kept-web', 'claude'], 'kept-web', 0)).toBe(false)
+    expect(needsAssistant(['kept-web'], 'kept-web', 1)).toBe(false)
+  })
+
+  it('puts connecting an assistant first', () => {
+    const at = '2026-10-30T00:00:00Z'
+    expect(sortQuestions([{ kind: 'duplicate', created_at: at }, { kind: 'connect', created_at: at }]).map((q) => q.kind)).toEqual(['connect', 'duplicate'])
   })
 })

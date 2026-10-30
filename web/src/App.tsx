@@ -128,7 +128,7 @@ function SignedIn({ onSignOut }: { onSignOut: () => void }) {
   // A reload keeps the last data on screen, so editing the vocabulary doesn't flash the whole app.
   if (!base.data) return <Centered><p className="muted">{t('Loading…')}</p></Centered>
   const [setup, categories, costCenters] = base.data
-  const session: Session = { setup, categories, costCenters, unseen: questions.data?.length ?? 0, refreshUnseen, refreshVocabulary: base.reload }
+  const session: Session = { setup, categories, costCenters, unseen: questions.data?.length ?? 0, needsAssistant: questions.data?.some((q) => q.kind === 'connect') ?? false, refreshUnseen, refreshVocabulary: base.reload }
   return (
     <SessionContext.Provider value={session}>
       <Header onSignOut={onSignOut} />
