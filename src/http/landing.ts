@@ -11,6 +11,8 @@ import { CHAT_SCRIPT, CHAT_STYLE, chatData, conversations } from './landingChat.
 // A visitor already signed in on this browser goes straight to the app.
 const SCRIPT = "try { if (localStorage.getItem('kept.refresh_token')) location.replace('/app/') } catch {}"
 
+const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>'
+
 const hash = (script: string) => `'sha256-${createHash('sha256').update(script).digest('base64')}'`
 
 export const LANDING_CSP = `default-src 'none'; style-src 'self' 'unsafe-inline'; script-src ${hash(SCRIPT)} ${hash(CHAT_SCRIPT)}; img-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'`
@@ -21,9 +23,14 @@ const STYLE = `
 @media (prefers-color-scheme: dark) { :root { --chat-bg: #12100e; --chat-dot: #1f1c18; --chat-out: #1f3a2c; } }
 h2 { margin: 0 0 12px; }
 h3 { font-size: 14px; margin: 0 0 6px; }
+.topbar nav { flex-wrap: wrap; }
+.topbar nav a { white-space: nowrap; }
 @media (max-width: 720px) { .topbar nav { order: 3; flex-basis: 100%; } }
 main { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
 section { margin-bottom: 28px; }
+.points { list-style: none; padding: 0; margin: 20px 0 0; display: grid; gap: 10px; }
+.points li { display: flex; gap: 10px; align-items: flex-start; }
+.points svg { flex-shrink: 0; margin-top: 3px; color: var(--accent); }
 .hero h1 { font-size: 30px; line-height: 1.2; margin: 0 0 10px; }
 .hero { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; align-items: center; padding: 24px 0 8px; }
 @media (max-width: 720px) { .hero { grid-template-columns: 1fr; } }
@@ -74,6 +81,13 @@ ${siteHeader(lang, {
   <div>
     <h1>${t('Tell your assistant what you spent. Kept keeps the books.')}</h1>
     <p class="muted">${t("Kept teaches the AI you already use to track your household's spending: what to ask, how to file it, and what to remember. No forms, no bank logins.")}</p>
+    <ul class="points">
+      ${[
+        ['No new AI to learn.', 'Kept works inside the assistant you already use: Claude, ChatGPT or Gemini.'],
+        ['No new app on your phone.', 'Your assistant\'s app is all you need.'],
+        ['Track spending on the go.', 'A quick chat at the checkout, like telling a friend.'],
+      ].map(([head, line]) => `<li>${CHECK}<span><strong>${t(head!)}</strong> ${t(line!)}</span></li>`).join('')}
+    </ul>
   </div>
   <div class="demo">
     <div class="phone">
