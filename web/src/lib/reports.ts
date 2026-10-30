@@ -1,33 +1,12 @@
+import { shiftMonths } from '../../../src/domain/months.js'
+
 // Reports: the trend, and a period broken down by category, people & things or merchant,
 // each bar with a tick for the same days of the previous period.
 
 export interface Row { key: string; amount: number; period?: string | null }
 
-const pad = (n: number) => String(n).padStart(2, '0')
-const daysIn = (y: number, m: number) => new Date(Date.UTC(y, m, 0)).getUTCDate()
-const ymd = (d: Date) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`
-const date = (s: string) => new Date(`${s}T00:00:00Z`)
-
-function shiftMonths(s: string, months: number): string {
-  const [y, m, d] = s.split('-').map(Number) as [number, number, number]
-  const index = y * 12 + (m - 1) - months
-  const ny = Math.floor(index / 12)
-  const nm = (index % 12) + 1
-  return `${ny}-${pad(nm)}-${pad(Math.min(d, daysIn(ny, nm)))}`
-}
-
-// The same days of the previous period: Oct 1–29 → Sep 1–29; a range starting on the 1st moves by whole months, any other by its length.
-export function previousRange(from: string, to: string): { from: string; to: string } {
-  if (from.endsWith('-01')) {
-    const [fy, fm] = from.split('-').map(Number) as [number, number]
-    const [ty, tm] = to.split('-').map(Number) as [number, number]
-    const months = (ty - fy) * 12 + (tm - fm) + 1
-    return { from: shiftMonths(from, months), to: shiftMonths(to, months) }
-  }
-  const days = (date(to).getTime() - date(from).getTime()) / 86_400_000 + 1
-  const shift = (s: string) => ymd(new Date(date(s).getTime() - days * 86_400_000))
-  return { from: shift(from), to: shift(to) }
-}
+// Shared with the landing page's chart (src/domain/months.ts).
+export { onTrack, previousRange } from '../../../src/domain/months.js'
 
 // The last 12 months, oldest first, from per-month category totals; only top-level categories add up, subcategories are inside them.
 export function trend(rows: Row[], today: string): { month: string; amount: number }[] {
@@ -90,10 +69,4 @@ export function withSpending(bars: Bar[]): Bar[] {
 export function biggestChange(bars: Bar[]): Bar | null {
   const candidates = bars.filter((b) => !b.sub && b.key !== NOBODY && b.key !== OTHER && b.amount !== b.prev)
   return candidates.sort((a, b) => Math.abs(b.amount - b.prev) - Math.abs(a.amount - a.prev))[0] ?? null
-}
-
-// What the running month is on track for, at its pace so far.
-export function onTrack(soFar: number, today: string): number {
-  const [y, m, d] = today.split('-').map(Number) as [number, number, number]
-  return Math.round((soFar / d) * daysIn(y, m) * 100) / 100
 }

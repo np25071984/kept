@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import { LANDING_CSP, landingPage } from '../../src/http/landing.js'
+import { landingChart, sampleMonths } from '../../src/http/landingChart.js'
 import { chatData, conversations } from '../../src/http/landingChat.js'
 
 describe('landing page', () => {
@@ -10,8 +11,8 @@ describe('landing page', () => {
     expect(ru).toContain('Расскажите ассистенту, что потратили.')
     expect(ru).toContain('value="ru" lang="ru" aria-checked="true"')
     expect(landingPage('en')).toContain('Tell your assistant what you spent.')
-    expect(ru).toContain('/app/landing/chart-ru-dark-narrow.png')
-    expect(landingPage('en')).toContain('<img src="/app/landing/chart-en-light.png"')
+    expect(ru).toContain('По месяцам')
+    expect(landingPage('en')).toContain('<svg class="chart"')
   })
 
   it('allows only its own inline scripts', () => {
@@ -37,5 +38,28 @@ describe('landing chat', () => {
 
   it('keeps its data from closing the script tag', () => {
     expect(chatData('en')).not.toContain('<')
+  })
+})
+
+describe('landing chart', () => {
+  it('ends the sample in the current month, counted so far', () => {
+    const { months, soFar, before } = sampleMonths('2026-11-15')
+    expect(months).toHaveLength(12)
+    expect(months[0]!.month).toBe('2025-12')
+    expect(months.at(-1)).toEqual({ month: '2026-11', amount: soFar })
+    expect(soFar).toBe(Math.round((1552.27 * 15) / 30 * 100) / 100)
+    expect(before).toBe(Math.round((1688.51 * 15) / 31 * 100) / 100)
+  })
+
+  it('compares with the same days of a shorter month before', () => {
+    expect(sampleMonths('2026-03-31').before).toBe(1688.51)
+  })
+
+  it('draws both widths with the month names and totals in the visitor\'s language', () => {
+    const html = landingChart('ru', '2026-11-15')
+    expect(html.match(/<svg class="chart"/g)).toHaveLength(2)
+    expect(html).toContain('ноябрь на сегодня')
+    expect(html).toContain('>нояб.</text>')
+    expect(landingChart('en', '2026-11-15')).toContain('November so far')
   })
 })

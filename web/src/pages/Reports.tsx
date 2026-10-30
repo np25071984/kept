@@ -5,6 +5,7 @@ import { periodRange, type Period } from '../lib/filters.js'
 import { formatMoney } from '../lib/money.js'
 import { biggestChange, categoryBars, merchantBars, NOBODY, onTrack, OTHER, peopleBars, previousRange, topLevelTotal, trend, withSpending, type Bar, type Row } from '../lib/reports.js'
 import { useLoad, useSession } from '../session.js'
+import { CHART_HEIGHT, CHART_WIDTH, LABEL_Y, monthChartLayout } from '../../../src/domain/monthChart.js'
 import { t } from '../i18n.js'
 
 type Scope = 'me' | 'household'
@@ -156,37 +157,22 @@ function MonthChart({ months: all, average, money, currency }: { months: { month
   // On a phone the last 6 months, so the labels stay readable.
   const months = typeof window !== 'undefined' && window.innerWidth < 600 ? all.slice(-6) : all
   if (!months.length) return null
-  const max = Math.max(1, ...months.map((m) => m.amount), average ?? 0)
-  const step = 10 ** Math.floor(Math.log10(max))
-  const unit = max / step > 5 ? step : step / 2
-  const ceiling = Math.ceil(max / unit) * unit
-  const ticks = Array.from({ length: Math.round(ceiling / unit) + 1 }, (_, i) => i * unit)
-  const label = (v: number) => new Intl.NumberFormat(locale(), { style: 'currency', currency, notation: 'compact', maximumFractionDigits: 1 }).format(v)
-  // Room for the longest axis label at 11px: "$3.5K" needs little, "3,5 тыс. $" more.
-  const left = Math.max(44, 10 + 6.2 * Math.max(...ticks.map((v) => label(v).length)))
-  const W = 640, H = 210, base = 184, height = 170
-  const y = (v: number) => base - (v / ceiling) * height
-  const slot = (W - left) / months.length
+  const label = (v: number) => new Intl.NumberFormat(locale(), { style: 'currency', currency, notation: 'compact', minimumFractionDigits: 0, maximumFractionDigits: 1 }).format(v)
+  const chart = monthChartLayout(months, average, label)
   return (
     <>
-      <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={t('Spending per month')}>
+      <svg className="chart" viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`} role="img" aria-label={t('Spending per month')}>
         <defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="var(--accent)" /></pattern></defs>
-        {ticks.map((t) => <g key={t}><line className="grid" x1={left} x2={W} y1={y(t)} y2={y(t)} /><text x={left - 6} y={y(t) + 4} textAnchor="end">{label(t)}</text></g>)}
-        {months.map((m, i) => {
-          const x = left + i * slot + slot * 0.19
-          const bw = slot * 0.62
-          const top = y(m.amount)
-          const last = i === months.length - 1
-          return (
-            <g key={m.month}>
-              <title>{monthName(m.month)}: {money(m.amount)}{last ? ' so far' : ''}</title>
-              <rect className="hit" x={left + i * slot} y={14} width={slot} height={height} />
-              {m.amount > 0 && <rect className={`bar${last ? ' partial' : ''}`} x={x} y={top} width={bw} height={base - top} rx={4} />}
-              <text x={x + bw / 2} y={202} textAnchor="middle">{monthName(m.month)}</text>
-            </g>
-          )
-        })}
-        {average != null && <line className="avg" x1={left} x2={W} y1={y(average)} y2={y(average)} />}
+        {chart.ticks.map((tick) => <g key={tick.value}><line className="grid" x1={chart.left} x2={CHART_WIDTH} y1={tick.y} y2={tick.y} /><text x={chart.left - 6} y={tick.y + 4} textAnchor="end">{label(tick.value)}</text></g>)}
+        {chart.bars.map((bar) => (
+          <g key={bar.month}>
+            <title>{monthName(bar.month)}: {money(bar.amount)}{bar.partial ? ' so far' : ''}</title>
+            <rect className="hit" x={bar.slotX} y={chart.plotTop} width={chart.slot} height={chart.plotHeight} />
+            {bar.amount > 0 && <rect className={`bar${bar.partial ? ' partial' : ''}`} x={bar.x} y={bar.y} width={bar.width} height={bar.height} rx={4} />}
+            <text x={bar.x + bar.width / 2} y={LABEL_Y} textAnchor="middle">{monthName(bar.month)}</text>
+          </g>
+        ))}
+        {chart.averageY != null && <line className="avg" x1={chart.left} x2={CHART_WIDTH} y1={chart.averageY} y2={chart.averageY} />}
       </svg>
       <div className="legend"><span><span className="sw" />{t('Spent')}</span><span><span className="sw hatch" />{t('This month so far')}</span>{average != null && <span><span className="sw dash" />{t('12-month average')}</span>}</div>
     </>

@@ -3,6 +3,7 @@ import type { Language } from '../domain/language.js'
 import { tr } from '../i18n.js'
 import { escape } from '../oauth/pages.js'
 import { siteHeader } from './siteHeader.js'
+import { landingChart } from './landingChart.js'
 import { CHAT_SCRIPT, CHAT_STYLE, chatData, conversations } from './landingChat.js'
 
 // The page at / (VISION.md §4.C): what Kept is, what happens to the data, which assistants it works with.
@@ -50,7 +51,12 @@ section { margin-bottom: 28px; }
 .list li + li { border-top: 1px solid var(--line); }
 .assistants { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
 .assistants span { padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-weight: 600; font-size: 14px; }
-.report-shot img { display: block; width: 100%; height: auto; }
+.chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.chart-totals { text-align: right; }
+.num { font-variant-numeric: tabular-nums; }
+.defs { position: absolute; }
+.months-6 { display: none; }
+@media (max-width: 600px) { .months-12 { display: none; } .months-6 { display: block; } }
 /* Anchored sections clear the sticky header. */
 section[id] { scroll-margin-top: 72px; }
 @media (max-width: 720px) { section[id] { scroll-margin-top: 150px; } }
@@ -58,7 +64,8 @@ footer { border-top: 1px solid var(--line); margin-top: 32px; padding-top: 16px;
 `
 
 
-export function landingPage(lang: Language): string {
+// `today` is the server's date (UTC): the chart's sample ends in the current month.
+export function landingPage(lang: Language, today = new Date().toISOString().slice(0, 10)): string {
   const t = (text: string) => escape(tr(lang, text))
   const chats = conversations(lang)
   const first = chats[0]!
@@ -117,12 +124,7 @@ ${siteHeader(lang, {
 <section id="reports">
   <h2>${t('Where the money goes')}</h2>
   <p class="muted">${t('Month by month for the whole household: everyone\'s purchases except private ones, never broken down by member.')}</p>
-  <picture class="report-shot">
-    <source srcset="/app/landing/chart-${lang}-dark-narrow.png" media="(max-width: 600px) and (prefers-color-scheme: dark)" width="404" height="298">
-    <source srcset="/app/landing/chart-${lang}-light-narrow.png" media="(max-width: 600px)" width="404" height="298">
-    <source srcset="/app/landing/chart-${lang}-dark.png" media="(prefers-color-scheme: dark)" width="944" height="392">
-    <img src="/app/landing/chart-${lang}-light.png" width="944" height="392" loading="lazy" alt="${t('Kept\'s monthly spending chart for a household: twelve months of bars, a dashed line for the average, and this month so far.')}">
-  </picture>
+  ${landingChart(lang, today)}
 </section>
 <section id="privacy">
   <h2>${t('Your data')}</h2>

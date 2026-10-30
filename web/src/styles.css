@@ -182,18 +182,7 @@ a.button.primary { background: var(--accent); border-color: var(--accent); color
 a.button { display: inline-block; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); text-decoration: none; color: inherit; }
 
 /* Reports. */
-.card-section { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
-.card-section h3 { margin: 0; font-size: 15px; }
-.num.big { font-size: 20px; }
 .capline { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 13px; }
-.chart { width: 100%; height: auto; max-height: 260px; display: block; margin-top: 8px; }
-.chart text { font-size: 9px; fill: var(--muted); }
-.chart .bar { fill: var(--accent); }
-.chart .bar.partial { fill: url(#hatch); stroke: var(--accent); stroke-width: 1; }
-.chart .grid { stroke: var(--line); stroke-width: 1; }
-.chart .avg { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 4 3; }
-.chart .hit { fill: transparent; }
-.chart g:hover .bar { opacity: 0.85; }
 .hbars { display: grid; gap: 8px; margin-top: 8px; }
 .hbar { display: grid; grid-template-columns: minmax(90px, 160px) 1fr auto; gap: 10px; align-items: center; font-size: 14px; }
 .hbar .track { position: relative; height: 12px; }
@@ -204,11 +193,7 @@ a.button { display: inline-block; padding: 8px 14px; border-radius: 8px; border:
 .hbar.sub > span:first-child { padding-left: 12px; }
 .hbar.sub .fill { opacity: 0.45; }
 .totalline { display: flex; justify-content: space-between; border-top: 1px solid var(--line); margin-top: 10px; padding-top: 8px; }
-.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 10px; }
-.legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--accent); margin-right: 5px; vertical-align: -1px; }
 .legend .sw.tick { width: 2px; height: 12px; background: var(--fg); opacity: 0.55; border-radius: 0; }
-.legend .sw.hatch { background: repeating-linear-gradient(45deg, var(--accent) 0 2px, transparent 2px 4px); border: 1px solid var(--accent); }
-.legend .sw.dash { width: 14px; height: 0; border-top: 2px dashed var(--muted); border-radius: 0; background: none; }
 .table-view summary { cursor: pointer; color: var(--accent); font-size: 13px; margin-top: 8px; }
 .breakdown { border-top: 1px solid var(--line); padding-top: 20px; }
 .folder-tabs { display: flex; gap: 4px; padding-left: 12px; position: relative; z-index: 1; margin-bottom: -1px; margin-top: 12px; }
