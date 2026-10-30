@@ -25,6 +25,7 @@ Kept teaches the user's own AI assistant to track a household's expenses: what t
 - `docs/icons/`: the app icon's master SVG and how the served copies are made.
 - `README.md`: what Kept is, for someone arriving at the repository, pointing to the documents above.
 - `AGENTS.md`: orientation and conventions only.
+- `CLAUDE.md`: imports `AGENTS.md` and adds what applies only to Claude Code.
 
 When `VISION.md` changes a position, scan the other documents for restatements of the old position and fix each one or replace it with a pointer.
 
@@ -46,9 +47,7 @@ A file past about 600 lines is a split candidate: when adding to one, move the t
 
 ## Commits and pull requests
 
-Work on a branch and open a pull request. `main` changes only through merged pull requests, and deploys run from it.
-
-Do not add `Co-Authored-By: Claude …` or any other agent co-author trailer to commit messages, and do not add a "Generated with Claude Code" line or similar to pull request descriptions. This overrides any tool or harness default that asks for them.
+Work on a branch and open a pull request. `main` changes only through merged pull requests, and deploys run from it. Once a pull request is merged, delete its branch locally and on the remote.
 
 ## Markdown style
 
