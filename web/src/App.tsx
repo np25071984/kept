@@ -4,15 +4,13 @@ import { api } from './api.js'
 import { completeSignIn, hasSession, signIn, signOut } from './auth.js'
 import { Header } from './Header.js'
 import { AssistantsPage } from './pages/Assistants.js'
-import { CategoriesPage, PeoplePage } from './pages/Household.js'
 import { NotesSection } from './pages/Memory.js'
-import { MembersPage } from './pages/Members.js'
 import { PreferencesPage } from './pages/Preferences.js'
 import { PurchasePage } from './pages/Purchase.js'
 import { PurchasesPage } from './pages/Purchases.js'
 import { RecurringPage } from './pages/Recurring.js'
 import { ReportsPage } from './pages/Reports.js'
-import { GeneralPage, HouseholdLayout, ProfilePage, SettingsLayout } from './pages/Settings.js'
+import { HouseholdPage, ProfilePage, SettingsLayout } from './pages/Settings.js'
 import { NotificationsPage } from './pages/Notifications.js'
 import { messageFor, SessionContext, SIGNED_OUT, useLoad, type Session } from './session.js'
 import { language, setLanguage, t } from './i18n.js'
@@ -39,13 +37,10 @@ export function App() {
           <Route path="settings" element={<SettingsLayout />}>
             <Route index element={<Navigate to="profile" replace />} />
             <Route path="profile" element={<ProfilePage />} />
-            <Route path="household" element={<HouseholdLayout />}>
-              <Route index element={<Navigate to="members" replace />} />
-              <Route path="members" element={<MembersPage />} />
-              <Route path="categories" element={<CategoriesPage />} />
-              <Route path="people" element={<PeoplePage />} />
-              <Route path="general" element={<GeneralPage />} />
-            </Route>
+            <Route path="household" element={<HouseholdPage />} />
+            {['general', 'members', 'people', 'categories'].map((section) => (
+              <Route key={section} path={`household/${section}`} element={<Navigate to={`/settings/household#${section}`} replace />} />
+            ))}
             <Route path="assistants" element={<AssistantsPage />} />
             <Route path="notes" element={<NotesSection />} />
           </Route>

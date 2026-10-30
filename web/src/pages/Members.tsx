@@ -9,12 +9,13 @@ import { useAction, useLoad, useSession } from '../session.js'
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString(locale(), { month: 'short', day: 'numeric' })
 
 // Settings → Household → Members: owners invite, promote and remove; members see the list.
-export function MembersPage() {
+export function MembersSection() {
   const { setup } = useSession()
   const owner = setup.you.role === 'owner'
   const list = useLoad(() => api.members(), [])
   return (
-    <section className="section">
+    <section className="section" id="members">
+      <h2>{t('Members')}</h2>
       {list.error && <p className="error">{list.error}</p>}
       <ul className="list">
         {list.data?.members.map((m) => <MemberRow key={m.id} member={m} owner={owner} onChanged={list.reload} />)}

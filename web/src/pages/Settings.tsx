@@ -1,6 +1,8 @@
-import { useState, type FormEvent } from 'react'
-import { Outlet } from 'react-router'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Outlet, useLocation } from 'react-router'
 import { api } from '../api.js'
+import { CategoriesSection, PeopleSection } from './Household.js'
+import { MembersSection } from './Members.js'
 import { CurrencyField, TimeZoneField } from '../PickerFields.js'
 import { Tabs } from '../Header.js'
 import { useAction, useSession } from '../session.js'
@@ -22,16 +24,16 @@ export function SettingsLayout() {
   )
 }
 
-export function HouseholdLayout() {
+// Settings → Household: one page, the short sections first. The old sub-tab addresses land on their section.
+export function HouseholdPage() {
+  const { hash } = useLocation()
+  useEffect(() => { if (hash) document.getElementById(hash.slice(1))?.scrollIntoView() }, [hash])
   return (
     <>
-      <Tabs className="subtabs" items={[
-        { to: '/settings/household/members', label: t('Members') },
-        { to: '/settings/household/categories', label: t('Categories') },
-        { to: '/settings/household/people', label: t('People & things') },
-        { to: '/settings/household/general', label: t('General') },
-      ]} />
-      <Outlet />
+      <GeneralSection />
+      <MembersSection />
+      <PeopleSection />
+      <CategoriesSection />
     </>
   )
 }
@@ -63,7 +65,7 @@ export function ProfilePage() {
 }
 
 // Settings → Household → General: the household's name, currency and time zone. Owners change them; members see them.
-export function GeneralPage() {
+export function GeneralSection() {
   const { setup, refreshVocabulary } = useSession()
   const owner = setup.you.role === 'owner'
   const [form, setForm] = useState({ name: setup.household.name, currency: setup.household.currency, timezone: setup.household.timezone })
@@ -84,7 +86,8 @@ export function GeneralPage() {
     }
   }
   return (
-    <form className="section form" onSubmit={save}>
+    <form className="section form" id="general" onSubmit={save}>
+      <h2>{t('General')}</h2>
       {!owner && <p className="muted small">{t('Only an owner can change these.')}</p>}
       <label>{t('Household name')}<input value={form.name} disabled={!owner} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label>
       <div className="field">{t('Currency')}

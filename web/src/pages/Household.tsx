@@ -8,15 +8,16 @@ import { useAction, useSession } from '../session.js'
 import { t } from '../i18n.js'
 
 // Settings → Household → Categories (VISION.md §4.C): add, rename and delete in place; three levels at most.
-export function CategoriesPage() {
+export function CategoriesSection() {
   const { categories } = useSession()
   const [adding, setAdding] = useState(false)
   return (
-    <section className="section">
+    <section className="section" id="categories">
       <div className="section-head">
-        <p className="muted small" style={{ margin: 0 }}>{t('Up to three levels. Renaming keeps every purchase in it; a category can be deleted once nothing uses it.')}</p>
+        <h2>{t('Categories')}</h2>
         {!adding && <IconButton icon={Plus} label={t('Add category')} primary onClick={() => setAdding(true)} />}
       </div>
+      <p className="muted small">{t('Up to three levels. Renaming keeps every purchase in it; a category can be deleted once nothing uses it.')}</p>
       <ul className="list">
         {adding && <li className="list-row"><NewCategory parent={null} onDone={() => setAdding(false)} /></li>}
         {categoryTree(categories).map((row) => <CategoryRow key={row.path} path={row.path} name={row.name} depth={row.depth} />)}
@@ -91,15 +92,16 @@ function CategoryRow({ path, name, depth }: { path: string; name: string; depth:
 }
 
 // Settings → Household → People & things.
-export function PeoplePage() {
+export function PeopleSection() {
   const { costCenters } = useSession()
   const [adding, setAdding] = useState(false)
   return (
-    <section className="section">
+    <section className="section" id="people">
       <div className="section-head">
-        <p className="muted small" style={{ margin: 0 }}>{t('Who and what money is spent for. The kind tells your assistant which purchases each one could be for: fuel for a Car, rent for a Home.')}</p>
+        <h2>{t('People & things')}</h2>
         {!adding && <IconButton icon={Plus} label={t('Add a person or thing')} primary onClick={() => setAdding(true)} />}
       </div>
+      <p className="muted small">{t('Who and what money is spent for. The kind tells your assistant which purchases each one could be for: fuel for a Car, rent for a Home.')}</p>
       {adding && <CostCenterEditor onDone={() => setAdding(false)} />}
       <ul className="list">
         {costCenters.map((cc) => <CostCenterRow key={cc.name} cc={cc} />)}
