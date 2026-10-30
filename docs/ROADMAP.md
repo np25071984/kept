@@ -1,6 +1,6 @@
 # Kept: Roadmap
 
-Last updated: 2026-10-29.
+Last updated: 2026-10-30.
 
 ## How to read this document
 
@@ -18,6 +18,20 @@ Real use, across assistants.
 - [ ] Decide on the messaging bot: build it if a target assistant can't write from its phone app (`VISION.md` §4.B).
 
 **Gate:** one household logs a full month of spending through its assistants alone, and the month's summary matches its bank statements.
+
+## Phase 4 — Paid Hosting
+
+Charging for the hosted Kept (`VISION.md` §5).
+
+- [ ] Export: a member downloads their own purchases and the household's vocabulary as CSV and JSON, from Settings and over the REST API.
+- [ ] An operator report of active households by the §5 definition, leaving out the operator's own and test households.
+- [ ] Billing state per household: trial start and paid-until, and a pure function that decides from them, the launch date and today whether the household may write.
+- [ ] Read-only households: the REST API refuses writes with an error that says how to pay, MCP tools pass it to the assistant, and the web UI shows a banner with the pay link.
+- [ ] Stripe: Checkout for $2 a month, a webhook that extends paid-until, and the customer portal linked from Settings.
+- [ ] A launch command that records the launch date and emails every existing household that its 30-day trial has started.
+- [ ] Terms of service, linked beside the privacy policy.
+
+**Gate:** about 100 active households, then the operator runs the launch command.
 
 ## Later
 

@@ -22,4 +22,8 @@ Teach your AI assistant to track your household's spending. Tell Claude, ChatGPT
 
 ## Running it
 
-Node 22.12 or later and Docker. `docs/DEVELOPMENT.md` has the steps, starting with `npm install` and `docker compose up -d`.
+Node 22.12 or later and Docker. `docs/DEVELOPMENT.md` has the steps, starting with `npm install` and `docker compose up -d`, and how to host your own Kept on one server.
+
+## License
+
+[AGPL-3.0](LICENSE). Self-hosting is free with every feature; the hosted Kept at kept-ledger.com is a paid service (`docs/VISION.md` §5). Contributions are welcome under the agreement in [`CONTRIBUTING.md`](CONTRIBUTING.md), and vulnerabilities go to the address in [`SECURITY.md`](SECURITY.md).
