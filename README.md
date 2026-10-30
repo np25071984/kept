@@ -18,6 +18,7 @@ Teach your AI assistant to track your household's spending. Tell Claude, ChatGPT
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | What remains, in order. |
 | [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) | Running it locally, tests, deploying, the source layout. |
 | [`AGENTS.md`](AGENTS.md) | Conventions for coding agents working in this repository. |
+| [`CLAUDE.md`](CLAUDE.md) | `AGENTS.md` plus what applies only to Claude Code. |
 
 ## Running it
 
