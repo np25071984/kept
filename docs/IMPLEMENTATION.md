@@ -51,6 +51,108 @@ The costs are real. MCP is young and the spec still changes. Assistants support 
 
 ## 2. Data Model
 
+```mermaid
+erDiagram
+    HOUSEHOLDS ||--o{ USERS : has
+    HOUSEHOLDS ||--o{ CATEGORIES : shares
+    HOUSEHOLDS ||--o{ COST_CENTERS : shares
+    HOUSEHOLDS ||--o{ INVITES : "invites to"
+    USERS ||--o{ INVITES : "invited_by"
+    USERS ||--o{ API_KEYS : holds
+    USERS ||--o{ TRANSACTIONS : "spent_by"
+    USERS ||--o{ SOURCES : brought
+    USERS ||--o{ REPEATS : owns
+    USERS ||--o{ UPDATES : sees
+    USERS ||--o{ WATCHES : watches
+    USERS ||--o{ CAPS : sets
+    USERS ||--o{ NOTES : writes
+    TRANSACTIONS ||--|{ LINE_ITEMS : "split into"
+    TRANSACTIONS ||--o{ SOURCES : "read from"
+    REPEATS |o--o{ TRANSACTIONS : creates
+    CATEGORIES |o--o{ TRANSACTIONS : "main_category_id"
+    CATEGORIES ||--o{ LINE_ITEMS : files
+    LINE_ITEMS ||--o{ LINE_ITEM_COST_CENTERS : "spent_for"
+    COST_CENTERS ||--o{ LINE_ITEM_COST_CENTERS : "spent on"
+    TRANSACTIONS |o--o{ UPDATES : "transaction_id, other_transaction_id"
+    REPEATS |o--o{ UPDATES : "missing charge"
+    CATEGORIES |o--o{ WATCHES : watched
+    CATEGORIES |o--o{ CAPS : capped
+    COST_CENTERS |o--o{ CAPS : capped
+
+    HOUSEHOLDS {
+        uuid id PK
+    }
+    USERS {
+        uuid id PK
+        uuid household_id FK
+    }
+    API_KEYS {
+        uuid id PK
+        uuid user_id FK
+    }
+    INVITES {
+        uuid id PK
+        uuid household_id FK
+        uuid invited_by FK
+    }
+    CATEGORIES {
+        uuid id PK
+        string path UK
+    }
+    COST_CENTERS {
+        uuid id PK
+        string name UK
+    }
+    TRANSACTIONS {
+        uuid id PK
+        uuid spent_by FK
+        uuid repeat_id FK
+        uuid main_category_id FK
+    }
+    LINE_ITEMS {
+        uuid id PK
+        uuid transaction_id FK
+        uuid category_id FK
+    }
+    LINE_ITEM_COST_CENTERS {
+        uuid line_item_id PK, FK
+        uuid cost_center_id PK, FK
+    }
+    SOURCES {
+        uuid id PK
+        uuid transaction_id FK
+        uuid user_id FK
+    }
+    REPEATS {
+        uuid id PK
+        uuid user_id FK
+    }
+    UPDATES {
+        uuid id PK
+        uuid user_id FK
+        uuid transaction_id FK
+        uuid other_transaction_id FK
+        uuid repeat_id FK
+    }
+    WATCHES {
+        uuid id PK
+        uuid user_id FK
+        uuid category_id FK
+    }
+    CAPS {
+        uuid id PK
+        uuid user_id FK
+        uuid category_id FK
+        uuid cost_center_id FK
+    }
+    NOTES {
+        uuid id PK
+        uuid user_id FK
+    }
+```
+
+Every table also carries `household_id`, left out above except where it is the only link. A subcategory belongs to its parent by `path` ("Groceries/Alcohol" under "Groceries"), not by a link. The OAuth tables, `oauth_models`, `oauth_keys` and `sign_in_codes` ([§5.4](#54-connecting-an-assistant)), link to nothing.
+
 **Households**
 
 | Field  | Type   | Required | Example       |
@@ -83,6 +185,7 @@ The costs are real. MCP is young and the spec still changes. Assistants support 
 | `name`         | String    | Yes      | E.g. "Laptop script".                                       |
 | `last_used_at` | Timestamp | No       |                                                             |
 | `revoked_at`   | Timestamp | No       |                                                             |
+| `kept_at`      | Timestamp | No       | When the member answered "keep" to an unused-key question; silences it for a year. |
 
 Every table carries a `household_id` for [row-level security](#4-security), including those whose rows belong to one member. Cost centers and categories are shared by every member. Transactions, notes and watched groups belong to their user (see [Households, Accounts and Privacy](VISION.md#households-accounts-and-privacy)).
 
@@ -185,12 +288,14 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | ---------------- | --------- | -------- | ---------------------------------------------------------------- |
 | `id`             | UUID      | Yes      |                                                                  |
 | `user_id`        | UUID      | Yes      | Only this user sees it.                                          |
-| `kind`           | String    | Yes      | `repeat_registered`, `possible_duplicate`                        |
+| `kind`           | String    | Yes      | `repeat_registered`, `possible_duplicate`, `missing_charge`      |
 | `text`           | Text      | Yes      | E.g. "Registered repeating phone expense, $50."                  |
 | `transaction_id` | UUID      | No       | The transaction created, or the new one of a possible duplicate. |
 | `other_transaction_id` | UUID | No      | For `possible_duplicate`: the purchase it may duplicate.         |
+| `repeat_id`      | UUID      | No       | For `missing_charge`: the repeat a statement lacked.             |
 | `created_at`     | Timestamp | Yes      |                                                                  |
 | `seen_at`        | Timestamp | No       | Set by `POST /api/v1/updates/seen` once the agent or web UI has shown it. |
+| `resolved_at`    | Timestamp | No       | Set when the member answers a `possible_duplicate` or `missing_charge` question. |
 
 **Line Item Cost Centers** (join table behind `spent_for`)
 
@@ -219,6 +324,7 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `cost_center` | Cost center link | No       |                                                            |
 | `amount`      | Decimal          | Yes      | In the household currency.                                 |
 | `period`      | String           | Yes      | `month` or `year`, the calendar one in the household's time zone. |
+| `kept_period` | String           | No       | The month (`2026-10`) or year a "keep it" answer silenced the cap-passed question for. |
 
 **Notes** (personal; see [Notes](VISION.md#notes))
 
