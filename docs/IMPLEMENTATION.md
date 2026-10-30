@@ -151,7 +151,7 @@ erDiagram
     }
 ```
 
-Every table also carries `household_id`, left out above except where it is the only link. A subcategory belongs to its parent by `path` ("Groceries/Alcohol" under "Groceries"), not by a link. The OAuth tables, `oauth_models`, `oauth_keys` and `sign_in_codes` ([§5.4](#54-connecting-an-assistant)), link to nothing.
+Every table also carries `household_id`, left out above except where it is the only link. A subcategory belongs to its parent by `path` ("Groceries/Alcohol" under "Groceries"), not by a link. The OAuth tables, `oauth_models`, `oauth_keys`, `sign_in_codes` and `sign_in_requests` ([§5.4](#54-connecting-an-assistant)), link to nothing.
 
 **Households**
 
@@ -574,6 +574,7 @@ sequenceDiagram
 
 - **The code is typed, not clicked.** On a phone, the assistant's sign-in browser and the mail app's browser are different, so an emailed link arrives without the sign-in session. The email also carries a link, which works in the same browser. The subject and first line read "Kept sign-in code: 123456", digits unspaced next to "code", so phones offer "Copy code" in the notification. A code expires after 10 minutes or 5 wrong tries.
 - **Sign-in doesn't reveal accounts.** Every email gets the same "check your email" page and a code.
+- **Codes are rate-limited.** An email gets at most 5 codes an hour, and one IP address may request at most 30 (`src/domain/throttle.ts`); past either, the email page answers 429 and sends nothing. Every request is recorded in `sign_in_requests`, since resending replaces an interaction's row in `sign_in_codes`. Behind Caddy, `TRUST_PROXY=1` makes the client's address the one in `X-Forwarded-For`.
 - **Invited people join by signing in.** Every email gets a code. A verified email with no account and no invite gets the create-household form and becomes its owner (`kept_create_household`). A verified email with an open invite and no account gets a page for their name, then joins as a `member`; their assistant then runs the new-member path of [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up).
 - **Tokens:** PKCE with S256 is required. Access tokens are opaque, bound to `<PUBLIC_URL>/mcp` and scope `kept`; a request with no scope gets `kept`. Refresh tokens rotate and don't end with the browser session, so the assistant stays connected.
 - **Metadata:** `/.well-known/oauth-authorization-server` serves the OAuth part of the OpenID document at `/.well-known/openid-configuration`: the `code` flow only, scope `kept`, and `protected_resources` pointing back to `/mcp`.
@@ -581,7 +582,7 @@ sequenceDiagram
 - **Clients created ahead of time:** Gemini asks for a client ID and secret instead of registering. Its redirect URI, shown under "Copy redirect URI" in its dialog, contains the member's Google account and Kept's host name, so each member creates their own client on the web UI's Me page (`POST /api/v1/connections/clients`); `create-client` does the same from the command line.
 - **Language:** the sign-in pages and the code email use the `kept_lang` cookie, else `Accept-Language`. The switch at the top of each page sets the cookie through `POST /language`; the web app sets it too, from the member's saved language. An invite email goes out in the inviter's language. Creating a household saves the page's language to the owner and seeds the starting categories in it.
 - **Connections** are a member's grants grouped by client. Disconnecting deletes the grants and their tokens.
-- **State** (clients, grants, sessions, codes, tokens) lives in `oauth_models`, and sign-in codes in `sign_in_codes`, hashed. Neither belongs to a household, so neither has row-level security. The scheduler deletes expired rows from both. `SECURITY DEFINER` functions find a user or an open invite by email and a user's household before the household is known.
+- **State** (clients, grants, sessions, codes, tokens) lives in `oauth_models`, sign-in codes in `sign_in_codes`, hashed, and code requests in `sign_in_requests`. None belongs to a household, so none has row-level security. The scheduler deletes expired rows, and requests older than an hour. `SECURITY DEFINER` functions find a user or an open invite by email and a user's household before the household is known.
 
 ## 6. Stack and Deployment
 
