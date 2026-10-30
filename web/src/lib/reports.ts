@@ -81,6 +81,11 @@ export function merchantBars(cur: Row[], prev: Row[], top = 5): Bar[] {
   return [...shown, ...(rest || restPrev ? [{ key: OTHER, label: OTHER, amount: rest / 100, prev: restPrev / 100, sub: false }] : [])]
 }
 
+// The bars drawn: only what had spending this period. A drop to nothing still shows in biggestChange and the table.
+export function withSpending(bars: Bar[]): Bar[] {
+  return bars.filter((b) => b.amount > 0)
+}
+
 // The top-level bar that moved most, leaving out the catch-alls.
 export function biggestChange(bars: Bar[]): Bar | null {
   const candidates = bars.filter((b) => !b.sub && b.key !== NOBODY && b.key !== OTHER && b.amount !== b.prev)

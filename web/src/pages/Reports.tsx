@@ -3,7 +3,7 @@ import { NavLink, useSearchParams } from 'react-router'
 import { api } from '../api.js'
 import { periodRange, type Period } from '../lib/filters.js'
 import { formatMoney } from '../lib/money.js'
-import { biggestChange, categoryBars, merchantBars, NOBODY, onTrack, OTHER, peopleBars, previousRange, topLevelTotal, trend, type Bar, type Row } from '../lib/reports.js'
+import { biggestChange, categoryBars, merchantBars, NOBODY, onTrack, OTHER, peopleBars, previousRange, topLevelTotal, trend, withSpending, type Bar, type Row } from '../lib/reports.js'
 import { useLoad, useSession } from '../session.js'
 import { t } from '../i18n.js'
 
@@ -115,8 +115,8 @@ export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
         <div className="card-section folder-body">
           {breakdown.error && <p className="error">{breakdown.error}</p>}
           {change && <p className="small"><span className="muted">{t('Biggest change:')}</span> <strong>{change.label} {change.amount >= change.prev ? '+' : '−'}{money(Math.abs(change.amount - change.prev))}</strong></p>}
-          {breakdown.data && bars.length === 0 && <p className="muted">{t('Nothing logged in this period.')}</p>}
-          <Bars bars={bars} money={money} />
+          {breakdown.data && withSpending(bars).length === 0 && <p className="muted">{t('Nothing logged in this period.')}</p>}
+          <Bars bars={withSpending(bars)} money={money} />
           <div className="totalline">
             <span><strong>{t('Total')}</strong> <span className="small muted">· {t(diff <= 0 ? '{amount} less than {range}' : '{amount} more than {range}', { amount: money(Math.abs(diff)), range: dayRange(prev.from, prev.to) })}</span></span>
             <strong className="num">{money(total)}</strong>

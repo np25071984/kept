@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { biggestChange, categoryBars, merchantBars, onTrack, peopleBars, previousRange, trend } from '../../web/src/lib/reports.js'
+import { biggestChange, categoryBars, merchantBars, onTrack, peopleBars, previousRange, trend, withSpending } from '../../web/src/lib/reports.js'
 
 describe('reports', () => {
   it('compares with the same days of the previous period', () => {
@@ -28,5 +28,11 @@ describe('reports', () => {
 
   it('projects the running month', () => {
     expect(onTrack(2900, '2026-10-29')).toBe(3100)
+  })
+
+  it('draws only what had spending this period, and still names a drop to nothing as the biggest change', () => {
+    const bars = categoryBars([{ key: 'Groceries', amount: 600 }], [{ key: 'Groceries', amount: 550 }, { key: 'Clothing', amount: 233 }])
+    expect(withSpending(bars).map((b) => b.key)).toEqual(['Groceries'])
+    expect(biggestChange(bars)?.key).toBe('Clothing')
   })
 })
