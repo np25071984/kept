@@ -510,3 +510,17 @@ Every member signs in with their own account. The header holds the pages for loo
 The web UI, the sign-in pages and Kept's emails are in English or Russian. Language is personal: it starts from the browser's, and a menu in every page header switches it, signed in or not, so partners can each read Kept in their own. Dates and amounts follow the language. What the household typed (categories, people & things, notes) stays as typed, and the starting categories are created in the owner's language. The agent answers in whatever language the user writes in.
 
 Every page uses the same palette in light and dark, and stays usable at phone width. An icon replaces a word only for actions everyone recognises: the bell, search, menus, close and remove, edit, delete, add, pause and resume, and the recurring mark. A row's actions are all icons or all words, never mixed, and every icon-only button has a label and a tooltip. Primary actions, answers and anything with consequences keep their words: Save, Yes, merge, Revoke, Make it recurring. Charts use one data colour, mark the previous period as a muted tick, and show watched-group [coverage](#coverage) beside the amount. Signed out, `/` explains what Kept is (no new AI and no new app: the assistant you already use, on the go), what happens to the data and which assistants it works with, beside a phone-sized chat that plays a purchase told in text or voice, a bank screenshot, a receipt photo and an order the assistant finds in email, in turn; with reduced motion it shows the picked conversation finished. A sample household's monthly chart shows what the reports look like, in the visitor's language and theme. A visitor already signed in goes straight to My purchases.
+
+## 5. Open Source and Hosting
+
+Kept is open source under the AGPL-3.0. Anyone may run it on their own server for free, with every feature; `DEVELOPMENT.md` has the steps. Households that would rather not run a server use the hosted Kept at kept-ledger.com.
+
+| Plan          | Price                          | What it includes                                                  |
+| ------------- | ------------------------------ | ----------------------------------------------------------------- |
+| Self-hosted   | Free                           | Everything. The household runs the server, backups and upgrades.  |
+| Hosted        | $2 a month per household       | Everything, for every member. Kept runs the server, backups and upgrades. |
+
+- **Trial.** A new household gets 30 days free. Charging switches on once for the whole service, when the hosted Kept has about 100 active households; until then hosting is free for everyone, and every existing household starts its 30 days on the day it switches on.
+- **Active household.** One that logged a purchase in at least 3 of the last 4 weeks, with its first purchase more than 4 weeks ago. Weeks, not days, so a household whose assistant logs a week of statement charges in one sitting counts.
+- **Lapsed.** When a trial or subscription ends unpaid, the household turns read-only: every member can still read and export its data, and assistants cannot log new purchases until it pays. Nothing is deleted.
+- **No paid features.** Hosted and self-hosted run the same code; the price pays for running it.

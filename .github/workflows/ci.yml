@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # The compose database runs db/init, which creates the kept_app role and the kept_test database.
+      - run: docker compose up -d
+      - run: until docker compose exec -T postgres pg_isready -h localhost -U kept; do sleep 1; done
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
