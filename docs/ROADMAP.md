@@ -22,6 +22,8 @@ Real use, across assistants.
 ## Later
 
 - [ ] A privacy policy, linked from the landing page and the sign-in pages. Before sign-up opens to other households.
+- [ ] Tips on getting more from an assistant (`VISION.md` §3.4, "Showing members what their assistant can do"): `get_playbook` returns how the member logged in the last 30 days by source; playbook lines for one contextual tip a conversation, remembered once given or declined; the Tips page in the user menu with steps per assistant, kept in step with what Phase 3 records about each; a tips email picked by how the member has logged.
+- [ ] A fourth conversation in the landing page's chat: logging this week's orders from email.
 - [ ] Siri through App Intents in a native iOS app (`VISION.md` §4.B, "Other clients"). Not before Phase 3's gate.
 
 ## Nice to have

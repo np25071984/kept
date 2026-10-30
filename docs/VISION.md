@@ -283,6 +283,16 @@ Utility and phone bills are usually for a specific home or car. A note can name 
 
 Every transaction belongs to the member who logged it: `spent_by` comes from their login. On a joint account's statement, the agent logs only the caller's own purchases. When the statement shows which card made each charge, it leaves the other members' charges to them: "4 of these are on Alex's card, so I've left them for Alex." When it can't tell, it asks.
 
+#### Showing members what their assistant can do
+
+Most people type every purchase, not knowing their assistant can read their email, a screenshot of their banking app or a statement. Kept records how each purchase arrived, so it knows who would gain from which source, and teaches them in three places:
+
+- **In the conversation, when it would have helped.** `get_playbook` returns how the member logged lately, by source. After a typed Amazon order the agent offers: "If you connect your email to me, I can pick up order confirmations myself." After a week of typed card purchases: "You can also send me a screenshot of your banking app or a statement." At most one tip a conversation; a tip given or declined isn't repeated.
+- **On the web,** a Tips page gathers every one, with the steps for each assistant.
+- **By email,** a few tips picked by how the member has logged so far, with a link to the Tips page.
+
+Two limits hold everywhere. A tip names only what the member's assistant can do (see [Supported Assistants](#supported-assistants)). And no tip asks for bank passwords: the bank is reached through a screenshot or a downloaded statement, email through the assistant maker's own connector.
+
 ### 3.5 Repeating Spending: Phone, Rent, Subscriptions
 
 Any transaction can be set to **repeat**. The ledger then creates a copy on schedule, with the same amount, merchant, line items, cost centers and privacy, and the agent announces it. "Repeat" is Kept's internal term; users see "recurring", and the agent says "your recurring phone bill".
@@ -494,6 +504,7 @@ Every member signs in with their own account. The header holds the pages for loo
 | **Reports**            | Two reports, picked from the header. Mine: the member's own spending, private purchases included, with the caps past 80%. Household: every member's non-private purchases, never by member. Each starts with this month and the per-month trend, then breaks a chosen period down by category, by people & things and by merchant, in tabs. |
 | **Notifications**      | Behind the bell: Kept's open questions, with their answers as buttons (see [The AI Integration Layer](#b-the-ai-integration-layer)). The bell's count is the number unanswered. A member with no assistant connected is asked to connect one, here and in place of an empty My purchases, until they do. |
 | **Preferences**        | In the user menu: the member's watched groups, with this month's amount and coverage, and caps, with their progress. |
+| **Tips**               | In the user menu: what the member's assistant can read besides what they type (email, banking app screenshots, statements, receipt photos), with the steps for each assistant ([§3.4](#showing-members-what-their-assistant-can-do)). |
 | **Settings**           | In the user menu, in tabs. Profile. Household, one page: its name, currency and time zone, then members (owners invite and remove them), people & things, and categories. Assistants & keys: connect an assistant over MCP and manage API keys. Assistant notes: the member's notes. |
 
 The web UI, the sign-in pages and Kept's emails are in English or Russian. Language is personal: it starts from the browser's, and a menu in every page header switches it, signed in or not, so partners can each read Kept in their own. Dates and amounts follow the language. What the household typed (categories, people & things, notes) stays as typed, and the starting categories are created in the owner's language. The agent answers in whatever language the user writes in.
