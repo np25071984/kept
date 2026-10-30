@@ -1,9 +1,10 @@
-import { locale } from '../i18n.js'
+import { RotateCw, X } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { api } from '../api.js'
+import { locale, t } from '../i18n.js'
+import { IconButton } from '../IconButton.js'
 import type { Invite, Member } from '../lib/types.js'
 import { useAction, useLoad, useSession } from '../session.js'
-import { t } from '../i18n.js'
 
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString(locale(), { month: 'short', day: 'numeric' })
 
@@ -60,8 +61,8 @@ function InviteRow({ invite, owner, onChanged }: { invite: Invite; owner: boolea
       <div className="grow"><span className="muted">{invite.email}</span> <span className="tag">{t('Invited {date}', { date: shortDate(invite.sent_at) })}</span></div>
       {owner && (
         <div className="row tight">
-          <button className="link" disabled={busy} onClick={() => act(async () => { await api.invite(invite.email); await api.cancelInvite(invite.id); onChanged() })}>{t('Send again')}</button>
-          <button className="link" disabled={busy} onClick={() => act(async () => { await api.cancelInvite(invite.id); onChanged() })}>{t('Cancel invite')}</button>
+          <IconButton icon={RotateCw} label={t('Send again')} disabled={busy} onClick={() => act(async () => { await api.invite(invite.email); await api.cancelInvite(invite.id); onChanged() })} />
+          <IconButton icon={X} label={t('Cancel invite')} danger disabled={busy} onClick={() => act(async () => { await api.cancelInvite(invite.id); onChanged() })} />
         </div>
       )}
       {error && <p className="error full">{error}</p>}
