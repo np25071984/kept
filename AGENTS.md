@@ -23,6 +23,7 @@ Kept teaches the user's own AI assistant to track a household's expenses: what t
 - `docs/ROADMAP.md`: remaining tasks and their order, without arguing scope.
 - `docs/DEVELOPMENT.md`: running Kept and its tests locally, deploying it, and the source layout.
 - `docs/icons/`: the app icon's master SVG and how the served copies are made.
+- `README.md`: what Kept is, for someone arriving at the repository, pointing to the documents above.
 - `AGENTS.md`: orientation and conventions only.
 
 When `VISION.md` changes a position, scan the other documents for restatements of the old position and fix each one or replace it with a pointer.

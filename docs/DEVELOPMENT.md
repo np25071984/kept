@@ -63,7 +63,7 @@ Connect an assistant to `https://KEPT_HOST/mcp`. With `RESEND_API_KEY` set in `.
 docker compose logs kept | grep -E "Sign-in code|Invite"
 ```
 
-Update with `git pull && docker compose up -d --build`.
+Update from a development machine with `deploy/deploy.sh [ssh-host]`. It deploys only the pushed `main`: it refuses uncommitted changes or a `main` that differs from `origin/main`, copies the checkout to the server (keeping the server's `deploy/.env`), records the commit in `REVISION`, rebuilds, and checks the site from the server. In Claude Code, the project skill `deploy` (`.claude/skills/deploy`) runs the typecheck and tests first, then the script.
 
 ## Layout
 
@@ -76,4 +76,4 @@ Update with `git pull && docker compose up -d --build`.
 - `src/db`: the Kysely connection, the schema types and migrations.
 - `web`: the web UI, a React app; `web/src/lib` holds its pure functions, unit-tested in `test/unit/web.test.ts`.
 - `src/cli`: `migrate`, `create-household`, `create-client` and `openapi`.
-- `deploy`: the production compose file, the Caddyfile and the database role script.
+- `deploy`: the production compose file, the Caddyfile, the database role script and `deploy.sh`.
