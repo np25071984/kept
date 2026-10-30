@@ -12,7 +12,8 @@ export function Header({ onSignOut }: { onSignOut: () => void }) {
   return (
     <header className="topbar">
       <div className="topbar-inner">
-        <span className="brand"><img src="/app/icon.svg" width="22" height="22" alt="" />Kept</span>
+        {/* Outside the app's routes, so a plain link: / sends a signed-in browser back to My purchases. */}
+        <a className="brand" href="/"><img src="/app/icon.svg" width="22" height="22" alt="" />Kept</a>
         <nav>
           <NavLink to="/purchases">{t('My purchases')}</NavLink>
           <NavLink to="/recurring">{t('Recurring')}</NavLink>
