@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import { LANDING_CSP, landingPage } from '../../src/http/landing.js'
-import { landingChart, sampleMonths } from '../../src/http/landingChart.js'
+import { landingChart, sampleDay, sampleMonths } from '../../src/http/landingChart.js'
 import { chatData, conversations } from '../../src/http/landingChat.js'
 
 describe('landing page', () => {
@@ -49,6 +49,14 @@ describe('landing chart', () => {
     expect(months.at(-1)).toEqual({ month: '2026-11', amount: soFar })
     expect(soFar).toBe(Math.round((1552.27 * 15) / 30 * 100) / 100)
     expect(before).toBe(Math.round((1688.51 * 15) / 31 * 100) / 100)
+  })
+
+  it('draws the first days of a month as the 10th', () => {
+    expect(sampleDay('2026-11-01')).toBe('2026-11-10')
+    expect(sampleDay('2026-11-09')).toBe('2026-11-10')
+    expect(sampleDay('2026-11-10')).toBe('2026-11-10')
+    expect(sampleDay('2026-11-30')).toBe('2026-11-30')
+    expect(landingChart('en', '2026-11-01')).toMatch(/Oct 1\s–\s10/)
   })
 
   it('compares with the same days of a shorter month before', () => {

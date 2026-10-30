@@ -26,7 +26,13 @@ export function sampleMonths(today: string): { months: { month: string; amount: 
   return { months, average, soFar, before }
 }
 
-export function landingChart(lang: Language, today: string): string {
+// The day the sample is drawn for: never before the 10th, so the running month's bar is no sliver early in the month.
+export function sampleDay(today: string): string {
+  return Number(today.slice(8, 10)) < 10 ? `${today.slice(0, 8)}10` : today
+}
+
+export function landingChart(lang: Language, date: string): string {
+  const today = sampleDay(date)
   const t = (text: string, vars?: Record<string, string>) => escape(tr(lang, text, vars))
   const locale = lang === 'ru' ? 'ru-RU' : 'en-US'
   const money = (n: number) => new Intl.NumberFormat(locale, { style: 'currency', currency: CURRENCY }).format(n)
