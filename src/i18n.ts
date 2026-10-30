@@ -32,6 +32,8 @@ const RU: Record<string, string> = {
   Currency: 'Валюта',
   'Time zone': 'Часовой пояс',
   'Search time zones': 'Поиск часового пояса',
+  'Search currencies': 'Поиск валюты',
+  'No currency matches "{query}"': 'Нет валюты по запросу «{query}»',
   'No time zone matches "{query}"': 'Нет часового пояса по запросу «{query}»',
   'Currency can change until the first purchase.': 'Валюту можно изменить до первой покупки.',
   'Create household': 'Создать семью',

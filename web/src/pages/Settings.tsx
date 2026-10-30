@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Outlet } from 'react-router'
 import { api } from '../api.js'
-import { TimeZoneField } from '../TimeZoneField.js'
+import { CurrencyField, TimeZoneField } from '../PickerFields.js'
 import { Tabs } from '../Header.js'
 import { useAction, useSession } from '../session.js'
 import { t } from '../i18n.js'
@@ -87,12 +87,10 @@ export function GeneralPage() {
     <form className="section form" onSubmit={save}>
       {!owner && <p className="muted small">{t('Only an owner can change these.')}</p>}
       <label>{t('Household name')}<input value={form.name} disabled={!owner} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></label>
-      <label>{t('Currency')}
-        <select value={form.currency} disabled={!owner || setup.household.currency_locked} onChange={(e) => setForm({ ...form, currency: e.target.value })}>
-          {currencies().map((code) => <option key={code} value={code}>{code}</option>)}
-        </select>
+      <div className="field">{t('Currency')}
+        <CurrencyField value={form.currency} disabled={!owner || setup.household.currency_locked} onChange={(currency) => setForm({ ...form, currency })} />
         <span className="small muted">{t(setup.household.currency_locked ? 'Fixed after the first purchase.' : 'Can change until the first purchase.')}</span>
-      </label>
+      </div>
       <div className="field">{t('Time zone')}
         <TimeZoneField value={form.timezone} disabled={!owner} onChange={(timezone) => setForm({ ...form, timezone })} />
         <span className="small muted">{t('"Today", recurring bills and monthly totals follow it, for everyone in the household.')}</span>
@@ -108,4 +106,3 @@ export function GeneralPage() {
   )
 }
 
-const currencies = () => Intl.supportedValuesOf('currency')

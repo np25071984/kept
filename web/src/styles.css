@@ -129,6 +129,7 @@ code { font-size: 13px; }
 .picker-panel li.selected { color: var(--accent); font-weight: 600; }
 .picker .off { font-variant-numeric: tabular-nums; color: var(--muted); min-width: 92px; }
 .picker-trigger .off { min-width: 0; }
+.picker-currency .off { min-width: 44px; }
 .picker li.selected .off { color: inherit; }
 .search-field { position: relative; display: block; }
 .search-field svg { position: absolute; left: 10px; top: 50%; margin-top: -8px; color: var(--muted); pointer-events: none; }

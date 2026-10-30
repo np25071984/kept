@@ -1,19 +1,33 @@
-import { locale } from './i18n.js'
 import { ChevronDown, Search } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
-import { searchZones, zoneOptions } from './lib/timezones.js'
-import { t } from './i18n.js'
 
-// A searchable time zone picker: grouped by region, sorted by today's
-// offset, typed to filter; ↑/↓ and Enter pick, Escape closes. Shows the time there, so a wrong pick shows at once.
-export function TimeZoneField({ value, disabled, onChange }: { value: string; disabled?: boolean; onChange: (zone: string) => void }) {
-  const options = useMemo(() => zoneOptions(Intl.supportedValuesOf('timeZone'), new Date()), [])
+export interface PickerOption {
+  id: string
+  // Shown muted before the label: a zone's offset, a currency's code.
+  note: string
+  label: string
+  group?: string
+}
+
+// A dropdown you can type into (VISION.md §4.C): the options grouped under headings, filtered as you type;
+// ↑/↓ and Enter pick, Escape closes.
+export function SearchPicker({ kind, options, search, value, disabled, placeholder, empty, onChange }: {
+  // Names the picker for styling: a zone's offset needs a wider note column than a currency's code.
+  kind: string
+  options: PickerOption[]
+  search: (query: string) => PickerOption[]
+  value: string
+  disabled?: boolean
+  placeholder: string
+  empty: (query: string) => string
+  onChange: (id: string) => void
+}) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)
   const root = useRef<HTMLDivElement>(null)
   const list = useRef<HTMLUListElement>(null)
-  const shown = useMemo(() => searchZones(options, query), [options, query])
+  const shown = useMemo(() => search(query), [search, query])
   const selected = options.find((o) => o.id === value)
 
   useEffect(() => {
@@ -44,35 +58,33 @@ export function TimeZoneField({ value, disabled, onChange }: { value: string; di
     else return
     e.preventDefault()
   }
-  const time = new Intl.DateTimeFormat(locale(), { timeZone: value, hour: 'numeric', minute: '2-digit' }).format(new Date())
 
-  let region = ''
+  let group: string | undefined = ''
   return (
-    <div className="picker" ref={root}>
+    <div className={`picker picker-${kind}`} ref={root}>
       <button type="button" className="picker-trigger" disabled={disabled} aria-haspopup="listbox" aria-expanded={open} onClick={() => (open ? setOpen(false) : openPicker())}>
-        <span className="off">{selected?.label.split(') ')[0]})</span> {selected?.place ?? value}
-        <span className="detail">{selected?.region}</span>
+        <span className="off">{selected?.note}</span> {selected?.label ?? value}
+        <span className="detail">{selected?.group}</span>
         <ChevronDown size={14} aria-hidden="true" />
       </button>
-      <span className="small muted">{t("It's {time} there.", { time })}</span>
       {open && (
         <div className="picker-panel">
           <span className="search-field">
             <Search size={16} aria-hidden="true" />
-            <input autoFocus type="search" placeholder={t('Search time zones')} aria-label={t('Search time zones')} value={query} onChange={(e) => { setQuery(e.target.value); setActive(0) }} onKeyDown={onKey} />
+            <input autoFocus type="search" placeholder={placeholder} aria-label={placeholder} value={query} onChange={(e) => { setQuery(e.target.value); setActive(0) }} onKeyDown={onKey} />
           </span>
-          <ul ref={list} role="listbox" aria-label={t('Time zones')}>
+          <ul ref={list} role="listbox" aria-label={placeholder}>
             {shown.map((o, i) => {
-              const heading = o.region !== region ? (region = o.region) : null
+              const heading = o.group && o.group !== group ? (group = o.group) : null
               return [
-                heading && <li key={`r-${heading}`} className="region" role="presentation">{heading}</li>,
+                heading && <li key={`g-${heading}`} className="region" role="presentation">{heading}</li>,
                 <li key={o.id} data-index={i} role="option" aria-selected={o.id === value} className={`${i === active ? 'active' : ''}${o.id === value ? ' selected' : ''}`}
                   onPointerMove={() => setActive(i)} onPointerDown={(e) => e.preventDefault()} onClick={() => pick(o.id)}>
-                  <span className="off">{o.label.split(') ')[0]})</span>{o.place}
+                  <span className="off">{o.note}</span>{o.label}
                 </li>,
               ]
             })}
-            {shown.length === 0 && <li className="region" role="presentation">{t('No time zone matches "{query}"', { query })}</li>}
+            {shown.length === 0 && <li className="region" role="presentation">{empty(query)}</li>}
           </ul>
         </div>
       )}

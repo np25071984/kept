@@ -1,8 +1,9 @@
 import type { Language } from '../domain/language.js'
+import { currencyOptions } from '../domain/currencies.js'
 import { zoneOptions } from '../domain/timezones.js'
 import { tr } from '../i18n.js'
 import { siteHeader } from '../http/siteHeader.js'
-import { ZONE_PICKER_SCRIPT, ZONE_PICKER_STYLE } from './zonePicker.js'
+import { SELECT_PICKER_SCRIPT, SELECT_PICKER_STYLE } from './selectPicker.js'
 
 // The sign-in and consent pages an assistant opens when a member connects Kept. Plain server-rendered HTML.
 
@@ -36,7 +37,7 @@ function layout(lang: Language, title: string, body: string): string {
   .signin .error { color: var(--danger); }
   .hint { font-size: 13px; color: var(--muted); margin: 4px 0 12px; }
   @media (max-width: 480px) { main { padding: 16px 8px 40px; } .signin { padding: 22px 16px; } }
-${ZONE_PICKER_STYLE}
+${SELECT_PICKER_STYLE}
 </style>
 </head>
 <body>
@@ -101,9 +102,11 @@ ${cancel(lang, uid)}`)
 // After the code, for an email with no account and no invite.
 export function createPage(lang: Language, uid: string, email: string, error?: string): string {
   const preferred = lang === 'ru' ? 'RUB' : 'USD'
-  const currencies = Intl.supportedValuesOf('currency').map((code) => `<option value="${code}"${code === preferred ? ' selected' : ''}>${code}</option>`).join('')
+  const names = new Intl.DisplayNames(lang, { type: 'currency' })
+  const currencies = currencyOptions(Intl.supportedValuesOf('currency'), (code) => names.of(code))
+    .map((o) => `<option value="${o.id}" data-note="${o.id}"${o.id === preferred ? ' selected' : ''}>${escape(o.name)}</option>`).join('')
   const groups = new Map<string, string[]>()
-  for (const o of zoneOptions(Intl.supportedValuesOf('timeZone'), new Date())) groups.set(o.region, [...(groups.get(o.region) ?? []), `<option value="${escape(o.id)}">${escape(o.label)}</option>`])
+  for (const o of zoneOptions(Intl.supportedValuesOf('timeZone'), new Date())) groups.set(o.region, [...(groups.get(o.region) ?? []), `<option value="${escape(o.id)}" data-note="${escape(o.label.slice(0, o.label.indexOf(') ') + 1))}">${escape(o.place)}</option>`])
   const zones = [...groups].map(([region, options]) => `<optgroup label="${escape(region)}">${options.join('')}</optgroup>`).join('')
   return layout(lang, tr(lang, 'Create your household'), `
 <h1>${tr(lang, 'Create your household')}</h1>
@@ -115,13 +118,13 @@ ${problem(lang, error)}
   <label for="name">${tr(lang, 'Your name')}</label>
   <input id="name" name="name" autocomplete="given-name" required>
   <label for="currency">${tr(lang, 'Currency')}</label>
-  <select id="currency" name="currency">${currencies}</select>
+  <select id="currency" name="currency" data-search="${escape(tr(lang, 'Search currencies'))}" data-none="${escape(tr(lang, 'No currency matches "{query}"'))}">${currencies}</select>
+  <p class="hint">${tr(lang, 'Currency can change until the first purchase.')}</p>
   <label for="timezone">${tr(lang, 'Time zone')}</label>
   <select id="timezone" name="timezone" data-search="${escape(tr(lang, 'Search time zones'))}" data-none="${escape(tr(lang, 'No time zone matches "{query}"'))}">${zones}</select>
-  <p class="hint">${tr(lang, 'Currency can change until the first purchase.')}</p>
   <button type="submit">${tr(lang, 'Create household')}</button>
 </form>
-<script>${ZONE_PICKER_SCRIPT}</script>
+<script>${SELECT_PICKER_SCRIPT}</script>
 ${cancel(lang, uid)}`)
 }
 

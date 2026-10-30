@@ -257,6 +257,8 @@ export const ru: Record<string, string> = {
   'Time zone': 'Часовой пояс',
   '"Today", recurring bills and monthly totals follow it, for everyone in the household.': '«Сегодня», регулярные платежи и итоги месяца считаются по нему — для всей семьи.',
   "It's {time} there.": 'Там сейчас {time}.',
+  'Search currencies': 'Поиск валюты',
+  'No currency matches "{query}"': 'Нет валюты по запросу «{query}»',
   'Search time zones': 'Поиск часового пояса',
   'Time zones': 'Часовые пояса',
   'No time zone matches "{query}"': 'Нет часового пояса «{query}»',
