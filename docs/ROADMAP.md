@@ -23,3 +23,7 @@ Real use, across assistants.
 
 - [ ] A privacy policy, linked from the landing page and the sign-in pages. Before sign-up opens to other households.
 - [ ] Siri through App Intents in a native iOS app (`VISION.md` §4.B, "Other clients"). Not before Phase 3's gate.
+
+## Nice to have
+
+- [ ] Charts in chat: a `get_chart` tool that draws a report chart as an image on the server, in the web UI's style, language and theme, from the summary endpoint. Where an assistant doesn't show the image, a short-lived view-only link to it, totals only; the assistant always says the key numbers too. First, a test tool returning a fixed PNG, to see which of Claude, ChatGPT and Gemini show images from tool results.
