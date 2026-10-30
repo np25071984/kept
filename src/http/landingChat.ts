@@ -1,8 +1,8 @@
 import type { Language } from '../domain/language.js'
 import { tr } from '../i18n.js'
 
-// The landing page's animated chat (VISION.md §4.C): three conversations take turns, the way people log with Kept.
-// The user's text types into the input; the assistant shows a typing indicator before each reply. With reduced
+// The landing page's animated chat (VISION.md §4.C): four conversations take turns, the way people log with Kept.
+// The user's text types into the input, or a voice note records; the assistant shows a typing indicator before each reply. With reduced
 // motion, a picked conversation shows finished. It pauses while the phone is off screen.
 // Each reply follows the playbook: best guess, confirm, one-line result.
 
@@ -18,6 +18,8 @@ export interface ChatMessage {
   text: string
   time: string
   attach?: Shot
+  // A voice note's length, e.g. "0:07"; the text is its transcript.
+  voice?: string
 }
 
 export interface Conversation {
@@ -77,6 +79,15 @@ export function conversations(lang: Language): Conversation[] {
         { who: 'ai', time: '18:06', text: t('Logged $86.40 at Whole Foods, with $18.99 of alcohol and $7.48 of snacks.') },
       ],
     },
+    {
+      label: t('Email'),
+      messages: [
+        { who: 'user', time: '20:12', voice: '0:07', text: t('On Saturday I ordered a set of tea; it was delivered today. Go to my email, find the details and log this spending') },
+        { who: 'ai', time: '20:12', text: t('Found your TeaSupply order from October 25: $69.79. Log it to Groceries?') },
+        { who: 'user', time: '20:13', voice: '0:01', text: t('Yes') },
+        { who: 'ai', time: '20:13', text: t('Logged $69.79 at TeaSupply.') },
+      ],
+    },
   ]
 }
 
@@ -125,10 +136,21 @@ export const CHAT_SCRIPT = `(() => {
     }
     return box
   }
+  // A voice note: play button, waveform and length, with the transcript under it.
+  const WAVE = [6, 10, 16, 9, 14, 20, 12, 7, 15, 18, 11, 6, 13, 19, 16, 9, 12, 17, 8, 14, 10, 6, 11, 15, 9, 5]
+  const note = (length) => {
+    const row = el('div', 'voice')
+    const wave = el('span', 'wave')
+    const bars = Math.max(8, Math.min(WAVE.length, 6 + 3 * Number(length.split(':')[1])))
+    for (const h of WAVE.slice(0, bars)) { const bar = el('span'); bar.style.height = h + 'px'; wave.append(bar) }
+    row.append(el('span', 'play'), wave, el('span', 'len', length))
+    return row
+  }
   const bubble = (m) => {
     const b = el('div', 'bubble ' + m.who)
     if (m.attach) b.append(shot(m.attach))
-    b.append(el('div', 'text', m.text), el('span', 'time', m.time))
+    if (m.voice) b.append(note(m.voice))
+    b.append(el('div', m.voice ? 'text transcript' : 'text', m.text), el('span', 'time', m.time))
     return b
   }
   const open = (i) => {
@@ -139,7 +161,16 @@ export const CHAT_SCRIPT = `(() => {
     open(i)
     for (const m of data.conversations[i].messages) {
       await wait(m.who === 'user' ? 900 : 500, id)
-      if (m.who === 'user' && !m.attach) {
+      if (m.who === 'user' && m.voice) {
+        input.classList.add('recording')
+        const seconds = Number(m.voice.split(':')[1])
+        for (let s = 0; s <= seconds; s++) {
+          input.textContent = '● 0:0' + s
+          await wait(seconds > 2 ? 280 : 500, id)
+        }
+        input.textContent = placeholder
+        input.classList.remove('recording')
+      } else if (m.who === 'user' && !m.attach) {
         input.classList.add('typed')
         for (let n = 1; n <= m.text.length; n++) {
           input.textContent = m.text.slice(0, n)
@@ -164,7 +195,7 @@ export const CHAT_SCRIPT = `(() => {
   const start = (i) => {
     const id = ++run
     input.textContent = placeholder
-    input.classList.remove('typed')
+    input.classList.remove('typed', 'recording')
     if (!still) return play(i, id).catch(() => {})
     open(i)
     for (const m of data.conversations[i].messages) chat.append(bubble(m))
@@ -194,6 +225,14 @@ export const CHAT_STYLE = `
 .chat .bubble { animation: rise 0.25s ease-out; }
 @media (prefers-reduced-motion: reduce) { .chat .bubble { animation: none; } }
 .shot { margin: -2px -4px 6px; padding: 8px 9px; border-radius: 9px; font: 10px/1.45 ui-monospace, monospace; display: grid; gap: 1px; }
+.voice { display: flex; align-items: center; gap: 8px; margin: 1px 0 4px; }
+.voice .play { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); position: relative; flex-shrink: 0; }
+.voice .play::after { content: ""; position: absolute; left: 10px; top: 7px; border-style: solid; border-width: 6px 0 6px 9px; border-color: transparent transparent transparent var(--accent-fg); }
+.voice .wave { display: flex; align-items: center; gap: 2px; height: 22px; }
+.voice .wave span { width: 3px; border-radius: 2px; background: var(--accent); opacity: 0.75; }
+.voice .len { font-size: 11px; color: var(--muted); }
+.bubble .transcript { font-size: 13px; color: var(--muted); }
+.phone-input span.recording { color: #d64545; }
 .shot-row { display: flex; gap: 8px; }
 .shot-row span:nth-child(2) { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .shot-row span:last-child { text-align: right; }
