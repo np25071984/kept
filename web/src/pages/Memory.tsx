@@ -1,5 +1,5 @@
 import { locale } from '../i18n.js'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '../api.js'
 import { formatMoney } from '../lib/money.js'
@@ -20,7 +20,7 @@ export function WatchingSection() {
     <section className="section">
       <div className="section-head">
         <h2>{t('Watching')}</h2>
-        {!adding && <button onClick={() => setAdding(true)}>{t('Watch something')}</button>}
+        {!adding && <IconButton icon={Plus} label={t('Watch something')} onClick={() => setAdding(true)} />}
       </div>
       <p className="muted small">{t('Your assistant asks about these where they\'re bought.')}</p>
       {watches.error && <p className="error">{watches.error}</p>}
@@ -54,7 +54,7 @@ function WatchRow({ watch, found, onChanged }: { watch: Watch; found?: { total: 
         )}
         {error && <p className="error">{error}</p>}
       </div>
-      <button className="link" disabled={busy} onClick={() => act(async () => { await api.stopWatching(watch.id); onChanged() })}>{t('Stop watching')}</button>
+      <IconButton icon={X} label={t('Stop watching')} danger disabled={busy} onClick={() => act(async () => { await api.stopWatching(watch.id); onChanged() })} />
     </li>
   )
 }
@@ -94,7 +94,7 @@ export function NotesSection() {
     <section className="section">
       <div className="section-head">
         <h2>{t('Assistant notes')}</h2>
-        {!adding && <button onClick={() => setAdding(true)}>{t('Add a note')}</button>}
+        {!adding && <IconButton icon={Plus} label={t('Add a note')} onClick={() => setAdding(true)} />}
       </div>
       <p className="muted small">{t('What your assistants remember about your spending, in your words. They read every note before asking anything.')}</p>
       {notes.error && <p className="error">{notes.error}</p>}
