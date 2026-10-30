@@ -49,11 +49,14 @@ export async function createHousehold(ownerDb: Db, input: { name: string; curren
   })
 }
 
+type CallerRow = { user_id: string; household_id: string; name: string; role: string; timezone: string; currency: string }
+const toCaller = (row: CallerRow | undefined): Caller | null =>
+  row ? { user_id: row.user_id, household_id: row.household_id, name: row.name, role: row.role as Caller['role'], timezone: row.timezone, currency: row.currency } : null
+
+// One query per request: the key check returns the caller (IMPLEMENTATION.md §4).
 export async function authenticate(db: Db, key: string): Promise<Caller | null> {
   if (!key.startsWith(API_KEY_PREFIX)) return null
-  const found = await sql<{ user_id: string; household_id: string }>`select * from kept_authenticate(${hashSecret(key)})`.execute(db)
-  const row = found.rows[0]
-  return row ? callerFor(db, row.user_id, row.household_id) : null
+  return toCaller((await sql<CallerRow>`select * from kept_authenticate(${hashSecret(key)})`.execute(db)).rows[0])
 }
 
 // A household created at sign-in by a verified email with no account and no invite (VISION.md §3.6, "One way in").
@@ -76,19 +79,9 @@ export async function createHouseholdForEmail(db: Db, input: { name: string; cur
 }
 
 // The caller for a user whose household is known, e.g. from an OAuth2 access token.
-export async function callerFor(db: Db, userId: string, householdId?: string): Promise<Caller | null> {
-  const household = householdId ?? (await sql<{ household_id: string | null }>`select kept_user_household(${userId}) as household_id`.execute(db)).rows[0]?.household_id
-  if (!household) return null
-  return inHousehold(db, household, async (tx) => {
-    const user = await tx
-      .selectFrom('users')
-      .innerJoin('households', 'households.id', 'users.household_id')
-      .select(['users.id', 'users.name', 'users.role', 'households.timezone', 'households.currency'])
-      .where('users.id', '=', userId)
-      .executeTakeFirst()
-    if (!user) return null
-    return { user_id: user.id, household_id: household, role: user.role, name: user.name, timezone: user.timezone, currency: user.currency }
-  })
+// The caller behind an OAuth access token, which names the user.
+export async function callerFor(db: Db, userId: string): Promise<Caller | null> {
+  return toCaller((await sql<CallerRow>`select * from kept_user_caller(${userId})`.execute(db)).rows[0])
 }
 
 // Setup state for the first conversation (VISION.md §3.6).

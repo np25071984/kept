@@ -6,6 +6,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { buildApp, type App } from '../../src/http/app.js'
+import { pruneExpired } from '../../src/oauth/prune.js'
 import { client, newHousehold, startHarness, type Harness } from './helpers.js'
 
 // The flow an assistant runs when a member adds Kept as a connector (IMPLEMENTATION.md §5, §6).
@@ -197,6 +198,30 @@ describe('OAuth2 for MCP clients', () => {
     expect(owner.language).toBe('ru')
     const categories = await h.owner.selectFrom('categories').select('path').where('household_id', '=', owner.household_id).execute()
     expect(categories.map((c) => c.path)).toContain('Продукты')
+  })
+
+  it('deletes expired sign-in state and keeps what is still live', async () => {
+    const past = new Date(Date.now() - 60_000)
+    const future = new Date(Date.now() + 3_600_000)
+    await h.owner.insertInto('oauth_models').values([
+      { name: 'AccessToken', id: 'expired-token', payload: '{}', expires_at: past },
+      { name: 'AccessToken', id: 'live-token', payload: '{}', expires_at: future },
+    ]).execute()
+    await h.owner.insertInto('sign_in_codes').values({ interaction_uid: 'old', email: 'old@example.com', code_hash: 'x', expires_at: past }).execute()
+    expect(await pruneExpired(h.db)).toBeGreaterThanOrEqual(2)
+    const left = await h.owner.selectFrom('oauth_models').select('id').where('id', 'in', ['expired-token', 'live-token']).execute()
+    expect(left.map((r) => r.id)).toEqual(['live-token'])
+    expect(await h.owner.selectFrom('sign_in_codes').select('id').where('interaction_uid', '=', 'old').execute()).toEqual([])
+  })
+
+  it('records when a key was last used without writing on every request', async () => {
+    const lastUsed = async () => (await h.owner.selectFrom('api_keys').innerJoin('users', 'users.id', 'api_keys.user_id').select('last_used_at').where('users.email', '=', ownerEmail).where('api_keys.revoked_at', 'is', null).executeTakeFirstOrThrow()).last_used_at
+    await fetch(`${base}/api/v1/setup`, { headers: { authorization: `Bearer ${ownerKey}` } })
+    const first = await lastUsed()
+    expect(first).not.toBeNull()
+    const me = await (await fetch(`${base}/api/v1/setup`, { headers: { authorization: `Bearer ${ownerKey}` } })).json()
+    expect(me.you).toMatchObject({ email: ownerEmail, role: 'owner' })
+    expect(await lastUsed()).toEqual(first)
   })
 
   it('refuses a token that is not Kept\'s', async () => {
