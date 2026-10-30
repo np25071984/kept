@@ -1,4 +1,4 @@
-# Kept
+# <img src="docs/icons/icon-large.svg" width="40" align="center" alt=""> Kept
 
 Teach your AI assistant to track your household's spending. Tell Claude, ChatGPT or Gemini what you spent, in a sentence, a receipt photo, an order email or a bank statement, and Kept tells it what to ask, how to file the answer and what to remember. Live at [kept-ledger.com](https://kept-ledger.com).
 

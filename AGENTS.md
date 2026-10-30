@@ -22,7 +22,7 @@ Kept teaches the user's own AI assistant to track a household's expenses: what t
 - `docs/IMPLEMENTATION.md`: how Kept is built: architecture, data model, REST API, security and the MCP server. Name a file or function only as a pointer.
 - `docs/ROADMAP.md`: remaining tasks and their order, without arguing scope.
 - `docs/DEVELOPMENT.md`: running Kept and its tests locally, deploying it, and the source layout.
-- `docs/icons/`: the app icon's master SVG and how the served copies are made.
+- `docs/icons/`: the app icon's master SVG, its detailed large version, and how the served copies are made.
 - `README.md`: what Kept is, for someone arriving at the repository, pointing to the documents above.
 - `CONTRIBUTING.md`: how outside contributors work and the contributor license agreement.
 - `SECURITY.md`: how to report a vulnerability.
