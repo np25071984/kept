@@ -19,7 +19,7 @@ export const WatchBody = z.object({
 })
 
 export const QuestionParams = z.object({ id: z.string().min(3).describe('A question id from GET /api/v1/questions, e.g. "cap:…".') })
-export const AnswerBody = z.object({ answer: z.string().describe('duplicate: merge or different; cap: remove or keep; missing_charge: stop or still_paying; unused_key: revoke or keep.') })
+export const AnswerBody = z.object({ answer: z.string().describe('duplicate: merge or different; cap: remove or keep; missing_charge: stop or still_paying; unused_key: revoke or keep. keep silences a cap for its period and a key for a year.') })
 export const MissingBody = z.object({ period: Name.describe('The statement it was missing from, e.g. "October".') })
 
 const Period = z.enum(['month', 'year'])

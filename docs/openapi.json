@@ -3358,7 +3358,7 @@
     },
     "/api/v1/questions": {
       "get": {
-        "summary": "Kept's open questions for the caller, most important first: connecting an assistant, possible duplicates, caps passed, recurring charges missing from a statement, API keys unused for a year.",
+        "summary": "Kept's open questions for the caller, most important first: connecting an assistant, possible duplicates, caps passed, recurring charges missing from a statement, API keys unused for a year. Connecting is worked out on each request, open while the caller has no assistant connected and no API key, and takes no answer.",
         "tags": [
           "questions"
         ],
@@ -3925,7 +3925,7 @@
                 "properties": {
                   "answer": {
                     "type": "string",
-                    "description": "duplicate: merge or different; cap: remove or keep; missing_charge: stop or still_paying; unused_key: revoke or keep."
+                    "description": "duplicate: merge or different; cap: remove or keep; missing_charge: stop or still_paying; unused_key: revoke or keep. keep silences a cap for its period and a key for a year."
                   }
                 },
                 "required": [
@@ -4887,7 +4887,7 @@
         }
       },
       "post": {
-        "summary": "Make a transaction repeat. It is the first occurrence.",
+        "summary": "Make a transaction repeat. It is the first occurrence; 409 already_repeats if it already repeats.",
         "tags": [
           "repeats"
         ],
@@ -5588,7 +5588,7 @@
     },
     "/api/v1/expenses/summary": {
       "get": {
-        "summary": "Totals by category, cost center or item. scope=me includes the caller's private purchases; scope=household covers every member's non-private ones.",
+        "summary": "Totals by category, cost center, item or merchant. scope=me includes the caller's private purchases; scope=household covers every member's non-private ones, and folds a merchant fewer than two members bought from into \"Other merchants\".",
         "tags": [
           "summary"
         ],
@@ -6216,7 +6216,7 @@
     },
     "/api/v1/me": {
       "patch": {
-        "summary": "Change the caller's own name. Returns the setup.",
+        "summary": "Change the caller's own name or language. Returns the setup.",
         "tags": [
           "setup"
         ],
@@ -6747,7 +6747,7 @@
     },
     "/api/v1/invites": {
       "post": {
-        "summary": "Owners only. Invite a member by email; Kept sends the sign-in link.",
+        "summary": "Owners only. Invite a member by email; Kept emails them how to join and the address to add to their assistant.",
         "tags": [
           "setup"
         ],
