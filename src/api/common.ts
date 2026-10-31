@@ -27,3 +27,11 @@ export const IdParams = z.object({ id: Id })
 // without Zod's validation patterns.
 export const Timestamp = z.string().meta({ format: 'date-time', description: 'ISO 8601, UTC.' })
 export const ResponseId = z.string().meta({ format: 'uuid' })
+
+export const ErrorBody = z.object({
+  error: z.object({
+    code: z.string().describe('E.g. "unknown_category".'),
+    message: z.string(),
+    details: z.record(z.string(), z.unknown()).optional().describe('E.g. the known categories for an unknown one.'),
+  }),
+}).meta({ id: 'Error' })

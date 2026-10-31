@@ -13,7 +13,68 @@
         "description": "A per-user API key, \"kept_…\"."
       }
     },
-    "schemas": {}
+    "schemas": {
+      "ErrorInput": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "E.g. \"unknown_category\"."
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "description": "E.g. the known categories for an unknown one.",
+                "type": "object",
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "E.g. \"unknown_category\"."
+              },
+              "message": {
+                "type": "string"
+              },
+              "details": {
+                "description": "E.g. the known categories for an unknown one.",
+                "type": "object",
+                "additionalProperties": {}
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      }
+    }
   },
   "paths": {
     "/api/v1/transactions": {
@@ -880,6 +941,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       },
@@ -1193,6 +1274,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -1372,6 +1473,26 @@
                     "sources"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -1690,6 +1811,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       },
@@ -1711,8 +1852,25 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Default Response"
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -2148,6 +2306,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -2451,6 +2629,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -2489,6 +2687,26 @@
                     "categories"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -2536,6 +2754,26 @@
                     "path"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -2591,6 +2829,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       },
@@ -2611,8 +2869,25 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Default Response"
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -2655,6 +2930,26 @@
                     "cost_centers"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -2711,6 +3006,26 @@
                     "kind"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -2774,6 +3089,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       },
@@ -2794,8 +3129,25 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Default Response"
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -2850,6 +3202,26 @@
                     "watches"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -2918,6 +3290,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -2941,8 +3333,25 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Default Response"
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -3477,6 +3886,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -3519,8 +3948,25 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Default Response"
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -3584,6 +4030,26 @@
                     "text"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -3663,6 +4129,26 @@
                     "caps"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -3769,6 +4255,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -3872,6 +4378,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       },
@@ -3893,8 +4419,25 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Default Response"
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -3944,6 +4487,26 @@
                     "notes"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -4002,6 +4565,26 @@
                     "created_at"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -4077,6 +4660,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       },
@@ -4098,8 +4701,25 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Default Response"
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -4240,6 +4860,26 @@
                     "month"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -4401,6 +5041,26 @@
                     "last"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -4577,6 +5237,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       },
@@ -4598,8 +5278,25 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Default Response"
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -4691,6 +5388,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -4771,6 +5488,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -4822,6 +5559,26 @@
                     "marked"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -5008,6 +5765,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -5176,6 +5953,26 @@
                     "today"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -5393,6 +6190,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -5588,6 +6405,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -5686,6 +6523,26 @@
                     "invites"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -5824,6 +6681,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       },
@@ -5845,8 +6722,25 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Default Response"
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -5907,6 +6801,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -5930,8 +6844,25 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Default Response"
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -5989,6 +6920,26 @@
                     "api_key"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -6051,6 +7002,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       },
@@ -6103,6 +7074,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -6126,8 +7117,25 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Default Response"
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -6190,6 +7198,26 @@
                 }
               }
             }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -6212,8 +7240,25 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Default Response"
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -6272,6 +7317,26 @@
                     "client_secret"
                   ],
                   "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
