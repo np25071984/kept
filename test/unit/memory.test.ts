@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeCoverage, uniqueGroups } from '../../src/domain/coverage.js'
+import { checkedGroups, computeCoverage, groupsWithLines, isUnder, uniqueGroups } from '../../src/domain/coverage.js'
 import { watchInput } from '../../src/domain/memory.js'
 
 describe('watched groups', () => {
@@ -35,5 +35,21 @@ describe('computeCoverage', () => {
 
   it('has no share without base spending', () => {
     expect(computeCoverage({ kind: 'item', item: 'snacks' }, [])).toEqual({ group: 'snacks', total: 0, checked_share: null, estimate: null })
+  })
+})
+
+describe('checked groups', () => {
+  const watched = [{ kind: 'category' as const, path: 'Groceries/Alcohol' }, { kind: 'item' as const, item: 'snacks' }]
+
+  it('reads a subcategory as under its parent, whatever the case', () => {
+    expect(isUnder('groceries/alcohol', 'Groceries')).toBe(true)
+    expect(isUnder('Groceries', 'Groceries')).toBe(true)
+    expect(isUnder('Groceries2', 'Groceries')).toBe(false)
+  })
+
+  it('counts a group a line falls in as checked, beside the ones the user answered about', () => {
+    const lines = [{ amount: 900, category: 'Groceries/Alcohol/Wine' }, { amount: 300, category: 'Groceries', item: 'Snacks' }]
+    expect(groupsWithLines(watched, lines)).toEqual(['Groceries/Alcohol', 'snacks'])
+    expect(checkedGroups([' Groceries/Alcohol ', 'Car'], watched, [{ amount: 100, category: 'Groceries' }])).toEqual(['Groceries/Alcohol', 'Car'])
   })
 })

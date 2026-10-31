@@ -1,4 +1,5 @@
 import type { ColumnType, Generated } from 'kysely'
+import type { RepeatTemplate } from '../domain/repeats.js'
 
 // `numeric` comes back as a string and `date` as 'YYYY-MM-DD' (see db.ts).
 type Numeric = ColumnType<string, string | number, string | number>
@@ -191,14 +192,4 @@ export interface Database {
     ip: string
     created_at: Generated<Date>
   }
-}
-
-// The transaction a repeat creates, in the same shape POST /transactions accepts.
-export interface RepeatTemplate {
-  amount: number
-  merchant: string | null
-  notes: string | null
-  private: boolean
-  category: string | null
-  line_items: { amount: number; category: string; item?: string | null; notes?: string | null; spent_for?: { cost_center: string; share?: number | null }[]; is_rest?: boolean }[]
 }

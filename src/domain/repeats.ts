@@ -8,6 +8,16 @@ export interface Schedule {
   anchor: LocalDate
 }
 
+// The transaction a repeat creates, in the same shape POST /transactions accepts.
+export interface RepeatTemplate {
+  amount: number
+  merchant: string | null
+  notes: string | null
+  private: boolean
+  category: string | null
+  line_items: { amount: number; category: string; item?: string | null; notes?: string | null; spent_for?: { cost_center: string; share?: number | null }[]; is_rest?: boolean }[]
+}
+
 export interface RepeatState extends Schedule {
   next_date: LocalDate
   ends_on: LocalDate | null
@@ -43,6 +53,19 @@ export function occurrenceOnOrAfter(schedule: Schedule, date: LocalDate): LocalD
     const candidate = occurrence(schedule, k)
     if (candidate >= date) return candidate
   }
+}
+
+// The purchase is the first occurrence, so the next falls after it. An anchor later than the purchase starts the
+// schedule there, on the anchor itself.
+export function firstNextDate(schedule: Schedule, purchaseDate: LocalDate): LocalDate {
+  return occurrenceAfter(schedule, purchaseDate < schedule.anchor ? addDays(schedule.anchor, -1) : purchaseDate)
+}
+
+// The next date after a repeat is changed: a new schedule or a resume starts from today, skipping dates missed while
+// paused; anything else keeps the date it had.
+export function nextDateAfterChange(schedule: Schedule, next: LocalDate, today: LocalDate, restart: boolean): LocalDate {
+  if (!restart) return next
+  return occurrenceOnOrAfter(schedule, today > next ? today : next)
 }
 
 export interface DuePlan {

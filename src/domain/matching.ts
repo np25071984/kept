@@ -31,6 +31,8 @@ export type MatchDecision =
 
 export const MATCH_WINDOW_DAYS = 4
 const REPEAT_WINDOW_DAYS = 7
+// How far either side of a date to load candidates: the widest window any candidate can match in.
+export const CANDIDATE_WINDOW_DAYS = Math.max(MATCH_WINDOW_DAYS, REPEAT_WINDOW_DAYS)
 
 type Strength = 'clear' | 'unclear' | null
 

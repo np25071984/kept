@@ -1,10 +1,9 @@
 import { sql } from 'kysely'
 import { inHousehold, type Db, type Tx } from '../db/db.js'
-import type { RepeatTemplate } from '../db/schema.js'
-import { addDays, isLocalDate, todayIn } from '../domain/dates.js'
+import { isLocalDate, todayIn } from '../domain/dates.js'
 import { resizeLines, type Line } from '../domain/lines.js'
 import { formatAmount, fromCents, toCents } from '../domain/money.js'
-import { dueOccurrences, occurrenceAfter, occurrenceOnOrAfter, stillToCome, type Frequency, type Schedule } from '../domain/repeats.js'
+import { dueOccurrences, firstNextDate, nextDateAfterChange, stillToCome, type Frequency, type RepeatTemplate, type Schedule } from '../domain/repeats.js'
 import type { Caller } from './caller.js'
 import { conflict, invalid, notFound, unwrap } from './errors.js'
 import { getTransaction, insertTransaction } from './transactions.js'
@@ -94,7 +93,7 @@ export async function createRepeat(tx: Tx, caller: Caller, body: RepeatBody): Pr
       user_id: caller.user_id,
       template: JSON.stringify(template),
       ...schedule,
-      next_date: occurrenceAfter(schedule, source.date < schedule.anchor ? addDays(schedule.anchor, -1) : source.date),
+      next_date: firstNextDate(schedule, source.date),
       ends_on: body.ends_on ?? null,
       remaining: body.remaining ?? null,
     })
@@ -127,8 +126,7 @@ export async function updateRepeat(tx: Tx, caller: Caller, id: string, patch: Re
   const today = todayIn(caller.timezone, now)
   const rescheduled = patch.frequency !== undefined || patch.interval !== undefined || patch.anchor !== undefined
   const resumed = patch.paused === false && row.paused
-  // A resumed repeat skips the dates it missed while paused.
-  const nextDate = rescheduled || resumed ? occurrenceOnOrAfter(schedule, today > row.next_date ? today : row.next_date) : row.next_date
+  const nextDate = nextDateAfterChange(schedule, row.next_date, today, rescheduled || resumed)
   let template = row.template
   if (patch.amount !== undefined) {
     const lines: Line[] = template.line_items.map((l) => ({ ...l, amount: toCents(l.amount), is_rest: l.is_rest ?? false }))
