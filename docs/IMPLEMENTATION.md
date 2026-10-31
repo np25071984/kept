@@ -296,7 +296,7 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `other_transaction_id` | UUID | No      | For `possible_duplicate`: the purchase it may duplicate.         |
 | `repeat_id`      | UUID      | No       | For `missing_charge`: the repeat a statement lacked.             |
 | `created_at`     | Timestamp | Yes      |                                                                  |
-| `seen_at`        | Timestamp | No       | Set by `POST /api/v1/updates/seen` once the agent or web UI has shown it. |
+| `seen_at`        | Timestamp | No       | Set once the agent (`POST /api/v1/updates/take`) or web UI (`POST /api/v1/updates/seen`) has shown it. |
 | `resolved_at`    | Timestamp | No       | Set when the member answers a `possible_duplicate` or `missing_charge` question. |
 
 **Line Item Cost Centers** (join table behind `spent_for`)
@@ -376,8 +376,9 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `PATCH`  | `/api/v1/repeats/{id}`      | Change the amount, schedule or end date from the next occurrence, or pause it.                    |
 | `DELETE` | `/api/v1/repeats/{id}`      | Stop repeating. Transactions already created are kept.                                            |
 | `GET`    | `/api/v1/updates`           | What the ledger did on its own since the caller last checked: repeats registered, plus possible duplicates still to resolve. |
+| `POST`   | `/api/v1/updates/take`      | Return the unseen updates and mark them shown, in one transaction.                                |
 | `POST`   | `/api/v1/updates/seen`      | Mark updates as shown.                                                                            |
-| `GET`    | `/api/v1/setup`             | The household's setup steps and whether the caller has been introduced.                          |
+| `GET`    | `/api/v1/setup`             | The household's setup steps, whether the caller has been introduced, `start` (where the conversation begins: `first_member`, `new_member`, `resume` or `done`) and `today` in the household's time zone. |
 | `PATCH`  | `/api/v1/setup`             | Save confirmed setup answers: the household's name, currency and time zone (owners), step states, the introduction. The response's `currency_locked` says the first purchase fixed the currency. |
 | `PATCH`  | `/api/v1/me`                | Change the caller's own name or language (`en`, `ru`).                                            |
 | `GET`    | `/api/v1/members`           | The household's members and open invites.                                                         |
@@ -488,7 +489,7 @@ The MCP server is stateless Streamable HTTP at `POST /mcp`, in the same process 
 | Tool                  | REST call underneath           | Purpose                                                                   |
 | --------------------- | ------------------------------ | ------------------------------------------------------------------------- |
 | `log_transaction`     | `POST /api/v1/transactions`    | Write one or more transactions with optional line items, `spent_for` shares, `private` and a source. Returns whether each matched an existing purchase. |
-| `list_transactions`   | `GET /api/v1/transactions`     | Recent history, used to infer category, merchant, cost center and items.  |
+| `list_transactions`   | `GET /api/v1/transactions`     | Recent history, used to infer category, merchant, cost center and items. Takes several categories or cost centers. |
 | `edit_transaction`    | `PATCH /api/v1/transactions/{id}` | Change a purchase after the user confirmed, e.g. a return.             |
 | `delete_transaction`  | `DELETE /api/v1/transactions/{id}` | Delete a purchase after the user confirmed.                           |
 | `list_cost_centers`   | `GET /api/v1/cost-centers`     | Cost centers with their kind.                                             |
@@ -508,7 +509,7 @@ The MCP server is stateless Streamable HTTP at `POST /mcp`, in the same process 
 | `list_repeats`        | `GET /api/v1/repeats`          | The user's repeats with next date and amount.                             |
 | `update_repeat`       | `PATCH /api/v1/repeats/{id}`   | Change, pause or resume a repeat.                                         |
 | `stop_repeat`         | `DELETE /api/v1/repeats/{id}`  | Stop a repeat.                                                            |
-| `get_updates`         | `GET /api/v1/updates`, `POST /api/v1/updates/seen` | What happened since the user last talked to the agent; called at the start of a conversation. Marks what it returns as seen. |
+| `get_updates`         | `POST /api/v1/updates/take`    | What happened since the user last talked to the agent; called at the start of a conversation. Marks what it returns as seen. |
 | `get_summary`         | `GET /api/v1/expenses/summary` | Totals by category, cost center or item for a period, with coverage for watched groups. |
 | `add_cost_center`     | `POST /api/v1/cost-centers`    | Add a cost center the user confirmed.                                     |
 | `add_category`        | `POST /api/v1/categories`      | Add a category or subcategory the user confirmed.                         |
@@ -518,7 +519,7 @@ The MCP server is stateless Streamable HTTP at `POST /mcp`, in the same process 
 | `delete_category`     | `DELETE /api/v1/categories`    | Delete a category nothing uses, after the user confirmed.                 |
 | `update_setup`        | `PATCH /api/v1/setup`          | Save confirmed setup answers and mark steps `done` or `later`.            |
 | `invite_member`       | `POST /api/v1/invites`         | Invite a member by email, after the user confirms. Owners only.           |
-| `get_playbook`        | `GET /api/v1/notes`, `/watches`, `/categories`, `/cost-centers`, `/setup` | The question playbook plus the household's categories and cost centers, the user's current notes, watched groups, caps and open questions, and setup state in one call. Called before the first question; when setup is incomplete or the caller hasn't been introduced, the playbook tells the agent to run the first conversation. |
+| `get_playbook`        | `GET /api/v1/notes`, `/watches`, `/categories`, `/cost-centers`, `/caps`, `/questions`, `/setup` | The question playbook plus the household's categories and cost centers, the user's current notes, watched groups, caps and open questions, and setup state in one call. Called before the first question; when setup is incomplete or the caller hasn't been introduced, the playbook tells the agent to run the first conversation. |
 
 ### 5.2 Teaching the Agent
 
@@ -533,7 +534,7 @@ Which MCP mechanism carries each part of the playbook in [`VISION.md` §4.B](VIS
 | Logging an expense          | Prompt `log_expense` |
 | Catching up                 | Prompt `catch_up`    |
 
-The playbook text is one source, `src/mcp/playbook.ts`: the server instructions, and `get_playbook`'s `playbook` field. `get_playbook` also returns `start_with`: the first-member or new-member path of [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up) while setup is unfinished or the caller hasn't been introduced, the remaining steps for an owner who left some pending, or nothing.
+The playbook text is one source, `src/mcp/playbook.ts`: the server instructions, and `get_playbook`'s `playbook` field. `get_playbook` also returns `start_with`, the text for the setup endpoint's `start`: the first-member or new-member path of [`VISION.md` §3.6](VISION.md#36-first-conversation-setting-up) while setup is unfinished or the caller hasn't been introduced, the remaining steps for an owner who left some pending, or nothing.
 
 Server instructions, resources and prompts are the preferred mechanisms, but not every assistant supports them (see [§5.3](#53-uneven-client-support)). Each one has a tool equivalent: `get_playbook` returns the playbook and the vocabulary, and the tool descriptions say when to call it. That way an assistant that only calls tools still follows the playbook.
 

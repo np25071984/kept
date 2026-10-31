@@ -1,7 +1,9 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod'
-import { todayIn } from '../domain/dates.js'
+import { SOURCE_KINDS } from '../domain/matching.js'
+import type { StartPath } from '../domain/setup.js'
+import { MAX_BATCH, MAX_PAGE, MIN_AMOUNT, MIN_SHARE } from '../http/schemas.js'
 import { FIRST_MEMBER, NEW_MEMBER, PLAYBOOK, resumeSetup } from './playbook.js'
 
 // Every tool is a thin call to the REST API as the same caller (IMPLEMENTATION.md §5.1).
@@ -13,10 +15,10 @@ const write = { readOnlyHint: false, destructiveHint: false, openWorldHint: fals
 const destroy = { readOnlyHint: false, destructiveHint: true, openWorldHint: false } as const
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe('YYYY-MM-DD')
-const amount = z.number().positive()
+const amount = z.number().min(MIN_AMOUNT)
 const spentFor = z.array(z.object({
   cost_center: z.string().describe('An existing person or thing (cost center) by name.'),
-  share: z.number().gt(0).lte(1).nullish().describe('Fraction of the line. Omit to split the remainder evenly.'),
+  share: z.number().min(MIN_SHARE).lte(1).nullish().describe('Fraction of the line. Omit to split the remainder evenly.'),
 }))
 const lineItem = z.object({
   amount,
@@ -25,7 +27,7 @@ const lineItem = z.object({
   notes: z.string().nullish(),
   spent_for: spentFor.optional(),
 })
-const sourceKind = z.enum(['talk', 'photo', 'document', 'email', 'statement', 'other'])
+const sourceKind = z.enum(SOURCE_KINDS)
 const transactionFields = {
   date: date.optional().describe('Local date of the purchase. Defaults to today in the user\'s time zone.'),
   occurred_at: z.string().optional().describe('Exact moment, ISO 8601, when a receipt or statement shows it.'),
@@ -50,13 +52,22 @@ function result(response: { status: number; body: unknown }): CallToolResult {
   return { content: [{ type: 'text', text }], isError: response.status >= 400 }
 }
 
+// An array becomes the key repeated, as the REST API takes several categories or cost centers.
 function query(params: Record<string, unknown>): string {
-  const entries = Object.entries(params).filter(([, value]) => value !== undefined && value !== null)
-  return entries.length ? `?${new URLSearchParams(entries.map(([k, v]) => [k, String(v)])).toString()}` : ''
+  const entries = Object.entries(params)
+    .filter(([, value]) => value !== undefined && value !== null)
+    .flatMap(([key, value]) => (Array.isArray(value) ? value : [value]).map((v) => [key, String(v)]))
+  return entries.length ? `?${new URLSearchParams(entries).toString()}` : ''
+}
+
+const START_WITH: Record<Exclude<StartPath, 'resume'>, string> = {
+  first_member: FIRST_MEMBER,
+  new_member: NEW_MEMBER,
+  done: 'Setup is done. Handle the user\'s request.',
 }
 
 // The playbook, the household's vocabulary, the user's notes and watched groups, and what to do first, in one call.
-export async function playbook(rest: Rest, now = new Date()) {
+export async function playbook(rest: Rest) {
   const [setup, categories, costCenters, notes, watches, caps, questions] = await Promise.all([
     rest('GET', '/api/v1/setup'),
     rest('GET', '/api/v1/categories'),
@@ -66,13 +77,10 @@ export async function playbook(rest: Rest, now = new Date()) {
     rest('GET', '/api/v1/caps'),
     rest('GET', '/api/v1/questions'),
   ])
-  const s = setup.body as { household: { name: string; currency: string; timezone: string; next_step: string | null }; you: { introduced: boolean; role: string } }
-  let startWith = 'Setup is done. Handle the user\'s request.'
-  if (!s.you.introduced) startWith = s.you.role === 'owner' && s.household.next_step ? FIRST_MEMBER : NEW_MEMBER
-  else if (s.you.role === 'owner' && s.household.next_step) startWith = resumeSetup(s.household.next_step)
+  const s = setup.body as { household: { currency: string; timezone: string; next_step: string | null }; start: StartPath; today: string }
   return {
-    start_with: startWith,
-    today: todayIn(s.household.timezone, now),
+    start_with: s.start === 'resume' ? resumeSetup(s.household.next_step!) : START_WITH[s.start],
+    today: s.today,
     timezone: s.household.timezone,
     currency: s.household.currency,
     setup: setup.body,
@@ -97,17 +105,12 @@ export function registerTools(server: McpServer, rest: Rest) {
     title: 'Get updates',
     description: 'Call at the start of a conversation, after get_playbook. Returns what the ledger did since the user last heard (repeats registered, possible duplicates) and marks it seen. Mention each in one line; for a possible duplicate, ask whether the two are the same purchase.',
     annotations: { ...read, readOnlyHint: false, idempotentHint: false },
-  }, async () => {
-    const updates = await rest('GET', '/api/v1/updates')
-    const ids = (updates.body as { updates?: { id: string }[] }).updates?.map((u) => u.id) ?? []
-    if (ids.length) await rest('POST', '/api/v1/updates/seen', { ids })
-    return result(updates)
-  })
+  }, async () => result(await rest('POST', '/api/v1/updates/take')))
 
   server.registerTool('log_transaction', {
     title: 'Log transactions',
     description: 'Write one or more purchases. Only after the user confirmed the final record you showed them ("Log $60.00 to Car/Fuel for the Kia, today?"). Each is matched against purchases already logged: "created", "attached" (tell the user what changed, and what was kept because they edited it) or "possible_duplicate" (ask if it\'s the same purchase; merge_transactions if yes). "warnings" flags a date the user may not have meant; ask them.',
-    inputSchema: { transactions: z.array(transaction).min(1).describe('One entry per purchase; a statement batch goes in one call.') },
+    inputSchema: { transactions: z.array(transaction).min(1).max(MAX_BATCH).describe('One entry per purchase; a statement batch goes in one call.') },
     annotations: write,
   }, async ({ transactions }) => result(await rest('POST', '/api/v1/transactions', { transactions })))
 
@@ -115,8 +118,9 @@ export function registerTools(server: McpServer, rest: Rest) {
     title: 'List transactions',
     description: 'The user\'s own purchases, newest first. Use it for best guesses: the usual category at a merchant, the usual car, the last split, existing item names. Never includes other members\' purchases.',
     inputSchema: {
-      from: date.optional(), to: date.optional(), merchant: z.string().optional(), category: z.string().optional(),
-      cost_center: z.string().optional(), item: z.string().optional(), limit: z.number().int().min(1).max(500).optional(),
+      from: date.optional(), to: date.optional(), merchant: z.string().optional(),
+      category: z.array(z.string()).optional().describe('One or more category paths; each includes its subcategories.'),
+      cost_center: z.array(z.string()).optional().describe('One or more people or things.'), item: z.string().optional(), limit: z.number().int().min(1).max(MAX_PAGE).optional(),
     },
     annotations: read,
   }, async (args) => result(await rest('GET', `/api/v1/transactions${query(args)}`)))

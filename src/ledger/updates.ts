@@ -18,6 +18,13 @@ export async function getUpdates(tx: Tx, caller: Caller, includeSeen = false) {
   }))
 }
 
+// Returns the unseen updates and marks them seen in one transaction, for an agent that announces them once.
+export async function takeUpdates(tx: Tx, caller: Caller) {
+  const updates = await getUpdates(tx, caller)
+  await markSeen(tx, caller, updates.map((u) => u.id))
+  return updates
+}
+
 export async function markSeen(tx: Tx, caller: Caller, ids: string[]): Promise<number> {
   if (ids.length === 0) return 0
   const rows = await tx

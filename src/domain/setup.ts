@@ -18,6 +18,16 @@ export function nextStep(setup: SetupState): SetupStep | null {
   return SETUP_STEPS.find((step) => setup[step] === 'pending') ?? null
 }
 
+// Where a conversation starts: the first conversation for an owner with setup left or a member not yet introduced, the
+// next unfinished step for an owner already introduced, otherwise the user's request.
+export type StartPath = 'first_member' | 'new_member' | 'resume' | 'done'
+
+export function startPath(you: { introduced: boolean; role: string }, next: SetupStep | null): StartPath {
+  const owesSetup = you.role === 'owner' && next !== null
+  if (!you.introduced) return owesSetup ? 'first_member' : 'new_member'
+  return owesSetup ? 'resume' : 'done'
+}
+
 export function isValidCategoryPath(path: string): boolean {
   const parts = path.split('/')
   return parts.length <= 3 && parts.every((part) => part.trim().length > 0 && part === part.trim())
