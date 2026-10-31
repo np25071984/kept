@@ -44,12 +44,12 @@ sequenceDiagram
     participant K as Kept
 
     User->>AI: "I just spent $60"
+    AI->>K: get_playbook
+    K-->>AI: Categories, cost centers (Hyundai, Kia: both Car), notes
     AI->>K: list_transactions (recent)
     K-->>AI: Recent history (merchants, categories, cost centers, amounts)
     AI->>User: "Was that groceries at Trader Joe's, like last Saturday?"
     User->>AI: "No, it was gas"
-    AI->>K: list_cost_centers
-    K-->>AI: Hyundai, Kia (both Car)
     AI->>User: "For the Hyundai, like your last fill-up, or the Kia?"
     User->>AI: "Kia"
     AI->>User: "Log $60.00 to Car/Fuel for the Kia, today?"

@@ -37,10 +37,8 @@ describe('MCP server', () => {
     expect(client.getInstructions()).toContain('Call get_playbook before the first question about money')
     const tools = (await client.listTools()).tools.map((t) => t.name).sort()
     expect(tools).toEqual([
-      'add_category', 'add_cost_center', 'add_source', 'answer_question', 'change_cap', 'delete_category', 'delete_cost_center', 'delete_note', 'delete_transaction',
-      'edit_transaction', 'flag_missing_charge', 'get_playbook', 'get_summary', 'get_updates', 'invite_member', 'list_cost_centers', 'list_repeats',
-      'list_transactions', 'log_transaction', 'merge_transactions', 'remove_cap', 'rename_category', 'rename_cost_center', 'save_note', 'set_cap', 'set_repeat',
-      'stop_repeat', 'stop_watching', 'update_note', 'update_repeat', 'update_setup', 'watch_group',
+      'add_source', 'answer_question', 'delete_transaction', 'edit_transaction', 'flag_missing_charge', 'get_playbook', 'get_summary', 'get_updates', 'invite_member',
+      'list_transactions', 'log_transaction', 'manage_caps', 'manage_notes', 'manage_repeats', 'manage_vocabulary', 'manage_watches', 'merge_transactions', 'update_setup',
     ])
     expect((await client.listPrompts()).prompts.map((p) => p.name).sort()).toEqual(['catch_up', 'log_expense', 'setup_household'])
     const resource = await client.readResource({ uri: 'kept://household' })
@@ -59,8 +57,8 @@ describe('MCP server', () => {
     await call(client, 'update_setup', { steps: { categories: 'later', watch: 'later', invite: 'later' } })
     expect((await call(client, 'get_playbook')).body.start_with).toBe('Setup is done. Handle the user\'s request.')
 
-    await call(client, 'save_note', { text: 'Costco is always groceries.' })
-    await call(client, 'watch_group', { item: 'snacks' })
+    await call(client, 'manage_notes', { action: 'save', text: 'Costco is always groceries.' })
+    await call(client, 'manage_watches', { action: 'start', item: 'snacks' })
     const later = (await call(client, 'get_playbook')).body
     expect(later.notes.map((n: { text: string }) => n.text)).toContain('Costco is always groceries.')
     expect(later.watching.map((w: { group: string }) => w.group)).toContain('snacks')
@@ -69,15 +67,19 @@ describe('MCP server', () => {
 
   it('runs the fuel conversation\'s tool calls end to end', async () => {
     const client = await connect(key)
-    expect((await call(client, 'add_category', { path: 'Car/Fuel' })).isError).toBe(false)
-    await call(client, 'add_cost_center', { name: 'Hyundai', kind: 'Car' })
-    await call(client, 'add_cost_center', { name: 'Kia', kind: 'Car' })
+    expect((await call(client, 'manage_vocabulary', { action: 'add', what: 'category', name: 'Car/Fuel' })).isError).toBe(false)
+    await call(client, 'manage_vocabulary', { action: 'add', what: 'cost_center', name: 'Hyundai', kind: 'Car' })
+    await call(client, 'manage_vocabulary', { action: 'add', what: 'cost_center', name: 'Kia', kind: 'Car' })
 
-    const cars = await call(client, 'list_cost_centers')
+    const cars = await call(client, 'get_playbook')
     expect(cars.body.cost_centers).toEqual([{ name: 'Hyundai', kind: 'Car' }, { name: 'Kia', kind: 'Car' }])
 
     const logged = await call(client, 'log_transaction', { transactions: [{ amount: 60, date: '2026-10-27', merchant: 'Shell', category: 'Car/Fuel', spent_for: [{ cost_center: 'Kia' }] }] })
     expect(logged.body.results[0]).toMatchObject({ result: 'created', transaction: { amount: 60, category: 'Car/Fuel' } })
+    const repeat = await call(client, 'manage_repeats', { action: 'set', transaction_id: logged.body.results[0].transaction.id, frequency: 'monthly' })
+    expect(repeat.isError).toBe(false)
+    expect((await call(client, 'manage_repeats', { action: 'list' })).body.repeats).toHaveLength(1)
+    expect((await call(client, 'manage_repeats', { action: 'stop', id: repeat.body.id })).body).toEqual({ ok: true })
 
     const charge = await call(client, 'log_transaction', { transactions: [{ amount: 61.2, date: '2026-10-28', merchant: 'SHELL OIL 57444', category: 'Other', source: { kind: 'statement' } }] })
     expect(charge.body.results[0]).toMatchObject({ result: 'attached', transaction: { amount: 61.2, merchant: 'Shell' } })
@@ -97,6 +99,8 @@ describe('MCP server', () => {
     const wrong = await call(client, 'log_transaction', { transactions: [{ amount: 5, category: 'Gas' }] })
     expect(wrong.isError).toBe(true)
     expect(wrong.body.error).toMatchObject({ code: 'unknown_category', details: { known: expect.arrayContaining(['Car/Fuel']) } })
+    const noId = await call(client, 'manage_caps', { action: 'remove' })
+    expect(noId).toEqual({ isError: true, body: { error: { code: 'missing_field', message: 'id is required to remove a cap.' } } })
     await client.close()
   })
 
