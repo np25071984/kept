@@ -173,7 +173,7 @@ Every table also carries `household_id` for [row-level security](#4-security), l
 | `email`        | String | Yes      | Sign-in for the web UI and OAuth2.                           |
 | `role`         | String | Yes      | `owner` or `member`. Owners invite and remove members.       |
 | `introduced_at` | Timestamp | No    | When the agent first introduced Kept to this member. Empty = run the introduction. |
-| `language`     | String | No       | `en` or `ru`, set from the language menu or at sign-up. Empty = the browser's. |
+| `language`     | String | No       | `en` or `ru`, set in Settings → Profile or at sign-up. Empty = the browser's. |
 
 **API Keys** (any number per user)
 

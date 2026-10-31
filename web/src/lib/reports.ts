@@ -66,13 +66,13 @@ export function merchantBars(cur: Row[], prev: Row[], top = 5): Bar[] {
   return [...shown, ...(rest || restPrev ? [{ key: OTHER, label: OTHER, amount: rest / 100, prev: restPrev / 100, sub: false }] : [])]
 }
 
-// The bars drawn: only what had spending this period. A drop to nothing still shows in biggestChange and the table.
-export function withSpending(bars: Bar[]): Bar[] {
-  return bars.filter((b) => b.amount > 0)
+// The bars drawn: whatever had spending in either period, so a drop to nothing keeps its row with the previous tick.
+export function drawnBars(bars: Bar[]): Bar[] {
+  return bars.filter((b) => b.amount > 0 || b.prev > 0)
 }
 
-// The top-level bar that moved most, leaving out the catch-alls.
+// The drawn top-level bar that moved most, leaving out the catch-alls.
 export function biggestChange(bars: Bar[]): Bar | null {
-  const candidates = bars.filter((b) => !b.sub && b.key !== NOBODY && b.key !== OTHER && b.amount !== b.prev)
+  const candidates = drawnBars(bars).filter((b) => !b.sub && b.key !== NOBODY && b.key !== OTHER && b.amount !== b.prev)
   return candidates.sort((a, b) => Math.abs(b.amount - b.prev) - Math.abs(a.amount - a.prev))[0] ?? null
 }

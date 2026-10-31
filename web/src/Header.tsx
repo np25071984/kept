@@ -1,17 +1,30 @@
-import { Bell, ChevronDown, Globe } from 'lucide-react'
+import { Bell, ChevronDown, Menu as MenuIcon } from 'lucide-react'
 import { useEffect, useRef, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import { useSession } from './session.js'
-import { api } from './api.js'
-import { language, setLanguage, t, type Language } from './i18n.js'
+import { t } from './i18n.js'
 
 // The header every signed-in page shares (VISION.md §4.C): pages for looking back, the bell, and the user menu.
+// On a phone one ☰ menu holds the pages and the account links instead.
 export function Header({ onSignOut }: { onSignOut: () => void }) {
   const { setup, unseen } = useSession()
   const { pathname } = useLocation()
   return (
     <header className="topbar">
       <div className="topbar-inner">
+        <Menu label={<MenuIcon size={22} aria-hidden="true" />} ariaLabel={t('Menu')} className="phonemenu" active={false} align="left">
+          <NavLink to="/purchases">{t('My purchases')}</NavLink>
+          <NavLink to="/recurring">{t('Recurring')}</NavLink>
+          <span className="menu-heading">{t('Reports')}</span>
+          <NavLink to="/reports/mine" end={false} className="indent">{t('Mine')}</NavLink>
+          <NavLink to="/reports/household" end={false} className="indent">{t('Household')}</NavLink>
+          <hr />
+          <NavLink to="/preferences">{t('Preferences')}</NavLink>
+          <span className="menu-heading">{t('Settings')}</span>
+          {settingsPages().map((page) => <NavLink key={page.to} to={page.to} end={page.end ?? true} className="indent">{page.label}</NavLink>)}
+          <hr />
+          <button type="button" onClick={onSignOut}>{t('Sign out')} · {setup.you.name}</button>
+        </Menu>
         {/* Outside the app's routes, so a plain link: / sends a signed-in browser back to My purchases. */}
         <a className="brand" href="/"><img src="/app/icon.svg" width="22" height="22" alt="" />Kept</a>
         <nav>
@@ -23,7 +36,6 @@ export function Header({ onSignOut }: { onSignOut: () => void }) {
           </Menu>
         </nav>
         <div className="right">
-          <LanguageMenu />
           <NavLink to="/notifications" className="bell" aria-label={unseen ? t('Notifications: {n} waiting', { n: unseen }) : t('Notifications')} title={t('Notifications')}>
             <Bell size={18} aria-hidden="true" />
             {unseen > 0 && <span className="badge">{unseen}</span>}
@@ -41,7 +53,7 @@ export function Header({ onSignOut }: { onSignOut: () => void }) {
 }
 
 // A <details> dropdown that closes on a click elsewhere, on Escape and when the page changes.
-function Menu({ label, className, active, align, children }: { label: string; className: string; active: boolean; align: 'left' | 'right'; children: ReactNode }) {
+function Menu({ label, ariaLabel, className, active, align, children }: { label: ReactNode; ariaLabel?: string; className: string; active: boolean; align: 'left' | 'right'; children: ReactNode }) {
   const ref = useRef<HTMLDetailsElement>(null)
   const { pathname } = useLocation()
   useEffect(() => {
@@ -62,33 +74,19 @@ function Menu({ label, className, active, align, children }: { label: string; cl
   }, [])
   return (
     <details ref={ref} className={`${className}${active ? ' active' : ''}`}>
-      <summary>{label}<ChevronDown size={14} aria-hidden="true" /></summary>
+      <summary aria-label={ariaLabel}>{label}{typeof label === 'string' && <ChevronDown size={14} aria-hidden="true" />}</summary>
       <div className={`menu menu-${align}`}>{children}</div>
     </details>
   )
 }
 
-// The language menu (VISION.md §4.C): saved to the account, so emails follow it too.
-function LanguageMenu() {
-  const ref = useRef<HTMLDetailsElement>(null)
-  const pick = async (lang: Language) => {
-    if (ref.current) ref.current.open = false
-    if (lang === language()) return
-    setLanguage(lang)
-    await api.updateMe({ language: lang }).catch(() => undefined)
-    location.reload()
-  }
-  return (
-    <details ref={ref} className="langmenu">
-      <summary aria-label={t('Language')}><Globe size={18} aria-hidden="true" /><span className="code">{language().toUpperCase()}</span></summary>
-      <div className="menu menu-right" role="menu">
-        {([['en', 'English'], ['ru', 'Русский']] as const).map(([code, name]) => (
-          <button key={code} type="button" role="menuitemradio" lang={code} aria-checked={language() === code} onClick={() => void pick(code)}>{name}</button>
-        ))}
-      </div>
-    </details>
-  )
-}
+// The Settings pages: tabs on a wide screen, entries in the ☰ menu on a phone.
+export const settingsPages = () => [
+  { to: '/settings/profile', label: t('Profile') },
+  { to: '/settings/household', label: t('Household'), end: false },
+  { to: '/settings/assistants', label: t('Assistants & keys') },
+  { to: '/settings/notes', label: t('Assistant notes') },
+]
 
 // Segmented tabs whose tab is in the URL, so links and Back work.
 export function Tabs({ items, className = '' }: { items: { to: string; label: string; end?: boolean }[]; className?: string }) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CHART_WIDTH, monthChartLayout } from '../../src/domain/monthChart.js'
+import { CHART_WIDTH, monthChartLayout, NARROW_CHART_WIDTH } from '../../src/domain/monthChart.js'
 
 const label = (v: number) => `$${v}`
 const months = (...amounts: number[]) => amounts.map((amount, i) => ({ month: `2026-${String(i + 1).padStart(2, '0')}`, amount }))
@@ -18,6 +18,12 @@ describe('monthChartLayout', () => {
     expect(chart.bars.map((b) => b.partial)).toEqual([false, false, false, true])
     expect(chart.bars[2]!.height).toBeGreaterThan(chart.bars[1]!.height)
     expect(chart.averageY).toBeNull()
+  })
+
+  it('fills a narrower box when given one', () => {
+    const chart = monthChartLayout(months(100, 200, 300), null, label, NARROW_CHART_WIDTH)
+    expect(chart.width).toBe(NARROW_CHART_WIDTH)
+    expect(chart.slot * 3 + chart.left).toBeCloseTo(NARROW_CHART_WIDTH)
   })
 
   it('makes room for long axis labels', () => {

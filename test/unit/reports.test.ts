@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { biggestChange, categoryBars, merchantBars, monthlyAverage, onTrack, peopleBars, previousRange, trend, withSpending } from '../../web/src/lib/reports.js'
+import { biggestChange, categoryBars, drawnBars, merchantBars, monthlyAverage, onTrack, peopleBars, previousRange, trend } from '../../web/src/lib/reports.js'
 
 describe('reports', () => {
   it('compares with the same days of the previous period', () => {
@@ -30,10 +30,17 @@ describe('reports', () => {
     expect(onTrack(2900, '2026-10-29')).toBe(3100)
   })
 
-  it('draws only what had spending this period, and still names a drop to nothing as the biggest change', () => {
+  it('keeps a drop to nothing as a row, so the biggest change is always one of the rows drawn', () => {
     const bars = categoryBars([{ key: 'Groceries', amount: 600 }], [{ key: 'Groceries', amount: 550 }, { key: 'Clothing', amount: 233 }])
-    expect(withSpending(bars).map((b) => b.key)).toEqual(['Groceries'])
+    expect(drawnBars(bars).map((b) => [b.key, b.amount, b.prev])).toEqual([['Groceries', 600, 550], ['Clothing', 0, 233]])
     expect(biggestChange(bars)?.key).toBe('Clothing')
+    const people = peopleBars([{ key: 'Kia', amount: 30 }], [{ key: 'Sonya', amount: 159.33 }], 30, 159.33)
+    const change = biggestChange(people)
+    expect(drawnBars(people).map((b) => b.key)).toContain(change?.key)
+  })
+
+  it('draws nothing that had no spending in either period', () => {
+    expect(drawnBars([{ key: 'Kia', label: 'Kia', amount: 0, prev: 0, sub: false }])).toEqual([])
   })
 })
 
