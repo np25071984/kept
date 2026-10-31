@@ -1,12 +1,13 @@
-import { sql } from 'kysely'
 import type { Tx } from '../db/db.js'
 import { todayIn } from '../domain/dates.js'
+import { missingChargeText } from '../domain/updates.js'
 import { ANSWERS, capPeriodKey, keyUnused, needsAssistant, parseQuestionId, questionId, sortQuestions, type QuestionKind } from '../domain/questions.js'
+import { connectedClientIds } from '../oauth/connections.js'
 import { WEB_CLIENT_ID } from '../oauth/provider.js'
 import { deleteCap, listCaps } from './caps.js'
 import type { Caller } from './caller.js'
 import { invalid, notFound } from './errors.js'
-import { revokeApiKey } from './households.js'
+import { memberLanguage, revokeApiKey } from './households.js'
 import { stopRepeat } from './repeats.js'
 import { loadViews, mergeTransactions, type TransactionView } from './transactions.js'
 
@@ -46,10 +47,7 @@ export async function listQuestions(tx: Tx, caller: Caller, now = new Date()): P
     if (!keyUnused(k, now)) continue
     questions.push({ id: questionId('unused_key', key.id), kind: 'unused_key', created_at: (k.last_used_at ?? k.created_at).toISOString(), key: { id: key.id, name: key.name, last_used_at: k.last_used_at?.toISOString() ?? null } })
   }
-  const grants = await tx.selectFrom('oauth_models').select(sql<string>`payload->>'clientId'`.as('client_id'))
-    .where('name', '=', 'Grant').where(sql`payload->>'accountId'`, '=', caller.user_id)
-    .where((eb) => eb.or([eb('expires_at', 'is', null), eb('expires_at', '>', now)])).execute()
-  if (needsAssistant(grants.map((g) => g.client_id), WEB_CLIENT_ID, keys.length)) questions.push({ id: questionId('connect', caller.user_id), kind: 'connect', created_at: now.toISOString() })
+  if (needsAssistant(await connectedClientIds(tx, caller.user_id), WEB_CLIENT_ID, keys.length)) questions.push({ id: questionId('connect', caller.user_id), kind: 'connect', created_at: now.toISOString() })
   return sortQuestions(questions)
 }
 
@@ -92,7 +90,7 @@ export async function flagMissingCharge(tx: Tx, caller: Caller, repeatId: string
   const repeat = await tx.selectFrom('repeats').select(['id', 'template']).where('id', '=', repeatId).where('user_id', '=', caller.user_id).executeTakeFirst()
   if (!repeat) throw notFound('Repeat')
   const name = repeat.template.merchant ?? repeat.template.category ?? 'recurring'
-  const text = `No ${name} charge on your ${period} statement. Did you cancel it?`
+  const text = missingChargeText(name, period, await memberLanguage(tx, caller.user_id))
   const { id } = await tx.insertInto('updates').values({ household_id: caller.household_id, user_id: caller.user_id, kind: 'missing_charge', text, repeat_id: repeatId, seen_at: new Date() }).returning('id').executeTakeFirstOrThrow()
   return { id: questionId('missing_charge', id), text }
 }

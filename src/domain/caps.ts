@@ -5,7 +5,7 @@ import { formatAmount, toCents, type Cents } from './money.js'
 
 export type CapPeriod = 'month' | 'year'
 
-export const CLOSE_SHARE = 0.8
+const CLOSE_SHARE = 0.8
 
 export function capRange(period: CapPeriod, today: LocalDate): { from: LocalDate; to: LocalDate } {
   const { year, month } = parts(today)

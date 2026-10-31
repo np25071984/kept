@@ -5,10 +5,12 @@ import { addDays, checkWhen, dateWarning, isLocalDate, todayIn } from '../domain
 import { planEdit } from '../domain/edits.js'
 import { buildLines, validateShares, type Line, type SpentFor } from '../domain/lines.js'
 import { CANDIDATE_WINDOW_DAYS, decideMatch, reconcile, type FieldChange, type KeptField, type MatchCandidate, type SourceKind } from '../domain/matching.js'
-import { centsToNumeric, formatAmount, fromCents, numericToCents, toCents } from '../domain/money.js'
+import { centsToNumeric, fromCents, numericToCents, toCents } from '../domain/money.js'
+import { duplicateText } from '../domain/updates.js'
 import { listCaps } from './caps.js'
 import type { Caller } from './caller.js'
 import { invalid, notFound, unwrap } from './errors.js'
+import { memberLanguage } from './households.js'
 import { loadVocabulary, type Vocabulary } from './vocabulary.js'
 import { watchedGroups } from './watches.js'
 
@@ -167,7 +169,7 @@ async function createOne(tx: Tx, caller: Caller, body: TransactionBody, now: Dat
   const id = await insertTransaction(tx, caller, vocabulary, incoming, null)
   if (decision.kind === 'possible_duplicate') {
     const other = await getTransaction(tx, caller, decision.id)
-    const text = `Is the ${formatAmount(incoming.amount, caller.currency)}${incoming.merchant ? ` at ${incoming.merchant}` : ''} on ${incoming.date} the ${formatAmount(toCents(other.amount), caller.currency)}${other.merchant ? ` at ${other.merchant}` : ''} logged on ${other.date}?`
+    const text = duplicateText(incoming, { amount: toCents(other.amount), merchant: other.merchant, date: other.date }, caller.currency, await memberLanguage(tx, caller.user_id))
     await tx.insertInto('updates').values({ household_id: caller.household_id, user_id: caller.user_id, kind: 'possible_duplicate', text, transaction_id: id, other_transaction_id: decision.id }).execute()
     return { result: 'possible_duplicate', transaction: await getTransaction(tx, caller, id), possible_duplicate_of: decision.id }
   }

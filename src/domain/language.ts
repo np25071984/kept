@@ -1,6 +1,6 @@
 // English and Russian (VISION.md §4.C). The member's choice wins, then a cookie for signed-out pages, then the browser's.
 
-export const LANGUAGES = ['en', 'ru'] as const
+const LANGUAGES = ['en', 'ru'] as const
 export type Language = (typeof LANGUAGES)[number]
 
 export function isLanguage(value: unknown): value is Language {

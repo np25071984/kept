@@ -2,11 +2,13 @@ import { sql } from 'kysely'
 import { inHousehold, type Db, type Tx } from '../db/db.js'
 import { isLocalDate, todayIn } from '../domain/dates.js'
 import { resizeLines, type Line } from '../domain/lines.js'
-import { formatAmount, fromCents, toCents } from '../domain/money.js'
+import { fromCents, toCents } from '../domain/money.js'
+import { repeatLoggedText } from '../domain/updates.js'
 import { dueOccurrences, firstNextDate, nextDateAfterChange, stillToCome, type Frequency, type RepeatTemplate, type Schedule } from '../domain/repeats.js'
 import type { Caller } from './caller.js'
 import { conflict, invalid, notFound, unwrap } from './errors.js'
 import { getTransaction, insertTransaction } from './transactions.js'
+import { memberLanguage } from './households.js'
 import { loadVocabulary } from './vocabulary.js'
 
 // Repeating spending (VISION.md §3.5).
@@ -206,7 +208,7 @@ export async function runDueRepeats(db: Db, now = new Date()): Promise<number> {
         const label = (template.merchant ?? template.category ?? 'bill').toString()
         await tx
           .insertInto('updates')
-          .values({ household_id, user_id: row.user_id, kind: 'repeat_registered', text: `Logged your recurring ${label} bill, ${formatAmount(toCents(template.amount), user.currency)}.`, transaction_id: transactionId })
+          .values({ household_id, user_id: row.user_id, kind: 'repeat_registered', text: repeatLoggedText(label, toCents(template.amount), user.currency, await memberLanguage(tx, row.user_id)), transaction_id: transactionId })
           .execute()
       }
       if (plan.finished) await tx.deleteFrom('repeats').where('id', '=', id).execute()

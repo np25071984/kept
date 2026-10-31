@@ -10,7 +10,7 @@ export interface ZoneOption {
 }
 
 // Minutes east of GMT for `zone` at `at`.
-export function offsetMinutes(zone: string, at: Date): number {
+function offsetMinutes(zone: string, at: Date): number {
   const name = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'longOffset' }).formatToParts(at).find((p) => p.type === 'timeZoneName')?.value ?? 'GMT'
   const m = /GMT([+-])(\d{2}):(\d{2})/.exec(name)
   return m ? (m[1] === '-' ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3])) : 0

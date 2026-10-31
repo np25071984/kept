@@ -29,14 +29,14 @@ export type MatchDecision =
   | { kind: 'possible_duplicate'; id: string }
   | { kind: 'create' }
 
-export const MATCH_WINDOW_DAYS = 4
+const MATCH_WINDOW_DAYS = 4
 const REPEAT_WINDOW_DAYS = 7
 // How far either side of a date to load candidates: the widest window any candidate can match in.
 export const CANDIDATE_WINDOW_DAYS = Math.max(MATCH_WINDOW_DAYS, REPEAT_WINDOW_DAYS)
 
 type Strength = 'clear' | 'unclear' | null
 
-export function classifyMatch(candidate: MatchCandidate, incoming: IncomingCharge): Strength {
+function classifyMatch(candidate: MatchCandidate, incoming: IncomingCharge): Strength {
   // Two reports of the same kind are two purchases: two statement lines are two charges.
   if (candidate.sources.some((source) => source.kind === incoming.kind)) return null
   const merchants = relateMerchants(candidate.merchant, incoming.merchant)

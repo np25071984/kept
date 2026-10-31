@@ -101,6 +101,12 @@ export async function getSetup(tx: Tx, caller: Caller, now = new Date()) {
   }
 }
 
+// The member's saved language, for text the ledger stores for them; English when they haven't chosen.
+export async function memberLanguage(tx: Tx, userId: string): Promise<Language> {
+  const row = await tx.selectFrom('users').select('language').where('id', '=', userId).executeTakeFirst()
+  return isLanguage(row?.language) ? row.language : 'en'
+}
+
 // Any purchase in the household, by any member: the currency is fixed from then on.
 async function hasPurchases(tx: Tx): Promise<boolean> {
   return (await tx.selectFrom('transactions').select('id').limit(1).executeTakeFirst()) != null

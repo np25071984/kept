@@ -19,6 +19,6 @@ export function centsToNumeric(cents: Cents): string {
   return (cents / 100).toFixed(2)
 }
 
-export function formatAmount(cents: Cents, currency: string): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(cents / 100)
+export function formatAmount(cents: Cents, currency: string, language: 'en' | 'ru' = 'en'): string {
+  return new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-US', { style: 'currency', currency }).format(cents / 100)
 }
