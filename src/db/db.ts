@@ -33,6 +33,23 @@ export async function inHousehold<T>(db: Db, householdId: string, fn: (tx: Tx) =
   })
 }
 
+// Queries rely on row-level security to keep to the caller's household, which holds only for a role that neither owns the
+// tables nor bypasses it (IMPLEMENTATION.md §4).
+export function roleProblem(role: { name: string; superuser: boolean; bypassrls: boolean; ownsTables: boolean }): string | null {
+  if (role.superuser || role.bypassrls || role.ownsTables) return `DATABASE_URL connects as ${role.name}, which row-level security doesn't bind. Use the kept_app role.`
+  return null
+}
+
+export async function checkRole(db: Db): Promise<string | null> {
+  const { rows } = await sql<{ name: string; superuser: boolean; bypassrls: boolean; owns_tables: boolean }>`
+    select current_user as name, rolsuper as superuser, rolbypassrls as bypassrls,
+      exists (select 1 from pg_tables where schemaname = 'public' and tableowner = current_user) as owns_tables
+    from pg_roles where rolname = current_user
+  `.execute(db)
+  const role = rows[0]!
+  return roleProblem({ name: role.name, superuser: role.superuser, bypassrls: role.bypassrls, ownsTables: role.owns_tables })
+}
+
 export function migrator(db: Kysely<any>): Migrator {
   return new Migrator({
     db,

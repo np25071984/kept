@@ -6,7 +6,7 @@ import { resizeLines, type Line } from '../domain/lines.js'
 import { formatAmount, fromCents, toCents } from '../domain/money.js'
 import { dueOccurrences, occurrenceAfter, occurrenceOnOrAfter, stillToCome, type Frequency, type Schedule } from '../domain/repeats.js'
 import type { Caller } from './caller.js'
-import { invalid, notFound, unwrap } from './errors.js'
+import { conflict, invalid, notFound, unwrap } from './errors.js'
 import { getTransaction, insertTransaction } from './transactions.js'
 import { loadVocabulary } from './vocabulary.js'
 
@@ -76,6 +76,7 @@ export interface RepeatBody {
 // The transaction is the first occurrence; the next one follows on the schedule.
 export async function createRepeat(tx: Tx, caller: Caller, body: RepeatBody): Promise<RepeatView> {
   const source = await getTransaction(tx, caller, body.transaction_id)
+  if (source.repeat_id) throw conflict('already_repeats', 'This purchase already repeats. Change that repeat instead.')
   const schedule = checkSchedule({ frequency: body.frequency as Frequency, interval: body.interval ?? 1, anchor: body.anchor ?? source.date })
   checkEnd(body.ends_on, body.remaining)
   const template: RepeatTemplate = {

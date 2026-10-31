@@ -1,6 +1,6 @@
 import type { Tx } from '../db/db.js'
 import { groupsWithLines } from '../domain/coverage.js'
-import { addDays, dateWarning, isLocalDate, todayIn } from '../domain/dates.js'
+import { addDays, checkWhen, dateWarning, isLocalDate, todayIn } from '../domain/dates.js'
 import { buildLines, resizeLines, validateShares, type Line, type SpentFor } from '../domain/lines.js'
 import { decideMatch, reconcile, type FieldChange, type KeptField, type MatchCandidate, type SourceKind } from '../domain/matching.js'
 import { centsToNumeric, formatAmount, fromCents, numericToCents, toCents } from '../domain/money.js'
@@ -113,15 +113,10 @@ interface Prepared {
 }
 
 async function prepare(tx: Tx, caller: Caller, body: TransactionBody, vocabulary: Vocabulary, now: Date): Promise<Prepared> {
+  const moment = unwrap(checkWhen({ timezone: body.timezone, occurred_at: body.occurred_at || null }))
   const timezone = body.timezone ?? caller.timezone
-  const occurredAt = body.occurred_at ? new Date(body.occurred_at) : null
-  if (occurredAt && Number.isNaN(occurredAt.getTime())) throw invalid('invalid_occurred_at', 'occurred_at must be an ISO timestamp.')
-  let date: string
-  try {
-    date = body.date ?? todayIn(timezone, occurredAt ?? now)
-  } catch {
-    throw invalid('invalid_timezone', `"${timezone}" is not an IANA time zone name.`)
-  }
+  const occurredAt = moment ? new Date(moment) : null
+  const date = body.date ?? todayIn(timezone, occurredAt ?? now)
   if (!isLocalDate(date)) throw invalid('invalid_date', 'date must be YYYY-MM-DD.')
 
   const amount = toCents(body.amount)
@@ -422,6 +417,7 @@ export interface TransactionPatch {
 // The user's own edits are recorded, so a later source can't undo them (VISION.md §3.4, "The user's own edits win").
 export async function patchTransaction(tx: Tx, caller: Caller, id: string, patch: TransactionPatch): Promise<TransactionView> {
   const existing = await loadRaw(tx, caller, id)
+  const occurredAt = unwrap(checkWhen({ timezone: patch.timezone, occurred_at: patch.occurred_at }))
   const vocabulary = await loadVocabulary(tx)
   const edited = new Set(existing.user_edited)
   const amount = patch.amount !== undefined ? toCents(patch.amount) : existing.amount
@@ -462,7 +458,7 @@ export async function patchTransaction(tx: Tx, caller: Caller, id: string, patch
       user_edited: [...edited],
       updated_at: new Date(),
       ...(patch.date !== undefined && { date: patch.date }),
-      ...(patch.occurred_at !== undefined && { occurred_at: patch.occurred_at }),
+      ...(occurredAt !== undefined && { occurred_at: occurredAt }),
       ...(patch.timezone !== undefined && { timezone: patch.timezone }),
       ...(patch.merchant !== undefined && { merchant: patch.merchant?.trim() || null }),
       ...(patch.notes !== undefined && { notes: patch.notes }),

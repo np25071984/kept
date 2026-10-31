@@ -61,8 +61,9 @@ describe('renaming text references', () => {
 describe('usageProblem', () => {
   it('lets an unused name go and lists what still uses one', () => {
     expect(usageProblem('', 'Iva', { purchases: 0, repeats: 0 })).toBeNull()
-    expect(usageProblem('Category ', 'Car', { purchases: 1, subcategories: 2, 'watched groups': 1 })?.message).toBe(
-      'Category "Car" is still used by 1 purchase, 2 subcategories, 1 watched group. Move or change those first, or rename it instead.',
+    expect(usageProblem('Category ', 'Car', { purchases: 1, subcategories: 2, 'watched groups': 1, caps: 0 })?.message).toBe(
+      'Category "Car" is still used by purchases, subcategories, watched groups. Move or change those first, or rename it instead.',
     )
+    expect(usageProblem('', 'Iva', { purchases: 0, caps: 1 })?.message).toBe('"Iva" is still used by caps. Move or change those first, or rename it instead.')
   })
 })

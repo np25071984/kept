@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { inHousehold } from '../../src/db/db.js'
+import { checkRole, inHousehold } from '../../src/db/db.js'
 import { addDays, todayIn } from '../../src/domain/dates.js'
 import { INVITES_PER_HOUR } from '../../src/domain/throttle.js'
 import { authenticate } from '../../src/ledger/households.js'
@@ -29,6 +29,18 @@ describe('dates', () => {
     const recent = await sam.post('/api/v1/transactions', { date: today, amount: 3, merchant: 'Bodega', category: 'Other' })
     expect(recent.body.warnings).toBeUndefined()
   })
+
+  it('refuses a bad time zone, moment or amount instead of storing it', async () => {
+    const bad = (body: object) => sam.post('/api/v1/transactions', { amount: 5, category: 'Other', ...body })
+    expect((await bad({ date: '2026-10-01', timezone: 'Not/AZone' })).body.error.code).toBe('invalid_timezone')
+    expect((await bad({ occurred_at: 'yesterday' })).body.error.code).toBe('invalid_occurred_at')
+    expect((await bad({ amount: 0.001 })).status).toBe(400)
+    const logged = await bad({ date: '2026-10-01' })
+    const id = logged.body.transaction.id
+    expect((await sam.patch(`/api/v1/transactions/${id}`, { timezone: 'Not/AZone' })).body.error.code).toBe('invalid_timezone')
+    expect((await sam.patch(`/api/v1/transactions/${id}`, { occurred_at: 'yesterday' })).body.error.code).toBe('invalid_occurred_at')
+    expect((await sam.patch(`/api/v1/transactions/${id}`, { occurred_at: '2026-10-01T09:30:00-04:00' })).body.occurred_at).toBe('2026-10-01T13:30:00.000Z')
+  })
 })
 
 describe('renaming and deleting vocabulary', () => {
@@ -40,7 +52,7 @@ describe('renaming and deleting vocabulary', () => {
 
     const blocked = await c.delete('/api/v1/cost-centers?name=Iva')
     expect(blocked.status).toBe(409)
-    expect(blocked.body.error.message).toBe('"Iva" is still used by 1 purchase. Move or change those first, or rename it instead.')
+    expect(blocked.body.error.message).toBe('"Iva" is still used by purchases. Move or change those first, or rename it instead.')
 
     expect((await c.patch('/api/v1/cost-centers', { name: 'iva', new_name: 'Ivy' })).body).toEqual({ name: 'Ivy', kind: 'Child' })
     expect((await c.patch('/api/v1/cost-centers', { name: 'Ivy', kind: 'Kid' })).body).toEqual({ name: 'Ivy', kind: 'Kid' })
@@ -65,10 +77,21 @@ describe('renaming and deleting vocabulary', () => {
     expect(moved).toMatchObject({ checked_groups: ['Food/Alcohol'], line_items: [{ category: 'Food' }] })
     expect((await c.get('/api/v1/watches')).body.watches).toMatchObject([{ category: 'Food/Alcohol', group: 'Food/Alcohol' }])
 
-    expect((await c.delete('/api/v1/categories?path=Food')).body.error.message).toContain('1 purchase, 1 subcategory')
-    expect((await c.delete('/api/v1/categories?path=Food/Alcohol')).body.error.message).toContain('1 watched group')
+    expect((await c.delete('/api/v1/categories?path=Food')).body.error.message).toContain('purchases, subcategories')
+    expect((await c.delete('/api/v1/categories?path=Food/Alcohol')).body.error.message).toContain('watched groups')
     expect((await c.patch('/api/v1/categories', { path: 'Food', new_path: 'Travel' })).status).toBe(409)
     expect((await c.delete('/api/v1/categories?path=Travel')).status).toBe(204)
+  })
+
+  it('keeps a category or person with a cap, without counting anyone\'s purchases', async () => {
+    const c = client(h, (await newHousehold(h, 'Capped')).api_key)
+    await c.post('/api/v1/categories', { path: 'Eating out' })
+    await c.post('/api/v1/cost-centers', { name: 'Zoe', kind: 'Child' })
+    await c.post('/api/v1/caps', { category: 'Eating out', amount: 100, period: 'month' })
+    await c.post('/api/v1/caps', { cost_center: 'Zoe', amount: 50, period: 'month' })
+    expect((await c.delete('/api/v1/categories?path=Eating out')).body.error.message).toBe('Category "Eating out" is still used by caps. Move or change those first, or rename it instead.')
+    expect((await c.delete('/api/v1/cost-centers?name=Zoe')).body.error.message).toContain('still used by caps')
+    expect((await c.get('/api/v1/caps')).body.caps).toHaveLength(2)
   })
 })
 
@@ -77,6 +100,9 @@ describe('repeats', () => {
     const phone = await sam.post('/api/v1/transactions', { date: '2026-09-27', amount: 50, merchant: 'Verizon', category: 'Phone' })
     const repeat = await sam.post('/api/v1/repeats', { transaction_id: phone.body.transaction.id, frequency: 'monthly' })
     expect(repeat.body).toMatchObject({ next_date: '2026-10-27', amount: 50, merchant: 'Verizon', category: 'Phone' })
+    const again = await sam.post('/api/v1/repeats', { transaction_id: phone.body.transaction.id, frequency: 'monthly' })
+    expect(again.status).toBe(409)
+    expect(again.body.error.code).toBe('already_repeats')
 
     expect(await runDueRepeats(h.db, new Date('2026-10-27T03:00:00Z'))).toBe(0) // still Oct 26 in New York
     expect(await runDueRepeats(h.db, new Date('2026-10-27T15:00:00Z'))).toBe(1)
@@ -225,6 +251,13 @@ describe('setup and members', () => {
     expect((await laptop.get('/api/v1/categories')).status).toBe(200)
     expect((await sam.delete(`/api/v1/api-keys/${created.body.id}`)).status).toBe(204)
     expect((await laptop.get('/api/v1/categories')).status).toBe(401)
+  })
+})
+
+describe('database role', () => {
+  it('serves as a role row-level security binds, and refuses the tables\' owner', async () => {
+    expect(await checkRole(h.db)).toBeNull()
+    expect(await checkRole(h.owner)).toContain("row-level security doesn't bind")
   })
 })
 
