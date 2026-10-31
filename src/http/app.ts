@@ -1,6 +1,7 @@
 import swagger from '@fastify/swagger'
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify'
-import { jsonSchemaTransform, serializerCompiler, validatorCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod'
+import { jsonSchemaTransform, jsonSchemaTransformObject, serializerCompiler, validatorCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod'
+import { ErrorBody } from '../api/common.js'
 import { inHousehold, type Db, type Tx } from '../db/db.js'
 import type { Caller } from '../ledger/caller.js'
 import { ApiError } from '../ledger/errors.js'
@@ -56,12 +57,20 @@ export async function buildApp(deps: AppDeps): Promise<App> {
       security: [{ apiKey: [] }],
     },
     transform: jsonSchemaTransform,
+    transformObject: jsonSchemaTransformObject,
   })
 
   const oauth = createOAuth(deps.db, deps.oauthKeys ?? await loadKeys(deps.db), deps.publicUrl)
 
   // A bearer token is a member's API key or an OAuth2 access token issued for the MCP address (IMPLEMENTATION.md §4).
   app.decorateRequest('caller', null)
+  // Every API route answers an error with the same body (IMPLEMENTATION.md §3).
+  const error = { description: 'An error, with a code to act on.', content: { 'application/json': { schema: ErrorBody } } }
+  app.addHook('onRoute', (route) => {
+    if (!route.url.startsWith('/api/v1/') || route.schema?.hide) return
+    route.schema = { ...route.schema, response: { ...(route.schema?.response as object), '4xx': error, '5xx': error } }
+  })
+
   app.addHook('onRequest', async (request, reply) => {
     if (request.routeOptions.config?.public) return
     const header = request.headers.authorization ?? ''
