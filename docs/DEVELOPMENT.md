@@ -72,7 +72,7 @@ Update from a development machine with `deploy/deploy.sh [ssh-host]`. It deploys
 - `src/mcp`: the MCP server, its tools and the playbook text.
 - `src/oauth`: the OAuth2 authorization server, sign-in by emailed code, and the sign-in and consent pages.
 - `src/mail`: the emails Kept sends, and the mailers that send them through Resend or write them to the log.
-- `src/http`: Fastify routes and their TypeBox schemas, which also generate the OpenAPI spec, and serving the web UI.
+- `src/http`: Fastify routes and their schemas, which also generate the OpenAPI spec, and serving the web UI. The transaction schemas are Zod and shared with the MCP tools; the rest are TypeBox.
 - `src/db`: the Kysely connection, the schema types and migrations.
 - `web`: the web UI, a React app; `web/src/lib` holds its pure functions, unit-tested in `test/unit` (`web.test.ts`, `filters.test.ts`, `reports.test.ts`).
 - `src/cli`: `migrate`, `create-household`, `create-client` and `openapi`.

@@ -1,6 +1,8 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { z } from 'zod'
+import { TransactionBatch } from '../../src/http/transactionSchemas.js'
 import { newHousehold, startHarness, type Harness } from './helpers.js'
 
 let h: Harness
@@ -40,6 +42,8 @@ describe('MCP server', () => {
       'add_source', 'answer_question', 'delete_transaction', 'edit_transaction', 'flag_missing_charge', 'get_playbook', 'get_summary', 'get_updates', 'invite_member',
       'list_transactions', 'log_transaction', 'manage_caps', 'manage_notes', 'manage_repeats', 'manage_vocabulary', 'manage_watches', 'merge_transactions', 'update_setup',
     ])
+    const logTool = (await client.listTools()).tools.find((t) => t.name === 'log_transaction')!
+    expect(logTool.inputSchema).toEqual(z.toJSONSchema(TransactionBatch, { target: 'draft-7', io: 'input' }))
     expect((await client.listPrompts()).prompts.map((p) => p.name).sort()).toEqual(['catch_up', 'log_expense', 'setup_household'])
     const resource = await client.readResource({ uri: 'kept://household' })
     expect(JSON.parse((resource.contents[0] as { text: string }).text).categories).toContain('Groceries')

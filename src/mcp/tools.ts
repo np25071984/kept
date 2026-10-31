@@ -1,9 +1,9 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod'
-import { SOURCE_KINDS } from '../domain/matching.js'
 import type { StartPath } from '../domain/setup.js'
-import { MAX_BATCH, MAX_PAGE, MIN_AMOUNT, MIN_SHARE } from '../http/schemas.js'
+import { MIN_AMOUNT } from '../http/schemas.js'
+import { IdParams, MergeBody, SourceBody, TransactionBatch, TransactionPatch, TransactionQuery } from '../http/transactionSchemas.js'
 import { capCall, noteCall, query, repeatCall, vocabularyCall, watchCall, type Method, type Planned } from './actions.js'
 import { FIRST_MEMBER, NEW_MEMBER, PLAYBOOK, resumeSetup } from './playbook.js'
 
@@ -17,35 +17,6 @@ const destroy = { readOnlyHint: false, destructiveHint: true, openWorldHint: fal
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe('YYYY-MM-DD')
 const amount = z.number().min(MIN_AMOUNT)
-const spentFor = z.array(z.object({
-  cost_center: z.string().describe('An existing person or thing (cost center) by name.'),
-  share: z.number().min(MIN_SHARE).lte(1).nullish().describe('Fraction of the line. Omit to split the remainder evenly.'),
-}))
-const lineItem = z.object({
-  amount,
-  category: z.string().describe('An existing category path, e.g. "Car/Fuel".'),
-  item: z.string().nullish().describe('Free text to track, e.g. "snacks", "shoes".'),
-  notes: z.string().nullish(),
-  spent_for: spentFor.optional(),
-})
-const sourceKind = z.enum(SOURCE_KINDS)
-const transactionFields = {
-  date: date.optional().describe('Local date of the purchase. Defaults to today in the user\'s time zone.'),
-  occurred_at: z.string().optional().describe('Exact moment, ISO 8601, when a receipt or statement shows it.'),
-  timezone: z.string().optional().describe('IANA zone where it happened, if not the household\'s, e.g. "Asia/Tokyo".'),
-  merchant: z.string().nullish(),
-  notes: z.string().nullish().describe('E.g. the original amount and rate of a foreign purchase.'),
-  private: z.boolean().optional().describe('Left out of household totals.'),
-  category: z.string().nullish().describe('Main category: the whole purchase, or the rest beside line_items.'),
-  spent_for: spentFor.optional().describe('Who or what the main category was for.'),
-  line_items: z.array(lineItem).optional().describe('Only the parts the user priced; the rest goes to category.'),
-  checked_groups: z.array(z.string()).optional().describe('Watched groups the user answered about, "no" included.'),
-}
-const transaction = z.object({
-  ...transactionFields,
-  amount: amount.describe('Total paid, in the household currency.'),
-  source: z.object({ kind: sourceKind.optional(), extracted: z.record(z.string(), z.unknown()).optional() }).optional().describe('Where this came from. Default "talk".'),
-})
 const id = z.string().uuid()
 
 function result(response: { status: number; body: unknown }): CallToolResult {
@@ -108,25 +79,21 @@ export function registerTools(server: McpServer, rest: Rest) {
   server.registerTool('log_transaction', {
     title: 'Log transactions',
     description: 'Write one or more purchases. Only after the user confirmed the final record you showed them ("Log $60.00 to Car/Fuel for the Kia, today?"). Each is matched against purchases already logged: "created", "attached" (tell the user what changed, and what was kept because they edited it) or "possible_duplicate" (ask if it\'s the same purchase; merge_transactions if yes). "warnings" flags a date the user may not have meant; ask them.',
-    inputSchema: { transactions: z.array(transaction).min(1).max(MAX_BATCH).describe('One entry per purchase; a statement batch goes in one call.') },
+    inputSchema: TransactionBatch,
     annotations: write,
   }, async ({ transactions }) => result(await rest('POST', '/api/v1/transactions', { transactions })))
 
   server.registerTool('list_transactions', {
     title: 'List transactions',
     description: 'The user\'s own purchases, newest first. Use it for best guesses: the usual category at a merchant, the usual car, the last split, existing item names. Never includes other members\' purchases.',
-    inputSchema: {
-      from: date.optional(), to: date.optional(), merchant: z.string().optional(),
-      category: z.array(z.string()).optional().describe('One or more category paths; each includes its subcategories.'),
-      cost_center: z.array(z.string()).optional().describe('One or more people or things.'), item: z.string().optional(), limit: z.number().int().min(1).max(MAX_PAGE).optional(),
-    },
+    inputSchema: TransactionQuery.pick({ from: true, to: true, merchant: true, category: true, cost_center: true, item: true, limit: true }),
     annotations: read,
   }, async (args) => result(await rest('GET', `/api/v1/transactions${query(args)}`)))
 
   server.registerTool('edit_transaction', {
     title: 'Edit a transaction',
     description: 'Change one of the user\'s purchases after they confirmed the change, e.g. "I returned the shoes, it was $18". Edited fields win over later receipts and statements. line_items replaces all explicit line items.',
-    inputSchema: { id, ...transactionFields, amount: amount.optional() },
+    inputSchema: IdParams.extend(TransactionPatch.shape),
     annotations: write,
   }, async ({ id, ...patch }) => result(await rest('PATCH', `/api/v1/transactions/${id}`, patch)))
 
@@ -140,14 +107,14 @@ export function registerTools(server: McpServer, rest: Rest) {
   server.registerTool('add_source', {
     title: 'Add a source',
     description: 'Attach what you read from a receipt, bill, email or statement to a purchase already logged, e.g. a receipt sent later. Send the receipt\'s line_items (grouped) and checked_groups; the response lists what changed.',
-    inputSchema: { id, kind: sourceKind, ...transactionFields, amount: amount.optional(), extracted: z.record(z.string(), z.unknown()).optional() },
+    inputSchema: IdParams.extend(SourceBody.shape),
     annotations: write,
   }, async ({ id, ...body }) => result(await rest('POST', `/api/v1/transactions/${id}/sources`, body)))
 
   server.registerTool('merge_transactions', {
     title: 'Merge two transactions',
     description: 'After the user agreed two logged purchases are the same one: merges other_id into id, keeping both sets of sources, and deletes other_id.',
-    inputSchema: { id, other_id: id },
+    inputSchema: IdParams.extend(MergeBody.shape),
     annotations: destroy,
   }, async ({ id, other_id }) => result(await rest('POST', `/api/v1/transactions/${id}/merge`, { other_id })))
 
