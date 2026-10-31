@@ -1,7 +1,7 @@
-import { Type, type Static, type TSchema } from 'typebox'
-import { SOURCE_KINDS } from '../domain/matching.js'
+import { Type, type TSchema } from 'typebox'
 
-// Request schemas. They validate input and generate the OpenAPI spec (IMPLEMENTATION.md §6).
+// Request schemas. They validate input and generate the OpenAPI spec (IMPLEMENTATION.md §6). The transaction schemas are
+// in Zod (transactionSchemas.ts), shared with the MCP tools.
 
 const Nullable = <T extends TSchema>(schema: T) => Type.Union([schema, Type.Null()])
 export const LocalDate = Type.String({ pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Local date, YYYY-MM-DD.' })
@@ -14,68 +14,6 @@ export const MAX_PAGE = 500
 const Amount = Type.Number({ minimum: MIN_AMOUNT, description: 'In the household currency.' })
 
 export const IdParams = Type.Object({ id: Type.String({ format: 'uuid' }) })
-
-export const SpentFor = Type.Object({
-  cost_center: Type.String({ minLength: 1 }),
-  share: Type.Optional(Nullable(Type.Number({ minimum: MIN_SHARE, maximum: 1, description: 'Fraction of the line item. Entries without one split the remainder evenly.' }))),
-})
-
-export const LineItem = Type.Object({
-  amount: Amount,
-  category: Type.String({ minLength: 1, description: 'Category path, e.g. "Car/Fuel".' }),
-  item: Type.Optional(Nullable(Type.String())),
-  notes: Type.Optional(Nullable(Type.String())),
-  spent_for: Type.Optional(Type.Array(SpentFor)),
-})
-
-const SourceKind = Type.Union(SOURCE_KINDS.map((kind) => Type.Literal(kind)))
-
-const TransactionFields = {
-  date: Type.Optional(LocalDate),
-  occurred_at: Type.Optional(Type.String({ description: 'Exact moment, ISO 8601.' })),
-  timezone: Type.Optional(Type.String({ description: 'IANA name. Defaults to the household\'s time zone.' })),
-  merchant: Type.Optional(Nullable(Type.String())),
-  notes: Type.Optional(Nullable(Type.String())),
-  private: Type.Optional(Type.Boolean()),
-  category: Type.Optional(Nullable(Type.String({ description: 'Main category: the single line, or the rest line beside explicit line items.' }))),
-  spent_for: Type.Optional(Type.Array(SpentFor)),
-  line_items: Type.Optional(Type.Array(LineItem)),
-  checked_groups: Type.Optional(Type.Array(Type.String(), { description: 'Watched groups the user answered about, "no" included.' })),
-}
-
-export const TransactionBody = Type.Object({
-  ...TransactionFields,
-  amount: Amount,
-  source: Type.Optional(Type.Object({ kind: Type.Optional(SourceKind), extracted: Type.Optional(Type.Record(Type.String(), Type.Unknown())) })),
-})
-
-export const TransactionsBody = Type.Union([TransactionBody, Type.Object({ transactions: Type.Array(TransactionBody, { minItems: 1, maxItems: MAX_BATCH }) })])
-
-export const TransactionPatch = Type.Object({ ...TransactionFields, amount: Type.Optional(Amount), occurred_at: Type.Optional(Nullable(Type.String())) })
-
-export const SourceBody = Type.Object({
-  ...TransactionFields,
-  amount: Type.Optional(Amount),
-  kind: SourceKind,
-  extracted: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
-})
-
-export const MergeBody = Type.Object({ other_id: Type.String({ format: 'uuid', description: 'The transaction merged into this one and then deleted.' }) })
-
-export const TransactionQuery = Type.Object({
-  from: Type.Optional(LocalDate),
-  to: Type.Optional(LocalDate),
-  merchant: Type.Optional(Type.String()),
-  item: Type.Optional(Type.String()),
-  q: Type.Optional(Type.String({ description: 'Merchant or item, contains.' })),
-  private: Type.Optional(Type.Boolean()),
-  category: Type.Optional(Type.Array(Type.String(), { description: 'Repeat for several; each includes its subcategories.' })),
-  category_only: Type.Optional(Type.Array(Type.String(), { description: 'Categories without their subcategories.' })),
-  cost_center: Type.Optional(Type.Array(Type.String(), { description: 'Repeat for several.' })),
-  no_cost_center: Type.Optional(Type.Boolean({ description: 'Also purchases with a line for nobody in particular.' })),
-  limit: Type.Optional(Type.Integer({ minimum: 1, maximum: MAX_PAGE })),
-  offset: Type.Optional(Type.Integer({ minimum: 0 })),
-})
 
 export const CategoryBody = Type.Object({ path: Type.String({ minLength: 1 }) })
 export const CategoryRename = Type.Object({ path: Type.String({ minLength: 1 }), new_path: Type.String({ minLength: 1, description: 'The new path; its parent must exist. Subcategories move with it.' }) })
@@ -153,5 +91,3 @@ export const SummaryQuery = Type.Object({
   period: Type.Optional(Type.Union([Type.Literal('month'), Type.Literal('year'), Type.Literal('total')])),
   scope: Type.Optional(Type.Union([Type.Literal('me'), Type.Literal('household')])),
 })
-
-export type TransactionBodyT = Static<typeof TransactionBody>

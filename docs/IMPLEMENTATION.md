@@ -580,7 +580,7 @@ sequenceDiagram
 
 ## 6. Stack and Deployment
 
-- **Server:** TypeScript on Node with Fastify. Route schemas validate requests and generate the OpenAPI spec (§3). The MCP server uses the official MCP TypeScript SDK.
+- **Server:** TypeScript on Node with Fastify. Route schemas validate requests and generate the OpenAPI spec (§3). The transaction schemas are Zod, and the MCP tools for transactions take them as their input schemas, so the REST API and the tools describe one shape; the other routes use TypeBox. The MCP server uses the official MCP TypeScript SDK.
 - **Database:** PostgreSQL, one database for every household (§1).
 - **Database access:** Kysely for typed queries and migrations.
 - **Hosting:** one VPS running Docker Compose: PostgreSQL, the Kept server with its scheduler, and Caddy in front for HTTPS with automatic certificates. Assistants' connectors need the public HTTPS URL ([`VISION.md` §4.B](VISION.md#supported-assistants)). The server applies migrations on start. The host needs a domain name of its own: Gemini rejects wildcard IP names such as `sslip.io` before sign-in starts.
