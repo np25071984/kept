@@ -1,5 +1,9 @@
-// Which REST call a merged tool's action makes. A tool error names the tool's own parameters,
-// since the REST API's message would name its fields instead (IMPLEMENTATION.md §5.1).
+import { z } from 'zod'
+import { Id } from '../api/common.js'
+import { CapBody, CostCenterBody, NoteBody, RepeatBody, RepeatPatch, WatchBody } from '../api/ledger.js'
+
+// The merged tools' inputs, built from the REST API's fields, and which REST call each action makes. A tool error names
+// the tool's own parameters, since the REST API's message would name its fields instead (IMPLEMENTATION.md §5.1).
 
 export type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE'
 export type Call = { method: Method; url: string; body?: Record<string, unknown> }
@@ -21,13 +25,14 @@ function pick<T extends object>(args: T, keys: (keyof T & string)[]): Record<str
   return Object.fromEntries(keys.filter((key) => args[key] !== undefined).map((key) => [key, args[key]]))
 }
 
-export interface VocabularyArgs {
-  action: 'add' | 'rename' | 'delete'
-  what: 'category' | 'cost_center'
-  name: string
-  new_name?: string
-  kind?: string
-}
+export const ManageVocabulary = z.object({
+  action: z.enum(['add', 'rename', 'delete']),
+  what: z.enum(['category', 'cost_center']),
+  name: CostCenterBody.shape.name.describe('The category path or the person or thing\'s name; for add, the new one.'),
+  new_name: CostCenterBody.shape.name.optional().describe('rename: the new path or name.'),
+  kind: CostCenterBody.shape.kind.optional().describe('add cost_center: Car, Home, Child, Pet or anything else.'),
+})
+export type VocabularyArgs = z.infer<typeof ManageVocabulary>
 
 export function vocabularyCall({ action, what, name, new_name, kind }: VocabularyArgs): Planned {
   const category = what === 'category'
@@ -43,26 +48,16 @@ export function vocabularyCall({ action, what, name, new_name, kind }: Vocabular
   return call('DELETE', `${url}${query(category ? { path: name } : { name })}`)
 }
 
-export interface WatchArgs {
-  action: 'start' | 'stop'
-  category?: string | null
-  item?: string | null
-  id?: string
-}
+export const ManageWatches = z.object({ action: z.enum(['start', 'stop']), id: Id.optional().describe('stop: the watched group\'s id.') }).extend(WatchBody.shape)
+export type WatchArgs = z.infer<typeof ManageWatches>
 
 export function watchCall(args: WatchArgs): Planned {
   if (args.action === 'start') return call('POST', '/api/v1/watches', pick(args, ['category', 'item']))
   return args.id ? call('DELETE', `/api/v1/watches/${args.id}`) : missing('id', 'stop watching')
 }
 
-export interface CapArgs {
-  action: 'set' | 'change' | 'remove'
-  id?: string
-  category?: string | null
-  cost_center?: string | null
-  amount?: number
-  period?: 'month' | 'year'
-}
+export const ManageCaps = z.object({ action: z.enum(['set', 'change', 'remove']), id: Id.optional() }).extend(CapBody.partial().shape)
+export type CapArgs = z.infer<typeof ManageCaps>
 
 export function capCall(args: CapArgs): Planned {
   if (args.action === 'set') return call('POST', '/api/v1/caps', pick(args, ['category', 'cost_center', 'amount', 'period']))
@@ -71,11 +66,8 @@ export function capCall(args: CapArgs): Planned {
   return call('DELETE', `/api/v1/caps/${args.id}`)
 }
 
-export interface NoteArgs {
-  action: 'save' | 'update' | 'delete'
-  id?: string
-  text?: string
-}
+export const ManageNotes = z.object({ action: z.enum(['save', 'update', 'delete']), id: Id.optional(), text: NoteBody.shape.text.optional() })
+export type NoteArgs = z.infer<typeof ManageNotes>
 
 export function noteCall({ action, id, text }: NoteArgs): Planned {
   if (action !== 'delete' && !text) return missing('text', `${action} a note`)
@@ -84,18 +76,15 @@ export function noteCall({ action, id, text }: NoteArgs): Planned {
   return action === 'update' ? call('PATCH', `/api/v1/notes/${id}`, { text }) : call('DELETE', `/api/v1/notes/${id}`)
 }
 
-export interface RepeatArgs {
-  action: 'set' | 'list' | 'update' | 'stop'
-  id?: string
-  transaction_id?: string
-  amount?: number
-  frequency?: 'weekly' | 'monthly' | 'yearly'
-  interval?: number
-  anchor?: string
-  ends_on?: string | null
-  remaining?: number | null
-  paused?: boolean
-}
+export const ManageRepeats = z.object({ action: z.enum(['set', 'list', 'update', 'stop']), id: Id.optional().describe('update, stop: the repeat\'s id.') })
+  .extend(RepeatBody.partial().shape)
+  .extend(RepeatPatch.shape)
+  .extend({
+    transaction_id: RepeatBody.shape.transaction_id.optional().describe('set: the purchase to repeat.'),
+    amount: RepeatPatch.shape.amount.describe('update: the amount from the next date.'),
+    paused: RepeatPatch.shape.paused.describe('update: pause or resume.'),
+  })
+export type RepeatArgs = z.infer<typeof ManageRepeats>
 
 const SCHEDULE: (keyof RepeatArgs)[] = ['frequency', 'interval', 'anchor', 'ends_on', 'remaining']
 

@@ -202,4 +202,19 @@ describe('two members of one household', () => {
     expect((await sql`select id from transactions`.execute(h.db)).rows).toEqual([])
     expect((await jones.get('/api/v1/categories')).body.categories.some((c: { path: string }) => c.path === 'Car/Fuel')).toBe(false)
   })
+
+  it('lists members, changes a role and removes a member', async () => {
+    const listed = await sam.get('/api/v1/members')
+    expect(listed.status).toBe(200)
+    expect(listed.body.members.map((m: { name: string; role: string; you: boolean }) => [m.name, m.role, m.you])).toEqual([['Sam', 'owner', true], ['Alexandra', 'member', false]])
+    const alexId = listed.body.members[1].id
+    expect((await alex.patch(`/api/v1/members/${alexId}`, { role: 'owner' })).status).toBe(403)
+
+    const promoted = await sam.patch(`/api/v1/members/${alexId}`, { role: 'owner' })
+    expect(promoted.status).toBe(200)
+    expect(promoted.body.members[1]).toMatchObject({ name: 'Alexandra', role: 'owner', you: false })
+
+    expect((await sam.delete(`/api/v1/members/${alexId}`)).status).toBe(204)
+    expect((await sam.get('/api/v1/members')).body.members.map((m: { name: string }) => m.name)).toEqual(['Sam'])
+  })
 })

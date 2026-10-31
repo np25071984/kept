@@ -36,9 +36,10 @@ Phone apps need the deployed HTTPS address, set as `PUBLIC_URL`.
 npm test                 # unit and integration tests; needs the compose database
 npm run test:unit        # the unit tests in test/unit, no database
 npm run typecheck
+npm run openapi          # regenerate docs/openapi.json after an API change
 ```
 
-Integration tests drop and recreate the `public` schema of the `kept_test` database, then connect as `kept_app` like the server does, so row-level security is exercised. CI (`.github/workflows/ci.yml`) runs the typecheck, the tests and the build on every pull request and push to `main`. Set `TEST_DATABASE_HOST` to use a database other than `localhost:5433`.
+Integration tests drop and recreate the `public` schema of the `kept_test` database, then connect as `kept_app` like the server does, so row-level security is exercised. CI (`.github/workflows/ci.yml`) runs the typecheck, the tests and the build on every pull request and push to `main`. Set `TEST_DATABASE_HOST` to use a database other than `localhost:5433`. A unit test compares the generated spec with `docs/openapi.json`, so every API change shows in review as a diff of it.
 
 ## Deploying
 
@@ -72,7 +73,8 @@ Update from a development machine with `deploy/deploy.sh [ssh-host]`. It deploys
 - `src/mcp`: the MCP server, its tools and the playbook text.
 - `src/oauth`: the OAuth2 authorization server, sign-in by emailed code, and the sign-in and consent pages.
 - `src/mail`: the emails Kept sends, and the mailers that send them through Resend or write them to the log.
-- `src/http`: Fastify routes and their schemas, which also generate the OpenAPI spec, and serving the web UI. The transaction schemas are Zod and shared with the MCP tools; the rest are TypeBox.
+- `src/api`: the REST API's request and response schemas in Zod, shared by the routes, the MCP tools, and the ledger's and web UI's types.
+- `src/http`: Fastify routes, and serving the web UI.
 - `src/db`: the Kysely connection, the schema types and migrations.
 - `web`: the web UI, a React app; `web/src/lib` holds its pure functions, unit-tested in `test/unit` (`web.test.ts`, `filters.test.ts`, `reports.test.ts`).
 - `src/cli`: `migrate`, `create-household`, `create-client` and `openapi`.

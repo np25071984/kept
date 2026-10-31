@@ -1,3 +1,5 @@
+import type { z } from 'zod'
+import type * as api from '../api/ledger.js'
 import type { Tx } from '../db/db.js'
 import { groupKey, uniqueGroups, type WatchedGroup } from '../domain/coverage.js'
 import { watchInput } from '../domain/memory.js'
@@ -7,12 +9,7 @@ import { loadVocabulary } from './vocabulary.js'
 
 // The caller's watched groups (VISION.md §3.3). Nobody else sees them.
 
-export interface WatchView {
-  id: string
-  category: string | null
-  item: string | null
-  group: string
-}
+export type WatchView = z.infer<typeof api.Watch>
 
 export async function listWatches(tx: Tx, caller: Caller): Promise<WatchView[]> {
   const rows = await tx
@@ -31,7 +28,7 @@ export async function watchedGroups(tx: Tx, caller: Caller): Promise<WatchedGrou
 }
 
 // Watching a group already watched returns the existing one.
-export async function addWatch(tx: Tx, caller: Caller, body: { category?: string | null; item?: string | null }): Promise<WatchView> {
+export async function addWatch(tx: Tx, caller: Caller, body: z.infer<typeof api.WatchBody>): Promise<WatchView> {
   const input = watchInput(body)
   if ('code' in input) throw invalid(input.code, input.message)
   const vocabulary = await loadVocabulary(tx)

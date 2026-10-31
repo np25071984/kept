@@ -1,5 +1,7 @@
+import type { z } from 'zod'
+import type * as api from '../api/ledger.js'
 import type { Tx } from '../db/db.js'
-import { capRange, capState, type CapPeriod, type CapState } from '../domain/caps.js'
+import { capRange, capState, type CapPeriod } from '../domain/caps.js'
 import { todayIn } from '../domain/dates.js'
 import { fromCents, numericToCents, toCents } from '../domain/money.js'
 import type { Caller } from './caller.js'
@@ -9,15 +11,7 @@ import { loadVocabulary } from './vocabulary.js'
 
 // The caller's caps (VISION.md §4.A, "Caps"): soft reminders on a category or one of the people & things. Nobody else sees them.
 
-export interface CapView {
-  id: string
-  category: string | null
-  cost_center: string | null
-  amount: number
-  period: CapPeriod
-  spent: number
-  state: CapState
-}
+export type CapView = z.infer<typeof api.Cap>
 
 interface Row { id: string; category: string | null; cost_center: string | null; amount: number; period: CapPeriod }
 
@@ -52,12 +46,7 @@ export async function listCaps(tx: Tx, caller: Caller, now = new Date()): Promis
   })
 }
 
-export interface CapBody {
-  category?: string | null
-  cost_center?: string | null
-  amount: number
-  period: CapPeriod
-}
+export type CapBody = z.infer<typeof api.CapBody>
 
 export async function addCap(tx: Tx, caller: Caller, body: CapBody): Promise<CapView> {
   const vocabulary = await loadVocabulary(tx)
@@ -77,7 +66,7 @@ export async function addCap(tx: Tx, caller: Caller, body: CapBody): Promise<Cap
   return (await listCaps(tx, caller)).find((c) => c.id === id)!
 }
 
-export async function updateCap(tx: Tx, caller: Caller, id: string, patch: { amount?: number; period?: CapPeriod }): Promise<CapView> {
+export async function updateCap(tx: Tx, caller: Caller, id: string, patch: z.infer<typeof api.CapPatch>): Promise<CapView> {
   const updated = await tx.updateTable('caps').set({ ...(patch.amount !== undefined && { amount: patch.amount }), ...(patch.period && { period: patch.period }) })
     .where('id', '=', id).where('user_id', '=', caller.user_id).executeTakeFirst()
   if (updated.numUpdatedRows === 0n) throw notFound('Cap')

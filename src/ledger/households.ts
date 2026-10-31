@@ -1,5 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { sql } from 'kysely'
+import type { z } from 'zod'
+import type * as api from '../api/household.js'
 import { inHousehold, type Db, type Tx } from '../db/db.js'
 import { isTimeZone, todayIn } from '../domain/dates.js'
 import { isLanguage, SEED_CATEGORIES_RU, type Language } from '../domain/language.js'
@@ -92,7 +94,7 @@ export async function getSetup(tx: Tx, caller: Caller, now = new Date()) {
   const household = await tx.selectFrom('households').select(['name', 'currency', 'timezone', 'setup']).executeTakeFirstOrThrow()
   const user = await tx.selectFrom('users').select(['name', 'email', 'introduced_at', 'role', 'language']).where('id', '=', caller.user_id).executeTakeFirstOrThrow()
   const setup = { ...initialSetup(), ...household.setup } as SetupState
-  const you = { name: user.name, email: user.email, introduced: user.introduced_at != null, role: user.role, language: user.language }
+  const you = { name: user.name, email: user.email, introduced: user.introduced_at != null, role: user.role, language: isLanguage(user.language) ? user.language : null }
   return {
     household: { name: household.name, currency: household.currency, currency_locked: await hasPurchases(tx), timezone: household.timezone, steps: setup, next_step: nextStep(setup) },
     you,
@@ -113,7 +115,7 @@ async function hasPurchases(tx: Tx): Promise<boolean> {
 }
 
 // The caller's own profile (VISION.md §4.C, Settings → Profile).
-export async function updateMe(tx: Tx, caller: Caller, patch: { name?: string; language?: string | null }) {
+export async function updateMe(tx: Tx, caller: Caller, patch: z.infer<typeof api.MePatch>) {
   if (patch.language !== undefined) {
     if (patch.language !== null && !isLanguage(patch.language)) throw invalid('invalid_language', 'Language is en or ru.')
     await tx.updateTable('users').set({ language: patch.language }).where('id', '=', caller.user_id).execute()
@@ -126,13 +128,7 @@ export async function updateMe(tx: Tx, caller: Caller, patch: { name?: string; l
   return getSetup(tx, caller)
 }
 
-export interface SetupPatch {
-  name?: string
-  currency?: string
-  timezone?: string
-  steps?: Record<string, string>
-  introduced?: boolean
-}
+export type SetupPatch = z.infer<typeof api.SetupPatch>
 
 export async function updateSetup(tx: Tx, caller: Caller, patch: SetupPatch) {
   if (patch.currency !== undefined) {
@@ -196,7 +192,7 @@ export async function createInvite(tx: Tx, caller: Caller, email: string, mailer
   const mail = { to: address, inviter: caller.name, household: household.name, language: isLanguage(inviter?.language) ? inviter.language : 'en' } as const
   if (taken) await mailer.sendInviteToMember(mail)
   else await mailer.sendInvite({ ...mail, link: `${base}/invite#token=${token}`, connect: `${base}/mcp` })
-  return invite
+  return { ...invite, expires_at: invite.expires_at.toISOString() }
 }
 
 async function emailTaken(db: Db | Tx, email: string): Promise<boolean> {
@@ -210,7 +206,7 @@ export async function deleteInvite(tx: Tx, caller: Caller, id: string) {
 }
 
 // The invite link's token signs the new member in once; they join as a member and get their first API key.
-export async function acceptInvite(db: Db, input: { token: string; name: string }) {
+export async function acceptInvite(db: Db, input: z.infer<typeof api.AcceptBody>) {
   const found = await sql<{ id: string; household_id: string; email: string; expires_at: Date; accepted_at: Date | null }>`select * from kept_find_invite(${hashSecret(input.token)})`.execute(db)
   const invite = found.rows[0]
   if (!invite || invite.accepted_at || invite.expires_at < new Date() || (await emailTaken(db, invite.email))) throw new ApiError(410, 'invite_invalid', 'This invite link is invalid, used or expired.')
@@ -229,7 +225,8 @@ export async function joinHousehold(tx: Tx, invite: { id: string; household_id: 
 }
 
 export async function listApiKeys(tx: Tx, caller: Caller) {
-  return tx.selectFrom('api_keys').select(['id', 'name', 'created_at', 'last_used_at']).where('user_id', '=', caller.user_id).where('revoked_at', 'is', null).orderBy('created_at').execute()
+  const keys = await tx.selectFrom('api_keys').select(['id', 'name', 'created_at', 'last_used_at']).where('user_id', '=', caller.user_id).where('revoked_at', 'is', null).orderBy('created_at').execute()
+  return keys.map((k) => ({ ...k, created_at: k.created_at.toISOString(), last_used_at: k.last_used_at?.toISOString() ?? null }))
 }
 
 export async function revokeApiKey(tx: Tx, caller: Caller, id: string) {

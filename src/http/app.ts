@@ -1,13 +1,11 @@
 import swagger from '@fastify/swagger'
-import { type TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
-import Fastify, { type FastifyInstance, type FastifyRequest, type FastifySchema } from 'fastify'
-import { jsonSchemaTransform, validatorCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod'
-import { ZodType } from 'zod'
+import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify'
+import { jsonSchemaTransform, serializerCompiler, validatorCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod'
 import { inHousehold, type Db, type Tx } from '../db/db.js'
 import type { Caller } from '../ledger/caller.js'
 import { ApiError } from '../ledger/errors.js'
 import { API_KEY_PREFIX, authenticate, callerFor, type Mailer } from '../ledger/households.js'
-import { loadKeys } from '../oauth/keys.js'
+import { loadKeys, type OAuthKeys } from '../oauth/keys.js'
 import { createOAuth, SCOPE, verifyAccessToken } from '../oauth/provider.js'
 import { oauthRoutes, protectedResourceMetadataUrl } from '../oauth/routes.js'
 import { householdRoutes } from './routes/household.js'
@@ -35,10 +33,11 @@ export interface AppDeps {
   trustProxy?: number
   // The built web UI; defaults to dist/web.
   webRoot?: string
+  // OAuth2 keys; by default loaded from the database, created on first start.
+  oauthKeys?: OAuthKeys
 }
 
-export type App = FastifyInstance<any, any, any, any, TypeBoxTypeProvider>
-export type ZodApp = FastifyInstance<any, any, any, any, ZodTypeProvider>
+export type App = FastifyInstance<any, any, any, any, ZodTypeProvider>
 
 export interface RouteDeps extends AppDeps {
   // Runs `fn` as the authenticated caller, inside a transaction scoped to their household.
@@ -46,7 +45,9 @@ export interface RouteDeps extends AppDeps {
 }
 
 export async function buildApp(deps: AppDeps): Promise<App> {
-  const app = Fastify({ logger: deps.logger ?? false, trustProxy: (_address: string, hop: number) => hop < (deps.trustProxy ?? 0) }).withTypeProvider<TypeBoxTypeProvider>()
+  const app = Fastify({ logger: deps.logger ?? false, trustProxy: (_address: string, hop: number) => hop < (deps.trustProxy ?? 0) }).withTypeProvider<ZodTypeProvider>()
+  app.setValidatorCompiler(validatorCompiler)
+  app.setSerializerCompiler(serializerCompiler)
 
   await app.register(swagger, {
     openapi: {
@@ -54,11 +55,10 @@ export async function buildApp(deps: AppDeps): Promise<App> {
       components: { securitySchemes: { apiKey: { type: 'http', scheme: 'bearer', description: 'A per-user API key, "kept_…".' } } },
       security: [{ apiKey: [] }],
     },
-    // Routes move from TypeBox to Zod one area at a time; only Zod schemas need converting to JSON Schema.
-    transform: (document) => isZodRoute(document.schema) ? jsonSchemaTransform(document) : { schema: document.schema, url: document.url },
+    transform: jsonSchemaTransform,
   })
 
-  const oauth = createOAuth(deps.db, await loadKeys(deps.db), deps.publicUrl)
+  const oauth = createOAuth(deps.db, deps.oauthKeys ?? await loadKeys(deps.db), deps.publicUrl)
 
   // A bearer token is a member's API key or an OAuth2 access token issued for the MCP address (IMPLEMENTATION.md §4).
   app.decorateRequest('caller', null)
@@ -104,10 +104,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   app.get('/health', { config: { public: true }, schema: { hide: true } }, async () => ({ ok: true }))
   app.get('/api/v1/openapi.json', { config: { public: true }, schema: { hide: true } }, async () => app.swagger())
 
-  await app.register(async (scope) => {
-    scope.setValidatorCompiler(validatorCompiler)
-    transactionRoutes(scope.withTypeProvider<ZodTypeProvider>(), routeDeps)
-  })
+  transactionRoutes(app, routeDeps)
   ledgerRoutes(app, routeDeps)
   householdRoutes(app, routeDeps)
   connectionRoutes(app, { db: deps.db, oauth })
@@ -115,8 +112,4 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   oauthRoutes(app, { db: deps.db, mailer: deps.mailer, oauth })
   await webRoutes(app, deps.webRoot)
   return app
-}
-
-function isZodRoute(schema: FastifySchema | undefined): boolean {
-  return !!schema && (['body', 'querystring', 'params', 'headers'] as const).some((key) => schema[key] instanceof ZodType)
 }

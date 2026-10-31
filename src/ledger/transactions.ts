@@ -1,3 +1,5 @@
+import type { z } from 'zod'
+import type * as api from '../api/transactions.js'
 import type { Tx } from '../db/db.js'
 import { capNotes } from '../domain/caps.js'
 import { checkedGroups } from '../domain/coverage.js'
@@ -14,74 +16,17 @@ import { memberLanguage } from './households.js'
 import { loadVocabulary, type Vocabulary } from './vocabulary.js'
 import { watchedGroups } from './watches.js'
 
-export interface SpentForBody {
-  cost_center: string
-  share?: number | null
-}
+// Request bodies, as the REST API validated them.
+export type SpentForBody = z.infer<typeof api.SpentFor>
+export type LineBody = z.infer<typeof api.LineItem>
+export type TransactionBody = z.infer<typeof api.TransactionBody>
+export type SourceBody = NonNullable<TransactionBody['source']>
 
-export interface LineBody {
-  amount: number
-  category: string
-  item?: string | null
-  notes?: string | null
-  spent_for?: SpentForBody[]
-}
+export type LineView = TransactionView['line_items'][number]
 
-export interface SourceBody {
-  kind?: SourceKind
-  extracted?: Record<string, unknown>
-}
+export type TransactionView = z.infer<typeof api.Transaction>
 
-export interface TransactionBody {
-  date?: string
-  occurred_at?: string
-  timezone?: string
-  amount: number
-  merchant?: string | null
-  notes?: string | null
-  private?: boolean
-  category?: string | null
-  spent_for?: SpentForBody[]
-  line_items?: LineBody[]
-  checked_groups?: string[]
-  source?: SourceBody
-}
-
-export interface LineView {
-  amount: number
-  category: string
-  item: string | null
-  notes: string | null
-  rest: boolean
-  spent_for: { cost_center: string; share: number | null }[]
-}
-
-export interface TransactionView {
-  id: string
-  date: string
-  occurred_at: string | null
-  timezone: string
-  amount: number
-  merchant: string | null
-  notes: string | null
-  private: boolean
-  category: string | null
-  repeat_id: string | null
-  checked_groups: string[]
-  line_items: LineView[]
-  sources: { id: string; kind: string; received_at: string; extracted: Record<string, unknown> | null }[]
-}
-
-export interface WriteResult {
-  result: 'created' | 'attached' | 'possible_duplicate'
-  transaction: TransactionView
-  possible_duplicate_of?: string
-  changes?: FieldChange[]
-  kept?: KeptField[]
-  warnings?: string[]
-  // Caps this write took past 80% or over, as lines to say in the confirmation (VISION.md §4.A, "Caps").
-  caps?: string[]
-}
+export type WriteResult = z.infer<typeof api.WriteResult>
 
 // Every write is matched against the caller's own transactions first (VISION.md §3.4, "One purchase, many sources").
 export async function createTransactions(tx: Tx, caller: Caller, bodies: TransactionBody[], now = new Date()): Promise<WriteResult[]> {
@@ -402,19 +347,7 @@ export async function loadViews(tx: Tx, caller: Caller, ids: string[]): Promise<
     .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
 }
 
-export interface TransactionPatch {
-  date?: string
-  occurred_at?: string | null
-  timezone?: string
-  amount?: number
-  merchant?: string | null
-  notes?: string | null
-  private?: boolean
-  category?: string | null
-  spent_for?: SpentForBody[]
-  line_items?: LineBody[]
-  checked_groups?: string[]
-}
+export type TransactionPatch = z.infer<typeof api.TransactionPatch>
 
 // The user's own edits are recorded, so a later source can't undo them (VISION.md §3.4, "The user's own edits win").
 export async function patchTransaction(tx: Tx, caller: Caller, id: string, patch: TransactionPatch): Promise<TransactionView> {
@@ -462,10 +395,7 @@ export async function deleteTransaction(tx: Tx, caller: Caller, id: string): Pro
   if (!deleted) throw notFound('Transaction')
 }
 
-export interface SourcePatchBody extends Partial<Omit<TransactionBody, 'source'>> {
-  kind: SourceKind
-  extracted?: Record<string, unknown>
-}
+export type SourcePatchBody = z.infer<typeof api.SourceBody>
 
 // A source added later, such as a receipt read after the purchase was logged.
 export async function addSource(tx: Tx, caller: Caller, id: string, body: SourcePatchBody, now = new Date()): Promise<WriteResult> {

@@ -1,4 +1,6 @@
 import { sql, type ExpressionBuilder } from 'kysely'
+import type { z } from 'zod'
+import type { TransactionQuery } from '../api/transactions.js'
 import type { Tx } from '../db/db.js'
 import type { Database } from '../db/schema.js'
 import { fromCents, numericToCents } from '../domain/money.js'
@@ -7,23 +9,7 @@ import { loadViews, type TransactionView } from './transactions.js'
 
 // The caller's purchases, filtered and paged. Never another member's.
 
-export interface ListFilters {
-  from?: string
-  to?: string
-  merchant?: string
-  item?: string
-  // Merchant or item, contains.
-  q?: string
-  private?: boolean
-  // Each category with its subcategories; `category_only` without them.
-  category?: string[]
-  category_only?: string[]
-  cost_center?: string[]
-  // Purchases with a line for nobody in particular.
-  no_cost_center?: boolean
-  limit?: number
-  offset?: number
-}
+export type ListFilters = z.infer<typeof TransactionQuery>
 
 type Eb = ExpressionBuilder<Database, 'transactions'>
 

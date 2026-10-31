@@ -1,19 +1,15 @@
+import type { z } from 'zod'
+import type * as api from '../api/ledger.js'
 import type { Tx } from '../db/db.js'
 import { computeCoverage, type CoverageTransaction } from '../domain/coverage.js'
 import { daysInMonth, isLocalDate, parts, todayIn } from '../domain/dates.js'
 import { fromCents, numericToCents } from '../domain/money.js'
-import { summarize, type GroupBy, type Period, type SummaryLine } from '../domain/summary.js'
+import { summarize, type SummaryLine } from '../domain/summary.js'
 import type { Caller } from './caller.js'
 import { invalid } from './errors.js'
 import { watchedGroups } from './watches.js'
 
-export interface SummaryQuery {
-  from?: string
-  to?: string
-  group_by?: GroupBy
-  period?: Period
-  scope?: 'me' | 'household'
-}
+export type SummaryQuery = z.infer<typeof api.SummaryQuery>
 
 // `me` covers the caller's own purchases, private included; `household` every member's non-private ones, never by member.
 export async function getSummary(tx: Tx, caller: Caller, query: SummaryQuery, now = new Date()) {
