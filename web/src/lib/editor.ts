@@ -1,4 +1,4 @@
-import { parseAmount, toCents } from './money.js'
+import { parseAmount } from './money.js'
 import type { Line, SpentFor, Transaction } from './types.js'
 
 // The purchase editor's form, and the PATCH it becomes. The rest line isn't edited directly: it is whatever the
@@ -84,17 +84,19 @@ export function validateForm(form: PurchaseForm): string[] {
   return problems
 }
 
+// Called only after validateForm, so every amount parses; a 0 would be refused by the API.
+const amount = (text: string) => (parseAmount(text) ?? 0) / 100
 const spentFor = (entries: SpentForForm[]) => entries.map((e) => ({ cost_center: e.cost_center.trim(), ...(e.share.trim() !== '' && { share: Number(e.share) / 100 }) }))
 
 export function patchFromForm(form: PurchaseForm) {
   return {
     date: form.date,
-    amount: toCents(Number(form.amount.replace(/[,$\s]/g, ''))) / 100,
+    amount: amount(form.amount),
     merchant: form.merchant.trim() || null,
     notes: form.notes.trim() || null,
     private: form.private,
     category: form.category || null,
     spent_for: spentFor(form.spent_for),
-    line_items: form.lines.map((line) => ({ amount: Number(line.amount.replace(/[,$\s]/g, '')), category: line.category, item: line.item.trim() || null, spent_for: spentFor(line.spent_for) })),
+    line_items: form.lines.map((line) => ({ amount: amount(line.amount), category: line.category, item: line.item.trim() || null, spent_for: spentFor(line.spent_for) })),
   }
 }

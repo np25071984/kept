@@ -32,6 +32,16 @@ describe('purchase editor', () => {
     })
   })
 
+  it('saves amounts written with a decimal comma as the user meant them', () => {
+    const form = formFromTransaction(target)
+    const lines = (amounts: string[]) => form.lines.map((line, i) => ({ ...line, amount: amounts[i]! }))
+    expect(validateForm({ ...form, amount: '1 234,50', lines: lines(['22,25']) })).toEqual([])
+    const patch = patchFromForm({ ...form, amount: '1 234,50', lines: lines(['22,25']) })
+    expect(patch.amount).toBe(1234.5)
+    expect(patch.line_items[0]!.amount).toBe(22.25)
+    expect(patchFromForm({ ...form, amount: '12,50', lines: lines(['1,234.50']) })).toMatchObject({ amount: 12.5, line_items: [{ amount: 1234.5 }] })
+  })
+
   it('explains what is wrong before anything is sent', () => {
     const form = formFromTransaction(target)
     expect(validateForm({ ...form, amount: '20' })).toContain('The lines add up to more than the amount.')
