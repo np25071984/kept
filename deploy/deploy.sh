@@ -39,7 +39,8 @@ for _ in $(seq 1 30); do
   [ "$(curl -s -o /dev/null -w '%{http_code}' "$url/health")" = 200 ] && break
   sleep 2
 done
-echo "Newest migration: $(docker compose exec -T postgres psql -U kept -d kept -Atc 'select name from kysely_migration order by name desc limit 1')"
+# </dev/null: exec forwards stdin, which here is the rest of this script, and would swallow the checks below.
+echo "Newest migration: $(docker compose exec -T postgres psql -U kept -d kept -Atc 'select name from kysely_migration order by name desc limit 1' </dev/null)"
 failed=0
 for path in /health / /app/ /app/site.css; do
   code="$(curl -s -o /dev/null -w '%{http_code}' "$url$path")"
