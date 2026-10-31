@@ -492,34 +492,22 @@ The MCP server is stateless Streamable HTTP at `POST /mcp`, in the same process 
 | `list_transactions`   | `GET /api/v1/transactions`     | Recent history, used to infer category, merchant, cost center and items. Takes several categories or cost centers. |
 | `edit_transaction`    | `PATCH /api/v1/transactions/{id}` | Change a purchase after the user confirmed, e.g. a return.             |
 | `delete_transaction`  | `DELETE /api/v1/transactions/{id}` | Delete a purchase after the user confirmed.                           |
-| `list_cost_centers`   | `GET /api/v1/cost-centers`     | Cost centers with their kind.                                             |
-| `watch_group`         | `POST /api/v1/watches`         | Start watching a category or item, after the user asked.                  |
-| `stop_watching`       | `DELETE /api/v1/watches/{id}`  | Stop watching a group.                                                    |
+| `manage_watches`      | `POST /api/v1/watches`, `DELETE /api/v1/watches/{id}` | `start` watching a category or item after the user asked, or `stop`. |
 | `answer_question`     | `POST /api/v1/questions/{id}/answer` | Record the user's answer to an open question.                       |
 | `flag_missing_charge` | `POST /api/v1/repeats/{id}/missing` | Keep a missing recurring charge as an open question.                 |
-| `set_cap`             | `POST /api/v1/caps`            | Set a cap the user confirmed.                                             |
-| `change_cap`          | `PATCH /api/v1/caps/{id}`      | Change a cap's amount or period.                                          |
-| `remove_cap`          | `DELETE /api/v1/caps/{id}`     | Remove a cap.                                                             |
-| `save_note`           | `POST /api/v1/notes`           | Remember something the user said, after telling them.                     |
-| `update_note`         | `PATCH /api/v1/notes/{id}`     | Change a note's text.                                                     |
-| `delete_note`         | `DELETE /api/v1/notes/{id}`    | Forget a note.                                                            |
+| `manage_caps`         | `POST /api/v1/caps`, `PATCH`, `DELETE /api/v1/caps/{id}` | `set` a cap the user confirmed, `change` its amount or period, or `remove` it. |
+| `manage_notes`        | `POST /api/v1/notes`, `PATCH`, `DELETE /api/v1/notes/{id}` | `save` something the user said after telling them, `update` a note's text, or `delete` it. |
 | `add_source`          | `POST /api/v1/transactions/{id}/sources` | Attach what the agent read from a photo, document or email to an existing transaction, e.g. a receipt added later. |
 | `merge_transactions`  | `POST /api/v1/transactions/{id}/merge` | Merge a duplicate after the user agrees they're the same purchase. |
-| `set_repeat`          | `POST /api/v1/repeats`         | Make a transaction repeat, after the user confirms the schedule.          |
-| `list_repeats`        | `GET /api/v1/repeats`          | The user's repeats with next date and amount.                             |
-| `update_repeat`       | `PATCH /api/v1/repeats/{id}`   | Change, pause or resume a repeat.                                         |
-| `stop_repeat`         | `DELETE /api/v1/repeats/{id}`  | Stop a repeat.                                                            |
+| `manage_repeats`      | `POST`, `GET /api/v1/repeats`, `PATCH`, `DELETE /api/v1/repeats/{id}` | `set` a repeat after the user confirms the schedule, `list` the user's repeats with next date and amount, `update` (including pause and resume), or `stop`. |
 | `get_updates`         | `POST /api/v1/updates/take`    | What happened since the user last talked to the agent; called at the start of a conversation. Marks what it returns as seen. |
 | `get_summary`         | `GET /api/v1/expenses/summary` | Totals by category, cost center or item for a period, with coverage for watched groups. |
-| `add_cost_center`     | `POST /api/v1/cost-centers`    | Add a cost center the user confirmed.                                     |
-| `add_category`        | `POST /api/v1/categories`      | Add a category or subcategory the user confirmed.                         |
-| `rename_cost_center`  | `PATCH /api/v1/cost-centers`   | Fix a cost center's name the user confirmed.                              |
-| `delete_cost_center`  | `DELETE /api/v1/cost-centers`  | Delete a cost center nothing uses, after the user confirmed.              |
-| `rename_category`     | `PATCH /api/v1/categories`     | Rename or move a category the user confirmed.                             |
-| `delete_category`     | `DELETE /api/v1/categories`    | Delete a category nothing uses, after the user confirmed.                 |
+| `manage_vocabulary`   | `POST`, `PATCH`, `DELETE /api/v1/categories` or `/api/v1/cost-centers` | `add`, `rename` or `delete` a category or cost center the user confirmed; `delete` only when nothing uses it. |
 | `update_setup`        | `PATCH /api/v1/setup`          | Save confirmed setup answers and mark steps `done` or `later`.            |
 | `invite_member`       | `POST /api/v1/invites`         | Invite a member by email, after the user confirms. Owners only.           |
 | `get_playbook`        | `GET /api/v1/notes`, `/watches`, `/categories`, `/cost-centers`, `/caps`, `/questions`, `/setup` | The question playbook plus the household's categories and cost centers, the user's current notes, watched groups, caps and open questions, and setup state in one call. Called before the first question; when setup is incomplete or the caller hasn't been introduced, the playbook tells the agent to run the first conversation. |
+
+The `manage_*` tools group a family's writes under an `action`, since models choose less reliably among many tools. Hints are per tool, so each is marked destructive and some clients confirm every call, adds included. Which REST call an action makes, and the error naming a missing parameter, is `src/mcp/actions.ts`.
 
 ### 5.2 Teaching the Agent
 

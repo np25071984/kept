@@ -4,11 +4,12 @@ import { z } from 'zod'
 import { SOURCE_KINDS } from '../domain/matching.js'
 import type { StartPath } from '../domain/setup.js'
 import { MAX_BATCH, MAX_PAGE, MIN_AMOUNT, MIN_SHARE } from '../http/schemas.js'
+import { capCall, noteCall, query, repeatCall, vocabularyCall, watchCall, type Method, type Planned } from './actions.js'
 import { FIRST_MEMBER, NEW_MEMBER, PLAYBOOK, resumeSetup } from './playbook.js'
 
 // Every tool is a thin call to the REST API as the same caller (IMPLEMENTATION.md §5.1).
 
-export type Rest = (method: 'GET' | 'POST' | 'PATCH' | 'DELETE', url: string, body?: unknown) => Promise<{ status: number; body: unknown }>
+export type Rest = (method: Method, url: string, body?: unknown) => Promise<{ status: number; body: unknown }>
 
 const read = { readOnlyHint: true, openWorldHint: false } as const
 const write = { readOnlyHint: false, destructiveHint: false, openWorldHint: false } as const
@@ -52,12 +53,9 @@ function result(response: { status: number; body: unknown }): CallToolResult {
   return { content: [{ type: 'text', text }], isError: response.status >= 400 }
 }
 
-// An array becomes the key repeated, as the REST API takes several categories or cost centers.
-function query(params: Record<string, unknown>): string {
-  const entries = Object.entries(params)
-    .filter(([, value]) => value !== undefined && value !== null)
-    .flatMap(([key, value]) => (Array.isArray(value) ? value : [value]).map((v) => [key, String(v)]))
-  return entries.length ? `?${new URLSearchParams(entries).toString()}` : ''
+async function forward(rest: Rest, planned: Planned): Promise<CallToolResult> {
+  if (!planned.ok) return result({ status: 400, body: { error: planned.error } })
+  return result(await rest(planned.call.method, planned.call.url, planned.call.body))
 }
 
 const START_WITH: Record<Exclude<StartPath, 'resume'>, string> = {
@@ -153,67 +151,29 @@ export function registerTools(server: McpServer, rest: Rest) {
     annotations: destroy,
   }, async ({ id, other_id }) => result(await rest('POST', `/api/v1/transactions/${id}/merge`, { other_id })))
 
-  server.registerTool('list_cost_centers', {
-    title: 'List people & things',
-    description: 'The people and things the household spends for ("cost centers" in the API), each with its kind: Car, Home, Child, Pet. get_playbook already returns them.',
-    annotations: read,
-  }, async () => result(await rest('GET', '/api/v1/cost-centers')))
-
-  server.registerTool('add_cost_center', {
-    title: 'Add a person or thing',
-    description: 'Add a car, home, child, pet or anything else the household tracks spending for. Only after the user said yes to adding this name as new, asked on its own: a name that isn\'t in list_cost_centers is often a typo for one that is.',
-    inputSchema: { name: z.string(), kind: z.string().describe('Car, Home, Child, Pet, …') },
-    annotations: write,
-  }, async (args) => result(await rest('POST', '/api/v1/cost-centers', args)))
-
-  server.registerTool('add_category', {
-    title: 'Add a category',
-    description: 'Add a category or subcategory ("Groceries/Alcohol") only after the user agreed to the name and nothing existing fits. A subcategory\'s parent must exist.',
-    inputSchema: { path: z.string() },
-    annotations: write,
-  }, async (args) => result(await rest('POST', '/api/v1/categories', args)))
-
-  server.registerTool('rename_category', {
-    title: 'Rename a category',
-    description: 'Fix a category\'s name or move it under another parent ("Gas" to "Car/Fuel"), after the user said yes to that change on its own. Purchases, watched groups and repeats keep it; subcategories move with it.',
-    inputSchema: { path: z.string(), new_path: z.string() },
-    annotations: write,
-  }, async (args) => result(await rest('PATCH', '/api/v1/categories', args)))
-
-  server.registerTool('delete_category', {
-    title: 'Delete a category',
-    description: 'Delete a category nothing uses, after the user said yes. If purchases, subcategories, watched groups or repeats still use it, Kept refuses and says which: offer to move them (edit_transaction, rename_category) or to rename instead.',
-    inputSchema: { path: z.string() },
+  server.registerTool('manage_vocabulary', {
+    title: 'Change categories or people & things',
+    description: 'Add, rename or delete a category (what: category, name is its path, e.g. "Car/Fuel") or a person or thing the household spends for (what: cost_center, "cost centers" in the API). get_playbook returns both. Each only after the user said yes to that change, asked on its own. add: a name that isn\'t in the household is often a typo for one that is, so ask first; a subcategory\'s parent must exist; a cost center needs its kind. rename fixes a name or moves a category ("Gas" to "Car/Fuel"); purchases, watched groups and repeats keep it, and subcategories move with it. delete works only when nothing uses it; otherwise Kept says what does: offer to move those purchases with edit_transaction, or to rename instead.',
+    inputSchema: {
+      action: z.enum(['add', 'rename', 'delete']),
+      what: z.enum(['category', 'cost_center']),
+      name: z.string().describe('The category path or the person or thing\'s name; for add, the new one.'),
+      new_name: z.string().optional().describe('rename: the new path or name.'),
+      kind: z.string().optional().describe('add cost_center: Car, Home, Child, Pet, …'),
+    },
     annotations: destroy,
-  }, async ({ path }) => result(await rest('DELETE', `/api/v1/categories${query({ path })}`)))
+  }, async (args) => forward(rest, vocabularyCall(args)))
 
-  server.registerTool('rename_cost_center', {
-    title: 'Rename a person or thing',
-    description: 'Fix the name of a person or thing ("Iva" to "Ivy"), after the user said yes to that change on its own. Purchases and repeats keep it.',
-    inputSchema: { name: z.string(), new_name: z.string() },
-    annotations: write,
-  }, async (args) => result(await rest('PATCH', '/api/v1/cost-centers', args)))
-
-  server.registerTool('delete_cost_center', {
-    title: 'Delete a person or thing',
-    description: 'Delete a person or thing nothing uses, after the user said yes. If purchases or repeats still use it, Kept refuses and says which: offer to move them with edit_transaction, or to rename instead.',
-    inputSchema: { name: z.string() },
+  server.registerTool('manage_watches', {
+    title: 'Watch a group or stop watching',
+    description: 'start: ask about a group where it\'s bought, after the user asked ("keep an eye on alcohol", "track snacks"): a category, which may need manage_vocabulary add first, or an item bought across categories. stop: stop asking ("stop tracking snacks"), by the id from get_playbook\'s watching; past purchases don\'t change.',
+    inputSchema: {
+      action: z.enum(['start', 'stop']),
+      category: z.string().nullish(), item: z.string().nullish(),
+      id: id.optional().describe('stop: the watched group\'s id.'),
+    },
     annotations: destroy,
-  }, async ({ name }) => result(await rest('DELETE', `/api/v1/cost-centers${query({ name })}`)))
-
-  server.registerTool('watch_group', {
-    title: 'Watch a group',
-    description: 'Start asking about a group where it\'s bought, after the user asked ("keep an eye on alcohol", "track snacks"): a category, which may need add_category first, or an item bought across categories.',
-    inputSchema: { category: z.string().nullish(), item: z.string().nullish() },
-    annotations: write,
-  }, async (args) => result(await rest('POST', '/api/v1/watches', args)))
-
-  server.registerTool('stop_watching', {
-    title: 'Stop watching a group',
-    description: 'Stop asking about a watched group ("stop tracking snacks"), by the id from get_playbook\'s watching. Past purchases don\'t change.',
-    inputSchema: { id },
-    annotations: destroy,
-  }, async ({ id }) => result(await rest('DELETE', `/api/v1/watches/${id}`)))
+  }, async (args) => forward(rest, watchCall(args)))
 
   server.registerTool('answer_question', {
     title: 'Answer an open question',
@@ -229,80 +189,37 @@ export function registerTools(server: McpServer, rest: Rest) {
     annotations: write,
   }, async ({ repeat_id, period }) => result(await rest('POST', `/api/v1/repeats/${repeat_id}/missing`, { period })))
 
-  server.registerTool('set_cap', {
-    title: 'Set a cap',
-    description: 'Set a soft reminder the user asked for ("cap eating out at $250 a month"), after they confirmed: a category or one of the people & things, an amount, per month or year. It never blocks a purchase.',
-    inputSchema: { category: z.string().nullish(), cost_center: z.string().nullish(), amount, period: z.enum(['month', 'year']) },
-    annotations: write,
-  }, async (args) => result(await rest('POST', '/api/v1/caps', args)))
-
-  server.registerTool('change_cap', {
-    title: 'Change a cap',
-    description: 'Change a cap\'s amount or period ("make the groceries cap $1,200"), by the id from get_playbook\'s caps.',
-    inputSchema: { id, amount: amount.optional(), period: z.enum(['month', 'year']).optional() },
-    annotations: write,
-  }, async ({ id, ...body }) => result(await rest('PATCH', `/api/v1/caps/${id}`, body)))
-
-  server.registerTool('remove_cap', {
-    title: 'Remove a cap',
-    description: 'Remove a cap ("drop my groceries cap"), by the id from get_playbook\'s caps.',
-    inputSchema: { id },
-    annotations: destroy,
-  }, async ({ id }) => result(await rest('DELETE', `/api/v1/caps/${id}`)))
-
-  server.registerTool('save_note', {
-    title: 'Save a note',
-    description: 'Remember something about the user\'s spending, in their words, after telling them what you\'ll remember: a habit ("Costco is always groceries"), a split, a store that\'s always private, or a plan. Write any time as a date ("We\'re selling the Kia in December 2026"), never "next month". Never save silently.',
-    inputSchema: { text: z.string() },
-    annotations: write,
-  }, async (args) => result(await rest('POST', '/api/v1/notes', args)))
-
-  server.registerTool('update_note', {
-    title: 'Update a note',
-    description: 'Change a note\'s text, after the user agreed.',
-    inputSchema: { id, text: z.string() },
-    annotations: write,
-  }, async ({ id, ...body }) => result(await rest('PATCH', `/api/v1/notes/${id}`, body)))
-
-  server.registerTool('delete_note', {
-    title: 'Delete a note',
-    description: 'Forget a note, after the user asked.',
-    inputSchema: { id },
-    annotations: destroy,
-  }, async ({ id }) => result(await rest('DELETE', `/api/v1/notes/${id}`)))
-
-  server.registerTool('set_repeat', {
-    title: 'Repeat a transaction',
-    description: 'Make a logged purchase repeat, after the user confirmed the schedule ("repeat it on the 27th of every month?"). The ledger then logs it on each date and you announce it via get_updates.',
+  server.registerTool('manage_caps', {
+    title: 'Set, change or remove a cap',
+    description: 'A cap is a soft reminder the user asked for, after they confirmed; it never blocks a purchase. set: a category or one of the people & things, an amount, per month or year ("cap eating out at $250 a month"). change: the amount or period ("make the groceries cap $1,200"). remove: "drop my groceries cap". change and remove take the id from get_playbook\'s caps.',
     inputSchema: {
-      transaction_id: id, frequency: z.enum(['weekly', 'monthly', 'yearly']), interval: z.number().int().min(1).optional().describe('2 with weekly = every two weeks.'),
-      anchor: date.optional().describe('Sets the weekday, day of month or date. Defaults to the purchase date.'), ends_on: date.nullish(), remaining: z.number().int().min(0).nullish(),
+      action: z.enum(['set', 'change', 'remove']),
+      id: id.optional(), category: z.string().nullish(), cost_center: z.string().nullish(),
+      amount: amount.optional(), period: z.enum(['month', 'year']).optional(),
     },
-    annotations: write,
-  }, async (args) => result(await rest('POST', '/api/v1/repeats', args)))
-
-  server.registerTool('list_repeats', {
-    title: 'List repeats',
-    description: 'The user\'s repeats with their next date and amount.',
-    annotations: read,
-  }, async () => result(await rest('GET', '/api/v1/repeats')))
-
-  server.registerTool('update_repeat', {
-    title: 'Change a repeat',
-    description: 'Change a repeat from its next date ("the phone is $55 from now on", "rent moves to the 1st"), or pause and resume it.',
-    inputSchema: {
-      id, amount: amount.optional(), frequency: z.enum(['weekly', 'monthly', 'yearly']).optional(), interval: z.number().int().min(1).optional(),
-      anchor: date.optional(), ends_on: date.nullish(), remaining: z.number().int().min(0).nullish(), paused: z.boolean().optional(),
-    },
-    annotations: write,
-  }, async ({ id, ...body }) => result(await rest('PATCH', `/api/v1/repeats/${id}`, body)))
-
-  server.registerTool('stop_repeat', {
-    title: 'Stop a repeat',
-    description: 'Stop repeating. Purchases already logged stay.',
-    inputSchema: { id },
     annotations: destroy,
-  }, async ({ id }) => result(await rest('DELETE', `/api/v1/repeats/${id}`)))
+  }, async (args) => forward(rest, capCall(args)))
+
+  server.registerTool('manage_notes', {
+    title: 'Save, update or delete a note',
+    description: 'save: remember something about the user\'s spending, in their words, after telling them what you\'ll remember: a habit ("Costco is always groceries"), a split, a store that\'s always private, or a plan. Write any time as a date ("We\'re selling the Kia in December 2026"), never "next month". Never save silently. update: change a note\'s text after the user agreed. delete: forget a note after the user asked. update and delete take the id from get_playbook\'s notes.',
+    inputSchema: { action: z.enum(['save', 'update', 'delete']), id: id.optional(), text: z.string().optional() },
+    annotations: destroy,
+  }, async (args) => forward(rest, noteCall(args)))
+
+  server.registerTool('manage_repeats', {
+    title: 'Recurring purchases',
+    description: 'set: make a logged purchase repeat, after the user confirmed the schedule ("repeat it on the 27th of every month?"); the ledger then logs it on each date and get_updates announces it. list: the user\'s repeats with their next date and amount. update: change a repeat from its next date ("the phone is $55 from now on", "rent moves to the 1st"), or pause and resume it. stop: stop repeating; purchases already logged stay.',
+    inputSchema: {
+      action: z.enum(['set', 'list', 'update', 'stop']),
+      id: id.optional().describe('update, stop: the repeat\'s id.'), transaction_id: id.optional().describe('set: the purchase to repeat.'),
+      amount: amount.optional().describe('update only.'), frequency: z.enum(['weekly', 'monthly', 'yearly']).optional(),
+      interval: z.number().int().min(1).optional().describe('2 with weekly = every two weeks.'),
+      anchor: date.optional().describe('Sets the weekday, day of month or date. Defaults to the purchase date.'), ends_on: date.nullish(),
+      remaining: z.number().int().min(0).nullish(), paused: z.boolean().optional().describe('update only.'),
+    },
+    annotations: destroy,
+  }, async (args) => forward(rest, repeatCall(args)))
 
   server.registerTool('get_summary', {
     title: 'Get a spending summary',
