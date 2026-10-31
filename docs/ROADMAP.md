@@ -24,7 +24,7 @@ Real use, across assistants.
 Charging for the hosted Kept (`VISION.md` §5).
 
 - [ ] Export: a member downloads their own purchases and the household's vocabulary as CSV and JSON, from Settings and over the REST API.
-- [ ] An operator report of active households by the §5 definition, leaving out the operator's own and test households.
+- [ ] An operator report of active households by the `VISION.md` §5 definition, leaving out the operator's own and test households.
 - [ ] Billing state per household: trial start and paid-until, and a pure function that decides from them, the launch date and today whether the household may write.
 - [ ] Read-only households: the REST API refuses writes with an error that says how to pay, MCP tools pass it to the assistant, and the web UI shows a banner with the pay link.
 - [ ] Stripe: Checkout for $2 a month, a webhook that extends paid-until, and the customer portal linked from Settings.

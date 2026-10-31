@@ -11,7 +11,7 @@ AI assistants remove the typing: a user can say "I just spent $60" and any assis
 **The Solution:** Kept teaches the agent to be a good bookkeeper for one specific household. It gives the agent three things:
 
 1. **A way to group spending.** Transactions, line items, categories, cost centers, watched groups (like alcohol or snacks) and the "rest" line, so every answer the user gives has a place to go (see [Data Flow Examples](#3-data-flow-examples)).
-2. **A playbook of questions.** What to ask, in what order, and when to stay quiet: lead with the best guess, ask about cost centers only when there is a choice, ask about all watched groups in one question and only where they are sold, and always confirm before writing. Each member extends the playbook with their own notes, like "Costco is always groceries."
+2. **A playbook of questions.** What to ask, in what order, and when to stay quiet: lead with the best guess, ask about cost centers only when there is a choice, ask about all watched groups in one question and only where they are sold, and always confirm before writing. Each member extends the playbook with their own notes.
 3. **Memory of the household.** History the agent reads to make its guesses (the usual car, the last split, existing item names, which stores are mixed), plus each member's notes, such as "Costco is always groceries" or "we're selling the Kia in December." Memory lives in the ledger, not in any one assistant, so every assistant a member connects shares it.
 
 The ledger stores the records, but the product is the behavior. Any capable assistant connected to Kept asks the right questions from day one and gets better as history builds up. Kept doesn't read banks, inboxes or receipts itself: the user's own AI does that, with whatever access the user chooses to give it, and Kept keeps what it learns.
@@ -41,21 +41,21 @@ The household has two cars, a Hyundai and a Kia, so a fuel expense also needs to
 sequenceDiagram
     actor User
     participant AI as AI Agent
-    participant API as Ledger API
+    participant K as Kept
 
     User->>AI: "I just spent $60"
-    AI->>API: GET /api/v1/transactions?recent
-    API-->>AI: Recent history (merchants, categories, cost centers, amounts)
+    AI->>K: list_transactions (recent)
+    K-->>AI: Recent history (merchants, categories, cost centers, amounts)
     AI->>User: "Was that groceries at Trader Joe's, like last Saturday?"
     User->>AI: "No, it was gas"
-    AI->>API: GET /api/v1/cost-centers?category=Car/Fuel
-    API-->>AI: Hyundai, Kia
+    AI->>K: list_cost_centers
+    K-->>AI: Hyundai, Kia (both Car)
     AI->>User: "For the Hyundai, like your last fill-up, or the Kia?"
     User->>AI: "Kia"
     AI->>User: "Log $60.00 to Car/Fuel for the Kia, today?"
     User->>AI: "Yes"
-    AI->>API: POST /api/v1/transactions
-    API-->>AI: 201 Created
+    AI->>K: log_transaction
+    K-->>AI: Created
     AI->>User: "Logged $60.00 to Car/Fuel (Kia)."
 ```
 
@@ -67,15 +67,15 @@ The user sends the minimum they know:
 
 The AI extracts what is explicit and fills defaults:
 
-| Field       | Value     | Source              |
-| ----------- | --------- | ------------------- |
-| `amount`    | 60.00     | Stated              |
-| `date`      | Today     | Default             |
-| `timezone`  | America/New_York | Household default |
-| `currency`  | USD       | Household currency  |
-| `category`  | *unknown* | Needs inference     |
-| `spent_for` | *unknown* | Depends on category |
-| `merchant`  | *unknown* | Optional            |
+| What             | Value            | Source              |
+| ---------------- | ---------------- | ------------------- |
+| Amount           | 60.00            | Stated              |
+| Date             | Today            | Default             |
+| Time zone        | America/New_York | Household default   |
+| Currency         | USD              | Household currency  |
+| Category         | *unknown*        | Needs inference     |
+| Who or what for  | *unknown*        | Depends on category |
+| Merchant         | *unknown*        | Optional            |
 
 #### Step 2: Infer the category
 
@@ -125,7 +125,7 @@ Only after confirmation does the AI call `log_transaction` ([`IMPLEMENTATION.md`
 
 #### Step 7: Feedback
 
-The ledger stores the entry and returns `201 Created`. The AI replies:
+The ledger stores the entry, and the AI replies:
 
 > "Logged $60.00 to Car/Fuel (Kia)."
 
@@ -143,7 +143,7 @@ At a grocery-only store the AI assumes everything is groceries. At a mixed store
 >
 > **User:** "Shoes for Zoe, $22, and bath curtains, $12."
 >
-> **AI:** "Log $40 at Target: Clothing $22 for Zoe, Home $12 for the House, and $6 Groceries for the rest?"
+> **AI:** "Log $40 at Target: Clothing $22 for Zoe, Housing $12 for the House, and $6 Groceries for the rest?"
 >
 > **User:** "Yes."
 
@@ -156,7 +156,7 @@ Stored result:
 | Amount | Category  | `spent_for` | Item          |
 | ------ | --------- | ----------- | ------------- |
 | $22.00 | Clothing  | Zoe         | shoes         |
-| $12.00 | Home      | House       | bath curtains |
+| $12.00 | Housing   | House       | bath curtains |
 | $6.00  | Groceries |             | *(rest)*      |
 
 ### 3.3 Watched Groups: Alcohol and Snacks
@@ -204,11 +204,11 @@ When the user isn't sure of the amounts, the AI offers to read the receipt:
 sequenceDiagram
     actor User
     participant AI as AI Agent
-    participant API as Ledger API
+    participant K as Kept
 
     User->>AI: "I spent $40 at Whole Foods"
-    AI->>API: GET /api/v1/watches
-    API-->>AI: Groceries/Alcohol, snacks
+    AI->>K: get_playbook (at the start of the conversation)
+    K-->>AI: Watched groups: Groceries/Alcohol, snacks
     AI->>User: "You're watching alcohol and snacks. Any of that in there?"
     User->>AI: "Some snacks, not sure how much"
     AI->>User: "Send me a photo of the receipt and I'll find them"
@@ -216,8 +216,8 @@ sequenceDiagram
     AI->>AI: Sort receipt lines into watched groups
     AI->>User: "Found $11.48 of snacks (chips, cookies), no alcohol. The other $28.52 is groceries. Log it?"
     User->>AI: "Yes"
-    AI->>API: POST /api/v1/transactions
-    API-->>AI: 201 Created
+    AI->>K: log_transaction
+    K-->>AI: Created
     AI->>User: "Logged $40.00 at Whole Foods, including $11.48 of snacks."
 ```
 
@@ -229,11 +229,11 @@ sequenceDiagram
 
 #### Coverage
 
-Watched-group totals are only as complete as the purchases where the user answered. Reports show this instead of hiding it, because a number used for decisions has to say how reliable it is:
+Watched-group totals are only as complete as the purchases where the user answered. Reports show this, because a number used for decisions has to say how reliable it is:
 
 > **Alcohol, October: $110.** Checked on 60% of grocery spending. If the rest is similar, about $180.
 
-A purchase counts as checked for a group when the user answered the question (including "no") or a receipt was scanned. The summary endpoint returns the checked share and the estimate alongside each watched group's total.
+A purchase counts as checked for a group when the user answered the question (including "no") or a receipt was scanned. Each watched group's total comes with the checked share and the estimate.
 
 ### 3.4 Sources: Anything the User's AI Can Read
 
@@ -271,11 +271,11 @@ The same purchase often reaches the ledger several times: the user mentions it, 
   When a more trusted source changes something the user already confirmed, the agent tells them. It never changes it silently.
 
 - **The user's own edits win.** If the user returns the shoes from a $40 Target run and edits the purchase down to $18, a later $40 card charge doesn't change it back. Matching compares a new charge with a transaction's sources as well as its current amount, so the charge still finds the purchase and is attached as a source, and the $18 stays.
-- **Sources are kept as what was read, not as files.** Each source stores what the agent extracted from it (amount, date, merchant, line detail, account number), so the web UI can show where a purchase's numbers came from. The photo, PDF or email itself stays with the user. Kept doesn't store it, and the agent usually can't pass it on anyway: a model sees an image but can't send its bytes in a tool call.
+- **Sources are kept as what was read.** Each source stores what the agent extracted from it (amount, date, merchant, line detail, account number), so the web UI can show where a purchase's numbers came from. The photo, PDF or email itself stays with the user. Kept doesn't store it, and the agent usually can't pass it on anyway: a model sees an image but can't send its bytes in a tool call.
 
 #### Itemizing from sources
 
-Any source with line detail is grouped the same way as a [receipt scan](#receipt-scan): one line item per watched group and per other category or cost center, plus the rest. An Amazon order email with eight products becomes, say, Home $34 for the House, Groceries/Snacks $12 and the rest. A source without detail, like a bank charge, keeps the transaction at one line item unless the user or another source adds more.
+Any source with line detail is grouped the same way as a [receipt scan](#receipt-scan): one line item per watched group and per other category or cost center, plus the rest. An Amazon order email with eight products becomes, say, Housing $34 for the House, Groceries/Snacks $12 and the rest. A source without detail, like a bank charge, keeps the transaction at one line item unless the user or another source adds more.
 
 Utility and phone bills are usually for a specific home or car. A note can name the account number on a bill, so "account 4471 is the Apartment" files every electricity bill for that account under the Apartment without asking.
 
@@ -285,13 +285,9 @@ Every transaction belongs to the member who logged it: `spent_by` comes from the
 
 #### Showing members what their assistant can do
 
-Most people type every purchase, not knowing their assistant can read their email, a screenshot of their banking app or a statement. Kept records how each purchase arrived, so it knows who would gain from which source, and teaches them in three places:
+Most people type every purchase, not knowing their assistant can read their email, a screenshot of their banking app or a statement. Kept records how each purchase arrived, so a tip can name the source that would have helped, such as connecting email after a typed Amazon order. The plan is in `ROADMAP.md`.
 
-- **In the conversation, when it would have helped.** `get_playbook` returns how the member logged lately, by source. After a typed Amazon order the agent offers: "If you connect your email to me, I can pick up order confirmations myself." After a week of typed card purchases: "You can also send me a screenshot of your banking app or a statement." At most one tip a conversation; a tip given or declined isn't repeated.
-- **On the web,** a Tips page gathers every one, with the steps for each assistant.
-- **By email,** a few tips picked by how the member has logged so far, with a link to the Tips page.
-
-Two limits hold everywhere. A tip names only what the member's assistant can do (see [Supported Assistants](#supported-assistants)). And no tip asks for bank passwords: the bank is reached through a screenshot or a downloaded statement, email through the assistant maker's own connector.
+Two limits hold for every such tip. A tip names only what the member's assistant can do (see [Supported Assistants](#supported-assistants)). And no tip asks for bank passwords: the bank is reached through a screenshot or a downloaded statement, email through the assistant maker's own connector.
 
 ### 3.5 Repeating Spending: Phone, Rent, Subscriptions
 
@@ -365,7 +361,7 @@ flowchart TD
 - **Every step can be skipped or left for later.** "Later" keeps the starting categories, and new ones are added when a purchase first needs one, after asking. A skipped cost center is asked about when it first matters: "Is this fuel for a car you want to track separately?"
 - **One question at a time, and interruptible.** If the user stops, the next conversation picks up at the first unanswered step and doesn't repeat the introduction.
 - **Nothing is saved before the summary is confirmed,** as with every other write.
-- **The starting categories are the same for every household:** Groceries, Eating out, Car, Housing, Health, Clothing, Travel and Other. There is no Kids category: a child is one of the people & things, and what a child costs is everything spent for them, across categories. The interview adds to them.
+- **The starting categories are the same for every household,** the eight in the example above. There is no Kids category: a child is one of the people & things, and what a child costs is everything spent for them, across categories. The interview adds to them.
 - **Recurring bills aren't asked about.** They come up when one is logged ([Repeating Spending](#35-repeating-spending-phone-rent-subscriptions)).
 - **One time zone per household.** It sets "today" for logging, recurring bills and monthly totals, so everyone shares one calendar. It is chosen when the household is created and owners can change it; members don't set one. A purchase made while traveling keeps its own zone.
 - **One way in.** The web UI and every assistant start with the same sign-in: an email and a code. A verified email with no account and no invite is offered to create a household; with an invite, to join it.
@@ -423,7 +419,7 @@ A cap is a personal soft reminder: "I don't want to spend more than $1,000 on gr
 
 - **It reminds, it never blocks.** Purchases over a cap are logged like any other.
 - **The agent mentions it when it matters.** Once a purchase that counts toward a cap takes it past 80%, the confirmation says so: "Log $64 at Trader Joe's? That's $860 of your $1,000 groceries cap this month." Crossing it gets one line: "That puts groceries $40 over your cap for October." Below 80% it says nothing.
-- **Set in conversation or on the web.** "Cap eating out at $250 a month" is saved after the user confirms, like a note. "Drop my groceries cap" removes one, and the web lists every cap with Edit and Remove. Preferences lists each cap's progress, and Reports · Mine shows the ones past 80%.
+- **Set in conversation or on the web.** "Cap eating out at $250 a month" is saved after the user confirms, like a note. "Drop my groceries cap" removes one, and the web lists every cap with Edit and Remove.
 
 #### Households, Accounts and Privacy
 
@@ -450,7 +446,7 @@ The ledger ships a remote **MCP server** (Streamable HTTP, OAuth2). Any MCP-capa
 
 #### Supported Assistants
 
-Most logging happens on a phone, so what matters is whether the assistant's phone app can use Kept. As of October 2026, no assistant lets the user add a custom MCP server from the phone. The user adds Kept once in the assistant's web settings, and the connector then shows up in the phone app.
+Most logging happens on a phone, so what matters is whether the assistant's phone app can use Kept. No assistant lets the user add a custom MCP server from the phone. The user adds Kept once in the assistant's web settings, and the connector then shows up in the phone app.
 
 | Assistant                     | Custom MCP server                 | Added in                                          | In the phone app                                   |
 | ----------------------------- | --------------------------------- | ------------------------------------------------- | -------------------------------------------------- |
@@ -467,27 +463,27 @@ Users without a supported assistant (Copilot, Meta AI, Siri) use the [messaging 
 
 #### How Kept Teaches the Agent
 
-Kept delivers the playbook, not just the data, so every assistant behaves the same way without the user writing a prompt:
+Kept delivers the playbook with the data, so every assistant behaves the same way without the user writing a prompt:
 
 | What the agent learns       | Content                                                                                                  |
 | --------------------------- | -------------------------------------------------------------------------------------------------------- |
-| The question playbook       | The rules from [Data Flow Examples](#3-data-flow-examples): best guess as a yes/no question, one question at a time, cost center only when there is a choice, confirm before writing. Start each conversation by announcing [updates](#what-happens-on-the-date) in one line. |
+| The question playbook       | The rules from [Data Flow Examples](#3-data-flow-examples): best guess as a yes/no question, one question at a time, cost center only when there is a choice, confirm before writing. |
 | When to call each tool      | E.g. the expense is only written after the user confirms the final record.                               |
 | The household's vocabulary  | Categories, cost centers, the member's notes and watched groups, in context before the first question. |
 | Setting up                  | The first conversation for a new household or a new member ([First Conversation](#36-first-conversation-setting-up)). |
 | Logging an expense          | The capture → infer → clarify → confirm flow.                                                            |
-| Catching up                 | Announces updates in one line each.                                                                      |
+| Catching up                 | Announces [updates](#what-happens-on-the-date) in one line each.                                         |
 | Open questions              | What Kept needs the user to decide: a possible duplicate, a cap passed, a recurring charge missing from a statement, an API key unused for a year. At most one per conversation, after the user's request is done, and none when the user is in a hurry. A "no" or "later" is an answer, so the question doesn't come back soon. The web UI lists the same questions under Notifications. |
 
 [`IMPLEMENTATION.md` §5.2](IMPLEMENTATION.md#52-teaching-the-agent) says which MCP mechanism carries each one.
 
-Each member can also teach the agent in conversation, for example "always ask about snacks at Target" or "we're selling the Kia in December." These are stored in the ledger as [notes](#notes), so they apply in every assistant the member uses, not only the one where they were said, and agents don't need to keep their own memory of the household's finances.
+Each member can also teach the agent in conversation, for example "always ask about snacks at Target" or "we're selling the Kia in December." These are stored as [notes](#notes).
 
 #### Other clients
 
-- **Messaging bot (WhatsApp / Telegram)** — For users who don't use an MCP-capable assistant. A small service connects a chat app to a low-cost model (e.g., Gemini Flash) that uses the same MCP server as its tool source. Each phone number or chat account is linked to one ledger user.
-- **Siri (later)** — Siri reaches third-party apps through App Intents, not MCP. A native iOS app that exposes "log an expense" as an App Intent would let users log by voice through Siri. Not planned until the core works.
-- **OpenAPI spec** — The REST API is still documented with `openapi.json` for clients that only support OpenAPI-style actions.
+- **Messaging bot (WhatsApp / Telegram):** for users who don't use an MCP-capable assistant. A small service connects a chat app to a low-cost model (e.g., Gemini Flash) that uses the same MCP server as its tool source. Each phone number or chat account is linked to one ledger user.
+- **Siri (later):** Siri reaches third-party apps through App Intents, not MCP. A native iOS app that exposes "log an expense" as an App Intent would let users log by voice through Siri. Not planned until the core works.
+- **OpenAPI spec:** the REST API is documented with `openapi.json` for clients that only support OpenAPI-style actions.
 
 Any client needs a model that can read images, so the user can send a receipt photo in the same chat.
 
@@ -504,7 +500,6 @@ Every member signs in with their own account. The header holds the pages for loo
 | **Reports**            | Two reports, picked from the header. Mine: the member's own spending, private purchases included, with the caps past 80%. Household: every member's non-private purchases, never by member. Each starts with this month and the per-month trend, then breaks a chosen period down by category, by people & things and by merchant, in tabs. |
 | **Notifications**      | Behind the bell: Kept's open questions, with their answers as buttons (see [The AI Integration Layer](#b-the-ai-integration-layer)). The bell's count is the number unanswered. A member with no assistant connected is asked to connect one, here and in place of an empty My purchases, until they do. |
 | **Preferences**        | In the user menu: the member's watched groups, with this month's amount and coverage, and caps, with their progress. |
-| **Tips**               | In the user menu: what the member's assistant can read besides what they type (email, banking app screenshots, statements, receipt photos), with the steps for each assistant ([§3.4](#showing-members-what-their-assistant-can-do)). |
 | **Settings**           | In the user menu, in tabs. Profile. Household, one page: its name, currency and time zone, then members (owners invite and remove them), people & things, and categories. Assistants & keys: connect an assistant over MCP and manage API keys. Assistant notes: the member's notes. |
 
 The web UI, the sign-in pages and Kept's emails are in English or Russian. Language is personal: it starts from the browser's, and a menu in every page header switches it, signed in or not, so partners can each read Kept in their own. Dates and amounts follow the language. What the household typed (categories, people & things, notes) stays as typed, and the starting categories are created in the owner's language. The agent answers in whatever language the user writes in.
