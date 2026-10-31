@@ -8,7 +8,7 @@ import { fromCents, toCents } from '../domain/money.js'
 import { repeatLoggedText } from '../domain/updates.js'
 import { dueOccurrences, firstNextDate, nextDateAfterChange, stillToCome, type Frequency, type RepeatTemplate, type Schedule } from '../domain/repeats.js'
 import type { Caller } from './caller.js'
-import { conflict, invalid, notFound, unwrap } from './errors.js'
+import { checkAmounts, conflict, invalid, notFound, unwrap } from './errors.js'
 import { getTransaction, insertTransaction } from './transactions.js'
 import { memberLanguage } from './households.js'
 import { loadVocabulary } from './vocabulary.js'
@@ -98,6 +98,7 @@ export async function updateRepeat(tx: Tx, caller: Caller, id: string, patch: Re
     anchor: patch.anchor ?? row.anchor,
   })
   checkEnd(patch.ends_on, patch.remaining)
+  checkAmounts(caller.currency, [patch.amount])
   const today = todayIn(caller.timezone, now)
   const rescheduled = patch.frequency !== undefined || patch.interval !== undefined || patch.anchor !== undefined
   const resumed = patch.paused === false && row.paused

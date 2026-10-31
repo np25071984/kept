@@ -35,11 +35,27 @@ describe('dates', () => {
     expect((await bad({ date: '2026-10-01', timezone: 'Not/AZone' })).body.error.code).toBe('invalid_timezone')
     expect((await bad({ occurred_at: 'yesterday' })).body.error.code).toBe('invalid_occurred_at')
     expect((await bad({ amount: 0.001 })).status).toBe(400)
+    expect((await bad({ amount: 60.405 })).status).toBe(400)
+    expect((await bad({ amount: 60, line_items: [{ amount: 12.345, category: 'Other' }] })).status).toBe(400)
     const logged = await bad({ date: '2026-10-01' })
     const id = logged.body.transaction.id
     expect((await sam.patch(`/api/v1/transactions/${id}`, { timezone: 'Not/AZone' })).body.error.code).toBe('invalid_timezone')
     expect((await sam.patch(`/api/v1/transactions/${id}`, { occurred_at: 'yesterday' })).body.error.code).toBe('invalid_occurred_at')
     expect((await sam.patch(`/api/v1/transactions/${id}`, { occurred_at: '2026-10-01T09:30:00-04:00' })).body.occurred_at).toBe('2026-10-01T13:30:00.000Z')
+  })
+})
+
+describe('amounts', () => {
+  it('refuses decimals the household currency doesn\'t have, instead of rounding them', async () => {
+    const yen = client(h, (await newHousehold(h, 'The Satos')).api_key)
+    expect((await yen.patch('/api/v1/setup', { currency: 'JPY' })).body.household.currency).toBe('JPY')
+    const refused = await yen.post('/api/v1/transactions', { amount: 4800.5, category: 'Other' })
+    expect(refused.status).toBe(422)
+    expect(refused.body.error.code).toBe('amount_too_precise')
+    const logged = await yen.post('/api/v1/transactions', { amount: 4800, category: 'Other' })
+    expect(logged.body.transaction.amount).toBe(4800)
+    expect((await yen.patch(`/api/v1/transactions/${logged.body.transaction.id}`, { amount: 4800.25 })).body.error.code).toBe('amount_too_precise')
+    expect((await yen.post('/api/v1/caps', { category: 'Other', amount: 30000.5, period: 'month' })).body.error.code).toBe('amount_too_precise')
   })
 })
 

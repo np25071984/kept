@@ -5,7 +5,7 @@ import { capRange, capState, type CapPeriod } from '../domain/caps.js'
 import { todayIn } from '../domain/dates.js'
 import { fromCents, numericToCents, toCents } from '../domain/money.js'
 import type { Caller } from './caller.js'
-import { invalid, notFound } from './errors.js'
+import { checkAmounts, invalid, notFound } from './errors.js'
 import { getSummary } from './summary.js'
 import { loadVocabulary } from './vocabulary.js'
 
@@ -49,6 +49,7 @@ export async function listCaps(tx: Tx, caller: Caller, now = new Date()): Promis
 export type CapBody = z.infer<typeof api.CapBody>
 
 export async function addCap(tx: Tx, caller: Caller, body: CapBody): Promise<CapView> {
+  checkAmounts(caller.currency, [body.amount])
   const vocabulary = await loadVocabulary(tx)
   if (Boolean(body.category) === Boolean(body.cost_center)) throw invalid('invalid_cap', 'A cap is for a category or one of the people & things, one of the two.')
   const { id } = await tx
@@ -67,6 +68,7 @@ export async function addCap(tx: Tx, caller: Caller, body: CapBody): Promise<Cap
 }
 
 export async function updateCap(tx: Tx, caller: Caller, id: string, patch: z.infer<typeof api.CapPatch>): Promise<CapView> {
+  checkAmounts(caller.currency, [patch.amount])
   const updated = await tx.updateTable('caps').set({ ...(patch.amount !== undefined && { amount: patch.amount }), ...(patch.period && { period: patch.period }) })
     .where('id', '=', id).where('user_id', '=', caller.user_id).executeTakeFirst()
   if (updated.numUpdatedRows === 0n) throw notFound('Cap')
