@@ -1,7 +1,7 @@
 import type { Tx } from '../db/db.js'
-import { capRange, capReminder, capState, type CapPeriod, type CapState } from '../domain/caps.js'
+import { capRange, capState, type CapPeriod, type CapState } from '../domain/caps.js'
 import { todayIn } from '../domain/dates.js'
-import { formatAmount, fromCents, numericToCents, toCents } from '../domain/money.js'
+import { fromCents, numericToCents, toCents } from '../domain/money.js'
 import type { Caller } from './caller.js'
 import { invalid, notFound } from './errors.js'
 import { getSummary } from './summary.js'
@@ -87,21 +87,4 @@ export async function updateCap(tx: Tx, caller: Caller, id: string, patch: { amo
 export async function deleteCap(tx: Tx, caller: Caller, id: string): Promise<void> {
   const deleted = await tx.deleteFrom('caps').where('id', '=', id).where('user_id', '=', caller.user_id).executeTakeFirst()
   if (deleted.numDeletedRows === 0n) throw notFound('Cap')
-}
-
-// Lines for the write result: caps a purchase just took past 80% or over (VISION.md §4.A). `added` is its cents per cap id.
-export function capNotes(caps: CapView[], added: Map<string, number>, currency: string): string[] {
-  const notes: string[] = []
-  for (const cap of caps) {
-    const extra = added.get(cap.id) ?? 0
-    if (!extra) continue
-    const after = toCents(cap.spent)
-    const amount = toCents(cap.amount)
-    const name = cap.category ?? cap.cost_center
-    const when = cap.period === 'month' ? 'this month' : 'this year'
-    const reminder = capReminder(after - extra, after, amount)
-    if (reminder === 'close') notes.push(`That's ${formatAmount(after, currency)} of the ${formatAmount(amount, currency)} ${name} cap ${when}.`)
-    if (reminder === 'over') notes.push(`That puts ${name} ${formatAmount(after - amount, currency)} over the cap ${when}.`)
-  }
-  return notes
 }

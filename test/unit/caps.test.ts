@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { capRange, capReminder, capState } from '../../src/domain/caps.js'
+import { capNotes, capRange, capReminder, capState } from '../../src/domain/caps.js'
 
 describe('caps', () => {
   it('covers the calendar month or year', () => {
@@ -20,5 +20,16 @@ describe('caps', () => {
     expect(capReminder(90_000, 104_000, 100_000)).toBe('over')
     expect(capReminder(70_000, 110_000, 100_000)).toBe('over')
     expect(capReminder(110_000, 120_000, 100_000)).toBeNull()
+  })
+})
+
+describe('capNotes', () => {
+  const cap = { id: 'c1', category: 'Eating out', cost_center: null, amount: 100, period: 'month' as const, spent: 0 }
+
+  it('mentions a cap the write took past 80%, then over, and nothing it didn\'t touch', () => {
+    expect(capNotes([{ ...cap, spent: 50 }], [{ ...cap, spent: 85 }], 'USD')).toEqual(['That\'s $85.00 of the $100.00 Eating out cap this month.'])
+    expect(capNotes([{ ...cap, spent: 85 }], [{ ...cap, spent: 115 }], 'USD')).toEqual(['That puts Eating out $15.00 over the cap this month.'])
+    expect(capNotes([{ ...cap, spent: 90 }], [{ ...cap, spent: 90 }], 'USD')).toEqual([])
+    expect(capNotes([], [{ ...cap, cost_center: 'Zoe', category: null, period: 'year', spent: 81 }], 'USD')).toEqual(['That\'s $81.00 of the $100.00 Zoe cap this year.'])
   })
 })

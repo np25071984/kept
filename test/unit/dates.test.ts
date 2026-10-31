@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkWhen, dateWarning } from '../../src/domain/dates.js'
+import { addDays, checkWhen, dateWarning, daysBetween, isLocalDate, isTimeZone, todayIn } from '../../src/domain/dates.js'
 
 describe('dateWarning', () => {
   it('passes recent dates', () => {
@@ -31,5 +31,32 @@ describe('checkWhen', () => {
     expect(checkWhen({ timezone: 'Not/AZone' })).toMatchObject({ ok: false, error: 'invalid_timezone' })
     expect(checkWhen({ timezone: 'EST' })).toMatchObject({ ok: false, error: 'invalid_timezone' })
     expect(checkWhen({ occurred_at: 'yesterday' })).toMatchObject({ ok: false, error: 'invalid_occurred_at' })
+  })
+})
+
+describe('local dates', () => {
+  it('accepts only real calendar dates', () => {
+    expect(isLocalDate('2024-02-29')).toBe(true)
+    expect(isLocalDate('2026-02-29')).toBe(false)
+    expect(isLocalDate('2026-2-3')).toBe(false)
+  })
+
+  it('counts days across months and years', () => {
+    expect(addDays('2026-12-30', 3)).toBe('2027-01-02')
+    expect(addDays('2026-03-01', -1)).toBe('2026-02-28')
+    expect(daysBetween('2026-10-01', '2026-10-31')).toBe(30)
+  })
+
+  it('takes today in the household\'s zone, not the machine\'s', () => {
+    const moment = new Date('2026-10-27T03:00:00Z')
+    expect(todayIn('America/New_York', moment)).toBe('2026-10-26')
+    expect(todayIn('Asia/Tokyo', moment)).toBe('2026-10-27')
+  })
+
+  it('takes IANA zone names only', () => {
+    expect(isTimeZone('Europe/Berlin')).toBe(true)
+    expect(isTimeZone('UTC')).toBe(true)
+    expect(isTimeZone('CET')).toBe(false)
+    expect(isTimeZone('Mars/Olympus')).toBe(false)
   })
 })

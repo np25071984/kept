@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { RepeatTemplate } from '../../src/db/schema.js'
+import type { RepeatTemplate } from '../../src/domain/repeats.js'
 import {
   categoryRenamer, checkCategoryRename, checkCostCenterRename, costCenterRenamer, mentions, renamePath, renameTemplate, usageProblem,
 } from '../../src/domain/renames.js'

@@ -1,10 +1,12 @@
 import type { Tx } from '../db/db.js'
-import { groupsWithLines } from '../domain/coverage.js'
+import { capNotes } from '../domain/caps.js'
+import { checkedGroups } from '../domain/coverage.js'
 import { addDays, checkWhen, dateWarning, isLocalDate, todayIn } from '../domain/dates.js'
-import { buildLines, resizeLines, validateShares, type Line, type SpentFor } from '../domain/lines.js'
-import { decideMatch, reconcile, type FieldChange, type KeptField, type MatchCandidate, type SourceKind } from '../domain/matching.js'
+import { planEdit } from '../domain/edits.js'
+import { buildLines, validateShares, type Line, type SpentFor } from '../domain/lines.js'
+import { CANDIDATE_WINDOW_DAYS, decideMatch, reconcile, type FieldChange, type KeptField, type MatchCandidate, type SourceKind } from '../domain/matching.js'
 import { centsToNumeric, formatAmount, fromCents, numericToCents, toCents } from '../domain/money.js'
-import { capNotes, listCaps } from './caps.js'
+import { listCaps } from './caps.js'
 import type { Caller } from './caller.js'
 import { invalid, notFound, unwrap } from './errors.js'
 import { loadVocabulary, type Vocabulary } from './vocabulary.js'
@@ -89,9 +91,7 @@ export async function createTransactions(tx: Tx, caller: Caller, bodies: Transac
     results.push(warning ? { ...result, warnings: [warning] } : result)
   }
   if (capsBefore.length && results.length) {
-    const after = await listCaps(tx, caller, now)
-    const added = new Map(after.map((c) => [c.id, toCents(c.spent) - toCents(capsBefore.find((b) => b.id === c.id)?.spent ?? 0)]))
-    const notes = capNotes(after, added, caller.currency)
+    const notes = capNotes(capsBefore, await listCaps(tx, caller, now), caller.currency)
     if (notes.length) results[results.length - 1] = { ...results[results.length - 1]!, caps: notes }
   }
   return results
@@ -135,7 +135,7 @@ async function prepare(tx: Tx, caller: Caller, body: TransactionBody, vocabulary
   const mainCategory = body.category ? vocabulary.categoryPath(vocabulary.categoryId(body.category)) : null
 
   const watched = await watchedGroups(tx, caller)
-  const checked = [...new Set([...(body.checked_groups ?? []).map((g) => g.trim()), ...groupsWithLines(watched, lines)])]
+  const checked = checkedGroups(body.checked_groups ?? [], watched, lines)
   const kind = body.source?.kind ?? 'talk'
   return {
     kind,
@@ -232,8 +232,8 @@ async function loadCandidates(tx: Tx, caller: Caller, date: string): Promise<Mat
     .selectFrom('transactions')
     .select(['id', 'date', 'amount', 'merchant', 'repeat_id'])
     .where('spent_by', '=', caller.user_id)
-    .where('date', '>=', addDays(date, -7))
-    .where('date', '<=', addDays(date, 7))
+    .where('date', '>=', addDays(date, -CANDIDATE_WINDOW_DAYS))
+    .where('date', '<=', addDays(date, CANDIDATE_WINDOW_DAYS))
     .execute()
   if (rows.length === 0) return []
   const sources = await tx.selectFrom('sources').select(['transaction_id', 'kind', 'extracted']).where('transaction_id', 'in', rows.map((r) => r.id)).execute()
@@ -419,43 +419,26 @@ export async function patchTransaction(tx: Tx, caller: Caller, id: string, patch
   const existing = await loadRaw(tx, caller, id)
   const occurredAt = unwrap(checkWhen({ timezone: patch.timezone, occurred_at: patch.occurred_at }))
   const vocabulary = await loadVocabulary(tx)
-  const edited = new Set(existing.user_edited)
-  const amount = patch.amount !== undefined ? toCents(patch.amount) : existing.amount
-  let lines = existing.lines
-  let mainCategory = existing.main_category
-
-  if (patch.line_items !== undefined || patch.category !== undefined || patch.spent_for !== undefined) {
-    const rest = existing.lines.find((line) => line.is_rest)
-    mainCategory = patch.category !== undefined ? (patch.category ? vocabulary.categoryPath(vocabulary.categoryId(patch.category)) : null) : mainCategory
-    lines = unwrap(
-      buildLines({
-        amount,
-        category: mainCategory ?? rest?.category ?? null,
-        spent_for: patch.spent_for ?? rest?.spent_for ?? [],
-        line_items: patch.line_items ? patch.line_items.map((l) => ({ ...l, amount: toCents(l.amount) })) : existing.lines.filter((l) => !l.is_rest),
-      }),
-    )
-    edited.add('line_items')
-  } else if (amount !== existing.amount) {
-    lines = unwrap(resizeLines(existing.lines, amount, mainCategory))
-  }
+  const plan = unwrap(planEdit(existing, {
+    amount: patch.amount !== undefined ? toCents(patch.amount) : undefined,
+    category: patch.category !== undefined ? (patch.category ? vocabulary.categoryPath(vocabulary.categoryId(patch.category)) : null) : undefined,
+    spent_for: patch.spent_for,
+    line_items: patch.line_items?.map((l) => ({ ...l, amount: toCents(l.amount) })),
+    date: patch.date,
+    merchant: patch.merchant,
+  }))
+  const { amount, lines } = plan
   for (const line of lines) {
     line.category = vocabulary.categoryPath(vocabulary.categoryId(line.category))
     for (const entry of line.spent_for ?? []) entry.cost_center = vocabulary.costCenterName(vocabulary.costCenterId(entry.cost_center))
   }
-  if (amount !== existing.amount) edited.add('amount')
-  if (patch.date !== undefined) {
-    if (!isLocalDate(patch.date)) throw invalid('invalid_date', 'date must be YYYY-MM-DD.')
-    edited.add('date')
-  }
-  if (patch.merchant !== undefined) edited.add('merchant')
 
   await tx
     .updateTable('transactions')
     .set({
       amount: centsToNumeric(amount),
-      main_category_id: mainCategory ? vocabulary.categoryId(mainCategory) : null,
-      user_edited: [...edited],
+      main_category_id: plan.main_category ? vocabulary.categoryId(plan.main_category) : null,
+      user_edited: plan.user_edited,
       updated_at: new Date(),
       ...(patch.date !== undefined && { date: patch.date }),
       ...(occurredAt !== undefined && { occurred_at: occurredAt }),
@@ -483,7 +466,7 @@ export interface SourcePatchBody extends Partial<Omit<TransactionBody, 'source'>
 }
 
 // A source added later, such as a receipt read after the purchase was logged.
-export async function addSource(tx: Tx, caller: Caller, id: string, body: SourcePatchBody): Promise<WriteResult> {
+export async function addSource(tx: Tx, caller: Caller, id: string, body: SourcePatchBody, now = new Date()): Promise<WriteResult> {
   const existing = await getTransaction(tx, caller, id)
   const vocabulary = await loadVocabulary(tx)
   const hasLines = body.line_items !== undefined || body.category !== undefined || body.spent_for !== undefined
@@ -500,7 +483,7 @@ export async function addSource(tx: Tx, caller: Caller, id: string, body: Source
       source: { kind: body.kind, extracted: body.extracted },
     },
     vocabulary,
-    new Date(),
+    now,
   )
   if (!hasLines) incoming.lines = []
   const merged = await applySource(tx, caller, vocabulary, id, incoming)

@@ -1,4 +1,4 @@
-import type { RepeatTemplate } from '../db/schema.js'
+import type { RepeatTemplate } from './repeats.js'
 import { isValidCategoryPath, parentPath } from './setup.js'
 
 // Renaming and deleting the household's vocabulary. Most references link by id, but repeat templates and checked groups

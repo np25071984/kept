@@ -82,3 +82,8 @@ export function computeCoverage(group: WatchedGroup, transactions: CoverageTrans
 export function groupsWithLines(groups: WatchedGroup[], lines: CoverageLine[]): string[] {
   return groups.filter((group) => lines.some((line) => inGroup(line, group))).map(groupKey)
 }
+
+// The groups a purchase records as checked: those the user answered about, once each, and those its lines cover.
+export function checkedGroups(answered: string[], watched: WatchedGroup[], lines: CoverageLine[]): string[] {
+  return [...new Set([...answered.map((group) => group.trim()), ...groupsWithLines(watched, lines)])]
+}

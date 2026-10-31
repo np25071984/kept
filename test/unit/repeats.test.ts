@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dueOccurrences, occurrence, occurrenceAfter, stillToCome } from '../../src/domain/repeats.js'
+import { dueOccurrences, firstNextDate, nextDateAfterChange, occurrence, occurrenceAfter, occurrenceOnOrAfter, stillToCome } from '../../src/domain/repeats.js'
 
 describe('occurrence', () => {
   it('moves the 31st to the last day of shorter months', () => {
@@ -55,5 +55,25 @@ describe('stillToCome', () => {
     expect(stillToCome([{ ...monthly, paused: true }], '2026-10-05')).toBe(0)
     const weekly = { ...monthly, frequency: 'weekly' as const, anchor: '2026-10-02', next_date: '2026-10-16', amount: 1000 }
     expect(stillToCome([weekly], '2026-10-16')).toBe(3000)
+  })
+})
+
+describe('the next date', () => {
+  const monthly = { frequency: 'monthly' as const, interval: 1, anchor: '2026-09-27' }
+
+  it('counts the purchase as the first occurrence', () => {
+    expect(firstNextDate(monthly, '2026-09-27')).toBe('2026-10-27')
+    expect(firstNextDate({ ...monthly, anchor: '2026-10-05' }, '2026-09-27')).toBe('2026-10-05')
+  })
+
+  it('takes an occurrence that falls on the date itself', () => {
+    expect(occurrenceOnOrAfter(monthly, '2026-10-27')).toBe('2026-10-27')
+    expect(occurrenceOnOrAfter(monthly, '2026-10-28')).toBe('2026-11-27')
+  })
+
+  it('keeps the date through a plain change, and skips dates missed while paused on resume', () => {
+    expect(nextDateAfterChange(monthly, '2026-10-27', '2027-01-03', false)).toBe('2026-10-27')
+    expect(nextDateAfterChange(monthly, '2026-10-27', '2027-01-03', true)).toBe('2027-01-27')
+    expect(nextDateAfterChange(monthly, '2026-11-27', '2026-10-30', true)).toBe('2026-11-27')
   })
 })
