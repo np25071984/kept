@@ -180,6 +180,11 @@ export interface Database {
     verified_at: Timestamp | null
     created_at: Generated<Date>
   }
+  invite_requests: {
+    id: Generated<string>
+    household_id: string
+    created_at: Generated<Date>
+  }
   sign_in_requests: {
     id: Generated<string>
     email: string

@@ -48,3 +48,16 @@ export function inviteEmail(input: { connect: string; inviter: string; household
 <p style="color:#6b6b66">${escape(stays)}</p>`),
   }
 }
+
+// An invite to an email that already has an account: an account is in one household, so there is nothing to join.
+export function inviteToMemberEmail(input: { inviter: string; household: string }, lang: Language = 'en'): Email {
+  const vars = { inviter: input.inviter, household: input.household }
+  const invited = tr(lang, '{inviter} invited you to track spending with {household} on Kept.', vars)
+  const cannot = tr(lang, 'This email already has a Kept account, and an account belongs to one household, so it can\'t join. To join, ask {inviter} to invite another email.', vars)
+  return {
+    subject: tr(lang, '{inviter} invited you to {household} on Kept', vars),
+    text: [invited, '', cannot].join('\n'),
+    html: layout(lang, `<p>${escape(invited)}</p>
+<p>${escape(cannot)}</p>`),
+  }
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { resendMailer } from '../../src/mail/resend.js'
-import { inviteEmail, signInCodeEmail } from '../../src/mail/templates.js'
+import { inviteEmail, inviteToMemberEmail, signInCodeEmail } from '../../src/mail/templates.js'
 
 describe('emails', () => {
   it('puts the code as one run of digits beside "code", where phones offer to copy it', () => {
@@ -18,6 +18,17 @@ describe('emails', () => {
     expect(email.text).toContain('https://kept-ledger.com/app/')
     expect(email.html).toContain('The &lt;Carters&gt;')
     expect(email.html).not.toContain('people & things')
+  })
+})
+
+describe('invite to an email with an account', () => {
+  it('says why it can\'t join, with no link to follow', () => {
+    const email = inviteToMemberEmail({ inviter: 'Alex', household: 'The <Carters>' })
+    expect(email.subject).toBe('Alex invited you to The <Carters> on Kept')
+    expect(email.text).toContain('already has a Kept account')
+    expect(email.text).not.toContain('http')
+    expect(email.html).toContain('The &lt;Carters&gt;')
+    expect(inviteToMemberEmail({ inviter: 'Аня', household: 'Ивановы' }, 'ru').text).toContain('уже есть аккаунт Kept')
   })
 })
 

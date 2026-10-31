@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { inHousehold } from '../../src/db/db.js'
 import { addDays, todayIn } from '../../src/domain/dates.js'
+import { INVITES_PER_HOUR } from '../../src/domain/throttle.js'
 import { authenticate } from '../../src/ledger/households.js'
 import { runDueRepeats, updateRepeat } from '../../src/ledger/repeats.js'
 import { client, newHousehold, startHarness, type Harness } from './helpers.js'
@@ -197,7 +198,25 @@ describe('setup and members', () => {
     const jo = client(h, first.json().api_key)
     expect((await jo.get('/api/v1/setup')).body.you.role).toBe('member')
     expect((await jo.post('/api/v1/invites', { email: 'kim@example.com' })).status).toBe(403)
-    expect((await ownerClient.post('/api/v1/invites', { email: 'jo@example.com' })).body.error.code).toBe('email_taken')
+
+    // An email with an account is invited like any other, so the answer doesn't reveal it; the email says it can't join.
+    const taken = await ownerClient.post('/api/v1/invites', { email: 'jo@example.com' })
+    const fresh = await ownerClient.post('/api/v1/invites', { email: 'lee@example.com' })
+    expect(taken.status).toBe(201)
+    expect(Object.keys(taken.body).sort()).toEqual(Object.keys(fresh.body).sort())
+    expect(h.invites.at(-2)).toEqual({ to: 'jo@example.com', link: '' })
+    expect(h.invites.at(-1)!.link).toContain('#token=')
+  })
+
+  it('refuses invites past the hourly limit', async () => {
+    const created = await newHousehold(h)
+    const owner = client(h, created.api_key)
+    for (let i = 0; i < INVITES_PER_HOUR; i++) expect((await owner.post('/api/v1/invites', { email: `guest${i}@example.com` })).status).toBe(201)
+    const sent = h.invites.length
+    const refused = await owner.post('/api/v1/invites', { email: 'one-more@example.com' })
+    expect(refused.status).toBe(429)
+    expect(refused.body.error.code).toBe('invite_limited')
+    expect(h.invites.length).toBe(sent)
   })
 
   it('issues and revokes API keys', async () => {
