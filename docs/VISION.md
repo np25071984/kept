@@ -369,7 +369,7 @@ flowchart TD
 - **Recurring bills aren't asked about.** They come up when one is logged ([Repeating Spending](#35-repeating-spending-phone-rent-subscriptions)).
 - **One time zone per household.** It sets "today" for logging, recurring bills and monthly totals, so everyone shares one calendar. It is chosen when the household is created and owners can change it; members don't set one. A purchase made while traveling keeps its own zone.
 - **One way in.** The web UI and every assistant start with the same sign-in: an email and a code. A verified email with no account and no invite is offered to create a household; with an invite, to join it.
-- **Invites come from Kept.** Only an owner can invite. Kept emails the invited person; they add Kept to their own assistant and sign in with that email, which joins them to the household, and their assistant runs the new-member path above.
+- **Invites come from Kept.** Only an owner can invite. Kept emails the invited person; they add Kept to their own assistant and sign in with that email, which joins them to the household, and their assistant runs the new-member path above. An account belongs to one household: an email that already has one is told so by Kept, and the owner's answer is the same either way, so inviting never reveals who has an account.
 - **A new member doesn't set up the household again.** Their agent introduces Kept, names the shared cost centers and categories, and asks what they want to keep an eye on and whether anything should be logged as private: watched groups and notes are personal.
 
 ## 4. Primary Features & Requirements

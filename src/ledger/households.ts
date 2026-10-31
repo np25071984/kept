@@ -3,9 +3,10 @@ import { sql } from 'kysely'
 import { inHousehold, type Db, type Tx } from '../db/db.js'
 import { isTimeZone } from '../domain/dates.js'
 import { isLanguage, SEED_CATEGORIES_RU, type Language } from '../domain/language.js'
+import { INVITE_WINDOW_MS, inviteAllowed } from '../domain/throttle.js'
 import { SEED_CATEGORIES, SETUP_STEPS, STEP_STATES, initialSetup, nextStep, type SetupState } from '../domain/setup.js'
 import type { Caller } from './caller.js'
-import { ApiError, conflict, forbidden, invalid, notFound } from './errors.js'
+import { ApiError, conflict, forbidden, invalid, notFound, tooMany } from './errors.js'
 
 export const API_KEY_PREFIX = 'kept_'
 const INVITE_DAYS = 7
@@ -157,14 +158,20 @@ export async function updateSetup(tx: Tx, caller: Caller, patch: SetupPatch) {
 export interface Mailer {
   // `connect` is the MCP address to add to an assistant; signing in there with the invited email joins the household.
   sendInvite(input: { to: string; link: string; connect: string; inviter: string; household: string; language?: Language }): Promise<void>
+  // An invite to an email that already has an account: it can't join, so the email carries no link.
+  sendInviteToMember(input: { to: string; inviter: string; household: string; language?: Language }): Promise<void>
   sendSignInCode(input: { to: string; code: string; link: string; language?: Language }): Promise<void>
 }
 
-export async function createInvite(tx: Tx, caller: Caller, email: string, mailer: Mailer, publicUrl: string) {
+// An email that already has an account gets an invite too, so the answer never reveals who has one (VISION.md §3.6).
+export async function createInvite(tx: Tx, caller: Caller, email: string, mailer: Mailer, publicUrl: string, now = new Date()) {
   if (caller.role !== 'owner') throw forbidden('Only an owner can invite members.')
   const address = email.trim().toLowerCase()
-  const taken = await sql<{ taken: boolean }>`select kept_email_taken(${address}) as taken`.execute(tx)
-  if (taken.rows[0]?.taken) throw conflict('email_taken', `${address} already has a Kept account.`)
+  await tx.deleteFrom('invite_requests').where('created_at', '<', new Date(now.getTime() - INVITE_WINDOW_MS)).execute()
+  const sent = await tx.selectFrom('invite_requests').select('created_at').execute()
+  if (!inviteAllowed(sent.map((r) => new Date(r.created_at)), now)) throw tooMany('invite_limited', 'Too many invites were sent today. Try again later.')
+  await tx.insertInto('invite_requests').values({ household_id: caller.household_id }).execute()
+  const taken = await emailTaken(tx, address)
   const token = newSecret()
   const expiresAt = new Date(Date.now() + INVITE_DAYS * 86_400_000)
   const invite = await tx
@@ -176,8 +183,14 @@ export async function createInvite(tx: Tx, caller: Caller, email: string, mailer
   const base = publicUrl.replace(/\/$/, '')
   // In the inviter's language: the invited person's is unknown until they sign in.
   const inviter = await tx.selectFrom('users').select('language').where('id', '=', caller.user_id).executeTakeFirst()
-  await mailer.sendInvite({ to: address, link: `${base}/invite#token=${token}`, connect: `${base}/mcp`, inviter: caller.name, household: household.name, language: isLanguage(inviter?.language) ? inviter.language : 'en' })
+  const mail = { to: address, inviter: caller.name, household: household.name, language: isLanguage(inviter?.language) ? inviter.language : 'en' } as const
+  if (taken) await mailer.sendInviteToMember(mail)
+  else await mailer.sendInvite({ ...mail, link: `${base}/invite#token=${token}`, connect: `${base}/mcp` })
   return invite
+}
+
+async function emailTaken(db: Db | Tx, email: string): Promise<boolean> {
+  return (await sql<{ taken: boolean }>`select kept_email_taken(${email}) as taken`.execute(db)).rows[0]?.taken ?? false
 }
 
 export async function deleteInvite(tx: Tx, caller: Caller, id: string) {
@@ -190,7 +203,7 @@ export async function deleteInvite(tx: Tx, caller: Caller, id: string) {
 export async function acceptInvite(db: Db, input: { token: string; name: string }) {
   const found = await sql<{ id: string; household_id: string; email: string; expires_at: Date; accepted_at: Date | null }>`select * from kept_find_invite(${hashSecret(input.token)})`.execute(db)
   const invite = found.rows[0]
-  if (!invite || invite.accepted_at || invite.expires_at < new Date()) throw new ApiError(410, 'invite_invalid', 'This invite link is invalid, used or expired.')
+  if (!invite || invite.accepted_at || invite.expires_at < new Date() || (await emailTaken(db, invite.email))) throw new ApiError(410, 'invite_invalid', 'This invite link is invalid, used or expired.')
   return inHousehold(db, invite.household_id, async (tx) => {
     const userId = await joinHousehold(tx, invite, input.name)
     const key = await issueApiKey(tx, invite.household_id, userId, 'First key')

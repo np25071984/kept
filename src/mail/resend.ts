@@ -1,5 +1,5 @@
 import type { Mailer } from '../ledger/households.js'
-import { inviteEmail, signInCodeEmail, type Email } from './templates.js'
+import { inviteEmail, inviteToMemberEmail, signInCodeEmail, type Email } from './templates.js'
 
 // Sends Kept's email through Resend's HTTP API (IMPLEMENTATION.md §6).
 
@@ -14,6 +14,7 @@ export function resendMailer(input: { apiKey: string; from: string; fetch?: type
   }
   return {
     sendInvite: (invite) => send(invite.to, inviteEmail(invite, invite.language)),
+    sendInviteToMember: (invite) => send(invite.to, inviteToMemberEmail(invite, invite.language)),
     sendSignInCode: ({ to, code, language }) => send(to, signInCodeEmail(code, language)),
   }
 }

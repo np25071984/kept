@@ -26,6 +26,7 @@ export async function startHarness(): Promise<Harness> {
   const codes: { to: string; code: string; link: string; language?: string }[] = []
   const mailer: Mailer = {
     async sendInvite({ to, link }) { invites.push({ to, link }) },
+    async sendInviteToMember({ to }) { invites.push({ to, link: '' }) },
     async sendSignInCode(input) { codes.push(input) },
   }
   const app = await buildApp({ db, mailer, publicUrl: 'https://kept.test' })

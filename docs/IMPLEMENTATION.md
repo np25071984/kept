@@ -213,6 +213,8 @@ Renaming a category or cost center keeps every link. Repeat templates and `check
 | `expires_at`   | Timestamp | Yes      |                                                             |
 | `accepted_at`  | Timestamp | No       | Set when the invitee joins as a `member`: by signing in from an assistant ([§5.4](#54-connecting-an-assistant)) or with the token. |
 
+`invite_requests` records each invite sent, by household and time, for the limit in [§4](#4-security); cancelling an invite leaves its request.
+
 **Transactions** (one row per payment)
 
 | Field      | Type      | Required | Notes                                                              |
@@ -389,7 +391,7 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `DELETE` | `/api/v1/api-keys/{id}`     | Revoke one of the caller's API keys.                                                              |
 | `GET`  | `/api/v1/expenses/summary`    | Query monthly and yearly totals by category, subcategory, cost center, item or merchant (e.g., fuel per car, alcohol per month). With `scope=household` and `group_by=merchant`, a merchant fewer than two members bought from folds into "Other merchants". `scope=me` covers the caller's own purchases, private included; `scope=household` covers every member's non-private purchases, never broken down by member. Watched groups include their [coverage](VISION.md#coverage). |
 
-Errors have one shape, `{"error": {"code", "message", "details"?}}`: 400 for a malformed request, 401 without a valid key, 403 for an owner-only action, 404 for anything outside the caller's own data, 409 for a conflict, 410 for a used or expired invite, and 422 when the ledger's rules reject it. A category or cost center the household doesn't have is rejected (`unknown_category`, `unknown_cost_center`, with the known ones in `details`), so the agent asks before adding one. The server serves the OpenAPI spec at `/api/v1/openapi.json`.
+Errors have one shape, `{"error": {"code", "message", "details"?}}`: 400 for a malformed request, 401 without a valid key, 403 for an owner-only action, 404 for anything outside the caller's own data, 409 for a conflict, 410 for a used or expired invite, 429 past the invite limit (`invite_limited`), and 422 when the ledger's rules reject it. A category or cost center the household doesn't have is rejected (`unknown_category`, `unknown_cost_center`, with the known ones in `details`), so the agent asks before adding one. The server serves the OpenAPI spec at `/api/v1/openapi.json`.
 
 ### 3.1 Request Examples
 
@@ -472,6 +474,8 @@ Every request except sign-in and discovery carries a bearer token: a member's AP
 Each household member gets their own API key or OAuth2 login. The ledger sets `spent_by` from the authenticated identity on every write, so the AI never sends it and can't spoof it. A single key shared by the whole household would make every entry look like the same person, and break [privacy](VISION.md#households-accounts-and-privacy), so keys must be per user. Every read is filtered by the caller's identity on the server, not by the client.
 
 API keys look like `kept_…` and only their SHA-256 hash is stored. Members created by an invite get their first key when they accept it.
+
+Invites are emails from Kept carrying the household's and inviter's names, so a household may send at most 10 an hour and 30 a day (`src/domain/throttle.ts`). An email that already has an account is invited like any other and gets an email saying it can't join, so the answer never reveals who has an account.
 
 PostgreSQL row-level security backs up the filtering in code. Every household-scoped table has a policy that admits only rows whose `household_id` matches the `app.household_id` setting, and each request runs in a transaction that sets it from the authenticated identity with `set_config(..., true)`. The server connects as a role that doesn't own the tables and has no `BYPASSRLS`, so a query missing its household filter returns nothing instead of another household's rows. Filtering by member within a household stays in the REST API. `SECURITY DEFINER` functions run as the table owner for lookups made before the household is known: loading the caller behind a key or an access token in one query, finding an invite by its token, checking whether an email has an account, and listing repeats due across households for the scheduler. A key's `last_used_at` is written at most every five minutes, so most requests don't write.
 

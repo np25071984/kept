@@ -114,6 +114,7 @@ const RU: Record<string, string> = {
   "Type it on the sign-in page. It works for 10 minutes. If you didn't try to sign in, ignore this email.": 'Введите его на странице входа. Он действует 10 минут. Если вы не входили, просто проигнорируйте это письмо.',
   '{inviter} invited you to {household} on Kept': '{inviter} приглашает вас в «{household}» в Kept',
   '{inviter} invited you to track spending with {household} on Kept.': '{inviter} приглашает вас вести траты вместе с «{household}» в Kept.',
+  "This email already has a Kept account, and an account belongs to one household, so it can't join. To join, ask {inviter} to invite another email.": 'У этого email уже есть аккаунт Kept, а аккаунт состоит только в одной семье, поэтому присоединиться он не может. Чтобы присоединиться, попросите пригласить другой email.',
   'Add this address to your AI assistant (Claude, ChatGPT or Gemini) as a custom connector, and sign in with this email:': 'Добавьте этот адрес в своего ИИ-ассистента (Claude, ChatGPT или Gemini) как свой коннектор и войдите с этим email:',
   'Or sign in on the web: {app}': 'Или войдите в браузере: {app}',
   'sign in on the web': 'войдите в браузере',

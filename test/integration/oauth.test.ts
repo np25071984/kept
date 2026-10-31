@@ -28,7 +28,7 @@ beforeAll(async () => {
   base = `http://127.0.0.1:${port}`
   const webRoot = mkdtempSync(join(tmpdir(), 'kept-web-'))
   writeFileSync(join(webRoot, 'index.html'), '<div id="root"></div>')
-  app = await buildApp({ db: h.db, mailer: { sendInvite: async (i) => { h.invites.push(i) }, sendSignInCode: async (c) => { h.codes.push(c) } }, publicUrl: base, webRoot })
+  app = await buildApp({ db: h.db, mailer: { sendInvite: async (i) => { h.invites.push(i) }, sendInviteToMember: async (i) => { h.invites.push({ ...i, link: '' }) }, sendSignInCode: async (c) => { h.codes.push(c) } }, publicUrl: base, webRoot })
   await app.listen({ port: Number(port), host: '127.0.0.1' })
   ownerEmail = `owner-${Date.now()}@example.com`
   ownerKey = (await newHousehold(h, 'The Smiths', ownerEmail)).api_key

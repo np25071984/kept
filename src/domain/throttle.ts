@@ -25,3 +25,15 @@ export function codeUsable(code: { expires_at: Date; attempts: number; verified_
 export function withinJoinWindow(verifiedAt: Date | null, now: Date): boolean {
   return verifiedAt !== null && now.getTime() - verifiedAt.getTime() <= JOIN_MINUTES * 60_000
 }
+
+// How many invites a household may send in an hour and in a day: each one is an email from Kept with the household's name
+// in it (IMPLEMENTATION.md §4).
+export const INVITE_WINDOW_MS = 24 * 60 * 60_000
+export const INVITES_PER_HOUR = 10
+export const INVITES_PER_DAY = 30
+
+// Whether the household may send another invite, given when its earlier ones went out.
+export function inviteAllowed(sent: readonly Date[], now: Date): boolean {
+  const within = (ms: number) => sent.filter((t) => t.getTime() > now.getTime() - ms).length
+  return within(60 * 60_000) < INVITES_PER_HOUR && within(INVITE_WINDOW_MS) < INVITES_PER_DAY
+}

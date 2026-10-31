@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CODES_PER_EMAIL, CODES_PER_IP, CODE_WINDOW_MS, JOIN_MINUTES, MAX_ATTEMPTS, codeAllowed, codeUsable, withinJoinWindow } from '../../src/domain/throttle.js'
+import { CODES_PER_EMAIL, CODES_PER_IP, CODE_WINDOW_MS, INVITES_PER_DAY, INVITES_PER_HOUR, JOIN_MINUTES, MAX_ATTEMPTS, codeAllowed, inviteAllowed, codeUsable, withinJoinWindow } from '../../src/domain/throttle.js'
 
 const now = new Date('2026-10-30T12:00:00Z')
 const ago = (minutes: number) => new Date(now.getTime() - minutes * 60_000)
@@ -44,5 +44,19 @@ describe('withinJoinWindow', () => {
     expect(withinJoinWindow(ago(JOIN_MINUTES), now)).toBe(true)
     expect(withinJoinWindow(ago(JOIN_MINUTES + 1), now)).toBe(false)
     expect(withinJoinWindow(null, now)).toBe(false)
+  })
+})
+
+describe('inviteAllowed', () => {
+  it('allows invites until the hourly share, then until the daily one', () => {
+    expect(inviteAllowed([], now)).toBe(true)
+    expect(inviteAllowed(times(INVITES_PER_HOUR - 1), now)).toBe(true)
+    expect(inviteAllowed(times(INVITES_PER_HOUR), now)).toBe(false)
+    expect(inviteAllowed(times(INVITES_PER_DAY - 1, 120), now)).toBe(true)
+    expect(inviteAllowed(times(INVITES_PER_DAY, 120), now)).toBe(false)
+  })
+
+  it('forgets invites older than a day', () => {
+    expect(inviteAllowed(times(INVITES_PER_DAY, 25 * 60), now)).toBe(true)
   })
 })

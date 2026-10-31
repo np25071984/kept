@@ -6,6 +6,9 @@ export function logMailer(log: (message: string) => void = console.log): Mailer 
     async sendInvite({ to, connect, inviter, household }) {
       log(`Invite for ${to}: ${inviter} invited you to ${household} on Kept. Add ${connect} to your AI assistant and sign in with this email.`)
     },
+    async sendInviteToMember({ to, inviter, household }) {
+      log(`Invite for ${to}: ${inviter} invited you to ${household} on Kept, but this email already has an account.`)
+    },
     async sendSignInCode({ to, code, link }) {
       log(`Sign-in code for ${to}: ${code} (or open ${link} in the same browser)`)
     },
