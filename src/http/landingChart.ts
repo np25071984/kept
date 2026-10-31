@@ -1,5 +1,5 @@
 import type { Language } from '../domain/language.js'
-import { CHART_HEIGHT, CHART_WIDTH, LABEL_Y, monthChartLayout } from '../domain/monthChart.js'
+import { CHART_HEIGHT, LABEL_Y, monthChartLayout, NARROW_CHART_WIDTH } from '../domain/monthChart.js'
 import { onTrack, previousRange, shiftMonths } from '../domain/months.js'
 import { tr } from '../i18n.js'
 import { escape } from '../oauth/pages.js'
@@ -42,12 +42,12 @@ export function landingChart(lang: Language, date: string): string {
     new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', timeZone: 'UTC' }).formatRange(new Date(`${r.from}T00:00:00Z`), new Date(`${r.to}T00:00:00Z`))
   const { months, average, soFar, before } = sampleMonths(today)
 
-  const svg = (shown: typeof months) => {
-    const chart = monthChartLayout(shown, average, axis)
-    return `<svg class="chart" viewBox="0 0 ${CHART_WIDTH} ${CHART_HEIGHT}" role="img" aria-label="${t('Kept\'s monthly spending chart for a household: twelve months of bars, a dashed line for the average, and this month so far.')}">
-${chart.ticks.map((tick) => `<line class="grid" x1="${chart.left}" x2="${CHART_WIDTH}" y1="${tick.y}" y2="${tick.y}"/><text x="${chart.left - 6}" y="${tick.y + 4}" text-anchor="end">${escape(axis(tick.value))}</text>`).join('')}
+  const svg = (shown: typeof months, narrow = false) => {
+    const chart = monthChartLayout(shown, average, axis, narrow ? NARROW_CHART_WIDTH : undefined)
+    return `<svg class="chart${narrow ? ' narrow' : ''}" viewBox="0 0 ${chart.width} ${CHART_HEIGHT}" role="img" aria-label="${t('Kept\'s monthly spending chart for a household: twelve months of bars, a dashed line for the average, and this month so far.')}">
+${chart.ticks.map((tick) => `<line class="grid" x1="${chart.left}" x2="${chart.width}" y1="${tick.y}" y2="${tick.y}"/><text x="${chart.left - 6}" y="${tick.y + 4}" text-anchor="end">${escape(axis(tick.value))}</text>`).join('')}
 ${chart.bars.map((bar) => `<g><title>${escape(monthName(bar.month, 'short'))}: ${escape(money(bar.amount))}</title><rect class="bar${bar.partial ? ' partial' : ''}" x="${bar.x}" y="${bar.y}" width="${bar.width}" height="${bar.height}" rx="4"/><text x="${bar.x + bar.width / 2}" y="${LABEL_Y}" text-anchor="middle">${escape(monthName(bar.month, 'short'))}</text></g>`).join('')}
-${chart.averageY == null ? '' : `<line class="avg" x1="${chart.left}" x2="${CHART_WIDTH}" y1="${chart.averageY}" y2="${chart.averageY}"/>`}
+${chart.averageY == null ? '' : `<line class="avg" x1="${chart.left}" x2="${chart.width}" y1="${chart.averageY}" y2="${chart.averageY}"/>`}
 </svg>`
   }
 
@@ -64,7 +64,7 @@ ${chart.averageY == null ? '' : `<line class="avg" x1="${chart.left}" x2="${CHAR
     </div>
   </div>
   <div class="months-12">${svg(months)}</div>
-  <div class="months-6">${svg(months.slice(-6))}</div>
+  <div class="months-6">${svg(months.slice(-6), true)}</div>
   <div class="legend"><span><span class="sw"></span>${t('Spent')}</span><span><span class="sw hatch"></span>${t('This month so far')}</span><span><span class="sw dash"></span>${t('12-month average')}</span></div>
 </div>`
 }

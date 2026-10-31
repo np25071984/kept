@@ -44,6 +44,8 @@
   .lines thead { display: none; }
   .lines tr { display: grid; grid-template-columns: 1fr auto; padding: 6px 0; border-bottom: 1px solid var(--line); }
   .lines td { border: 0; padding: 2px 0; }
+  .lines td { grid-column: 1; }
+  .lines td.num { grid-column: 2; grid-row: 1; }
   .lines td:empty { display: none; }
 }
 .sources { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
@@ -166,11 +168,25 @@ code { font-size: 13px; }
 .row-link .stretched::after { content: ""; position: absolute; inset: 0; }
 a.tag { position: relative; z-index: 1; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; }
 .tag.src { border-style: dashed; }
+/* On a phone one ☰ menu replaces the nav, the user menu and the Settings tabs, and opens across the full width. */
+.phonemenu, .phone-only { display: none; }
 @media (max-width: 720px) {
-  .topbar-inner { gap: 8px 12px; }
-  .topbar nav { order: 3; flex-basis: 100%; }
-  .topbar .right { margin-left: auto; }
+  .phone-only { display: inline; }
+  .settings-tabs { display: none; }
+  .topbar-inner { gap: 8px; flex-wrap: nowrap; padding: 6px 12px; }
+  .topbar nav, .topbar .usermenu { display: none; }
+  .phonemenu { display: block; position: static; }
+  .phonemenu summary { list-style: none; cursor: pointer; display: inline-grid; place-items: center; padding: 8px; margin-left: -8px; border-radius: 8px; }
+  .phonemenu summary::-webkit-details-marker { display: none; }
+  .phonemenu[open] summary { background: var(--accent-soft); color: var(--accent); }
+  .phonemenu .menu { left: 0; right: 0; top: 100%; border-radius: 0 0 12px 12px; border-top: 0; padding: 8px 12px 12px; font-size: 16px; max-height: calc(100dvh - 60px); overflow-y: auto; }
+  .phonemenu .menu a, .phonemenu .menu button { padding: 11px 12px; }
+  .phonemenu .menu a.active { background: var(--accent-soft); }
+  .phonemenu .menu-heading { padding: 11px 12px 2px; font-size: 13px; color: var(--muted); }
+  .phonemenu .indent { padding-left: 28px; }
 }
+/* Fingers need bigger targets than a mouse pointer. */
+@media (pointer: coarse) { .icon-btn, .bell { width: 40px; height: 40px; } }
 .amount-col { display: grid; justify-items: end; gap: 2px; }
 .meter { height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; margin: 6px 0 4px; }
 .meter > span { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
@@ -192,6 +208,16 @@ a.button { display: inline-block; padding: 8px 14px; border-radius: 8px; border:
 .hbar.sub { font-size: 13px; color: var(--muted); }
 .hbar.sub > span:first-child { padding-left: 12px; }
 .hbar.sub .fill { opacity: 0.45; }
+/* On a phone each row puts the name and amount on one line and gives the bar the full width under them. */
+@media (max-width: 560px) {
+  .hbars { gap: 12px; }
+  .hbar { grid-template-columns: 1fr auto; gap: 4px 12px; }
+  .hbar .track { grid-column: 1 / -1; grid-row: 2; height: 8px; }
+  .hbar .prev { top: -3px; bottom: -3px; }
+  .hbar.sub .track { margin-left: 12px; }
+  .hbar .val { min-width: 0; }
+}
+.legend + p { margin-top: 10px; }
 .totalline { display: flex; justify-content: space-between; border-top: 1px solid var(--line); margin-top: 10px; padding-top: 8px; }
 .legend .sw.tick { width: 2px; height: 12px; background: var(--fg); opacity: 0.55; border-radius: 0; }
 .table-view summary { cursor: pointer; color: var(--accent); font-size: 13px; margin-top: 8px; }
@@ -202,4 +228,12 @@ a.button { display: inline-block; padding: 8px 14px; border-radius: 8px; border:
 .folder-tabs a.active { background: var(--surface); color: var(--fg); font-weight: 600; padding-bottom: 9px; margin-bottom: -1px; box-shadow: inset 0 3px 0 var(--accent); }
 .folder-body { border-top-left-radius: 12px; }
 .folder-tabs .short { display: none; }
-@media (max-width: 480px) { .folder-tabs { padding-left: 6px; gap: 2px; } .folder-tabs a { padding: 7px 9px; font-size: 13px; } .folder-tabs .long { display: none; } .folder-tabs .short { display: inline; } .hbar { grid-template-columns: 90px 1fr auto; } }
+/* On a phone the folder tabs become a full-width segmented control above the card. */
+@media (max-width: 560px) {
+  .folder-tabs { padding: 0; gap: 0; margin: 12px 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+  .folder-tabs a { flex: 1 1 0; display: grid; place-items: center; text-align: center; white-space: normal; line-height: 1.25; padding: 9px 6px; border: 0; border-left: 1px solid var(--line); border-radius: 0; background: none; color: var(--fg); }
+  .folder-tabs a:first-child { border-left: 0; }
+  .folder-tabs a.active { padding-bottom: 9px; margin-bottom: 0; box-shadow: none; background: var(--accent-soft); color: var(--accent); }
+  .folder-tabs .long { display: none; }
+  .folder-tabs .short { display: inline; }
+}

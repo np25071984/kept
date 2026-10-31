@@ -65,7 +65,7 @@ describe('landing chart', () => {
 
   it('draws both widths with the month names and totals in the visitor\'s language', () => {
     const html = landingChart('ru', '2026-11-15')
-    expect(html.match(/<svg class="chart"/g)).toHaveLength(2)
+    expect(html.match(/<svg class="chart/g)).toHaveLength(2)
     expect(html).toContain('ноябрь на сегодня')
     expect(html).toContain('>нояб.</text>')
     expect(landingChart('en', '2026-11-15')).toContain('November so far')

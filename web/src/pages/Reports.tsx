@@ -4,9 +4,9 @@ import { api } from '../api.js'
 import { todayIn } from '../lib/dates.js'
 import { periodRange, type Period } from '../lib/filters.js'
 import { formatMoney } from '../lib/money.js'
-import { biggestChange, categoryBars, merchantBars, monthlyAverage, NOBODY, onTrack, OTHER, peopleBars, previousRange, topLevelTotal, trend, withSpending, type Bar, type Row } from '../lib/reports.js'
+import { biggestChange, categoryBars, merchantBars, monthlyAverage, NOBODY, drawnBars, onTrack, OTHER, peopleBars, previousRange, topLevelTotal, trend, type Bar, type Row } from '../lib/reports.js'
 import { useLoad, useSession } from '../session.js'
-import { CHART_HEIGHT, CHART_WIDTH, LABEL_Y, monthChartLayout } from '../../../src/domain/monthChart.js'
+import { CHART_HEIGHT, LABEL_Y, monthChartLayout, NARROW_CHART_WIDTH } from '../../../src/domain/monthChart.js'
 import { t } from '../i18n.js'
 
 type Scope = 'me' | 'household'
@@ -114,8 +114,8 @@ export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
         <div className="card-section folder-body">
           {breakdown.error && <p className="error">{breakdown.error}</p>}
           {change && <p className="small"><span className="muted">{t('Biggest change:')}</span> <strong>{change.label} {change.amount >= change.prev ? '+' : '−'}{money(Math.abs(change.amount - change.prev))}</strong></p>}
-          {breakdown.data && withSpending(bars).length === 0 && <p className="muted">{t('Nothing logged in this period.')}</p>}
-          <Bars bars={withSpending(bars)} money={money} />
+          {breakdown.data && bars.every((b) => b.amount === 0) && <p className="muted">{t('Nothing logged in this period.')}</p>}
+          <Bars bars={drawnBars(bars)} money={money} />
           <div className="totalline">
             <span><strong>{t('Total')}</strong> <span className="small muted">· {t(diff <= 0 ? '{amount} less than {range}' : '{amount} more than {range}', { amount: money(Math.abs(diff)), range: dayRange(prev.from, prev.to) })}</span></span>
             <strong className="num">{money(total)}</strong>
@@ -152,16 +152,17 @@ function Bars({ bars, money }: { bars: Bar[]; money: (n: number) => string }) {
 }
 
 function MonthChart({ months: all, average, money, currency }: { months: { month: string; amount: number }[]; average: number | null; money: (n: number) => string; currency: string }) {
-  // On a phone the last 6 months, so the labels stay readable.
-  const months = typeof window !== 'undefined' && window.innerWidth < 600 ? all.slice(-6) : all
+  // On a phone the last 6 months in a narrower box, so the labels stay readable.
+  const narrow = typeof window !== 'undefined' && window.innerWidth < 600
+  const months = narrow ? all.slice(-6) : all
   if (!months.length) return null
   const label = (v: number) => new Intl.NumberFormat(locale(), { style: 'currency', currency, notation: 'compact', minimumFractionDigits: 0, maximumFractionDigits: 1 }).format(v)
-  const chart = monthChartLayout(months, average, label)
+  const chart = monthChartLayout(months, average, label, narrow ? NARROW_CHART_WIDTH : undefined)
   return (
     <>
-      <svg className="chart" viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`} role="img" aria-label={t('Spending per month')}>
+      <svg className={`chart${narrow ? ' narrow' : ''}`} viewBox={`0 0 ${chart.width} ${CHART_HEIGHT}`} role="img" aria-label={t('Spending per month')}>
         <defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="var(--accent)" /></pattern></defs>
-        {chart.ticks.map((tick) => <g key={tick.value}><line className="grid" x1={chart.left} x2={CHART_WIDTH} y1={tick.y} y2={tick.y} /><text x={chart.left - 6} y={tick.y + 4} textAnchor="end">{label(tick.value)}</text></g>)}
+        {chart.ticks.map((tick) => <g key={tick.value}><line className="grid" x1={chart.left} x2={chart.width} y1={tick.y} y2={tick.y} /><text x={chart.left - 6} y={tick.y + 4} textAnchor="end">{label(tick.value)}</text></g>)}
         {chart.bars.map((bar) => (
           <g key={bar.month}>
             <title>{monthName(bar.month)}: {money(bar.amount)}{bar.partial ? ' so far' : ''}</title>
@@ -170,7 +171,7 @@ function MonthChart({ months: all, average, money, currency }: { months: { month
             <text x={bar.x + bar.width / 2} y={LABEL_Y} textAnchor="middle">{monthName(bar.month)}</text>
           </g>
         ))}
-        {chart.averageY != null && <line className="avg" x1={chart.left} x2={CHART_WIDTH} y1={chart.averageY} y2={chart.averageY} />}
+        {chart.averageY != null && <line className="avg" x1={chart.left} x2={chart.width} y1={chart.averageY} y2={chart.averageY} />}
       </svg>
       <div className="legend"><span><span className="sw" />{t('Spent')}</span><span><span className="sw hatch" />{t('This month so far')}</span>{average != null && <span><span className="sw dash" />{t('12-month average')}</span>}</div>
     </>

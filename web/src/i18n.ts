@@ -4,6 +4,8 @@ import { ru } from './locales/ru.js'
 // The member's saved language wins; signed out, the cookie the language menu sets; then the browser's.
 
 export type Language = 'en' | 'ru'
+// Each language named in itself, for the picker in Settings → Profile.
+export const LANGUAGES: readonly (readonly [Language, string])[] = [['en', 'English'], ['ru', 'Русский']]
 
 const COOKIE = 'kept_lang'
 
@@ -17,6 +19,7 @@ let current: Language = (() => {
   if (saved === 'en' || saved === 'ru') return saved
   return typeof navigator !== 'undefined' && navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en'
 })()
+if (typeof document !== 'undefined') document.documentElement.lang = current
 
 export const language = () => current
 export const locale = () => (current === 'ru' ? 'ru-RU' : 'en-US')

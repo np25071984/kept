@@ -4,21 +4,20 @@ import { api } from '../api.js'
 import { CategoriesSection, PeopleSection } from './Household.js'
 import { MembersSection } from './Members.js'
 import { CurrencyField, TimeZoneField } from '../PickerFields.js'
-import { Tabs } from '../Header.js'
+import { settingsPages, Tabs } from '../Header.js'
 import { useAction, useSession } from '../session.js'
-import { t } from '../i18n.js'
+import { language, LANGUAGES, setLanguage, t, type Language } from '../i18n.js'
 
 // Settings, from the user menu: tabs for the member, the household, assistants and notes (VISION.md §4.C).
+// On a phone the ☰ menu picks the page, so the title names it instead of the tabs.
 export function SettingsLayout() {
+  const { pathname } = useLocation()
+  const pages = settingsPages()
+  const current = pages.find((page) => pathname.startsWith(page.to))
   return (
     <>
-      <div className="page-head"><h1>{t('Settings')}</h1></div>
-      <Tabs items={[
-        { to: '/settings/profile', label: t('Profile') },
-        { to: '/settings/household', label: t('Household'), end: false },
-        { to: '/settings/assistants', label: t('Assistants & keys') },
-        { to: '/settings/notes', label: t('Assistant notes') },
-      ]} />
+      <div className="page-head"><h1>{t('Settings')}{current && <span className="phone-only"> · {current.label}</span>}</h1></div>
+      <Tabs items={pages} className="settings-tabs" />
       <Outlet />
     </>
   )
@@ -41,23 +40,36 @@ export function HouseholdPage() {
 export function ProfilePage() {
   const { setup, refreshVocabulary } = useSession()
   const [name, setName] = useState(setup.you.name)
+  const [lang, setLang] = useState(language())
   const { busy, error, act } = useAction()
   const [saved, setSaved] = useState(false)
+  const unchanged = name.trim() === setup.you.name && lang === language()
   const save = async (event: FormEvent) => {
     event.preventDefault()
     setSaved(false)
-    if (await act(() => api.updateMe({ name: name.trim() }))) {
-      setSaved(true)
-      refreshVocabulary()
+    if (!(await act(() => api.updateMe({ name: name.trim(), language: lang })))) return
+    // The language is saved to the account, so emails follow it too; the page reloads to redraw in it.
+    if (lang !== language()) {
+      setLanguage(lang)
+      location.reload()
+      return
     }
+    setSaved(true)
+    refreshVocabulary()
   }
   return (
     <form className="section form" onSubmit={save}>
       <p className="muted small">{t('{email} · {role} of {household}', { email: setup.you.email, role: t(setup.you.role === 'owner' ? 'Owner' : 'Member'), household: setup.household.name })}</p>
       <label>{t('Name')}<input value={name} onChange={(e) => { setName(e.target.value); setSaved(false) }} required /></label>
+      <label>{t('Language')}
+        <select value={lang} onChange={(e) => { setLang(e.target.value as Language); setSaved(false) }}>
+          {LANGUAGES.map(([code, label]) => <option key={code} value={code} lang={code}>{label}</option>)}
+        </select>
+        <span className="small">{t('For the web app and the emails Kept sends you.')}</span>
+      </label>
       {error && <p className="error">{error}</p>}
       <div className="row tight">
-        <button type="submit" className="primary" disabled={busy || !name.trim() || name.trim() === setup.you.name}>{t('Save')}</button>
+        <button type="submit" className="primary" disabled={busy || !name.trim() || unchanged}>{t('Save')}</button>
         {saved && <span className="muted small">{t('Saved.')}</span>}
       </div>
     </form>
