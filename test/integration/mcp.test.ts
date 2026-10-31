@@ -84,6 +84,11 @@ describe('MCP server', () => {
 
     const listed = await call(client, 'list_transactions', { merchant: 'Shell' })
     expect(listed.body.transactions).toHaveLength(1)
+    await call(client, 'log_transaction', { transactions: [{ amount: 12, date: '2026-10-28', merchant: 'Bodega', category: 'Groceries' }] })
+    const both = await call(client, 'list_transactions', { category: ['Car', 'Groceries'], from: '2026-10-27', to: '2026-10-28' })
+    expect(both.body.transactions.map((t: { merchant: string }) => t.merchant).sort()).toEqual(['Bodega', 'Shell'])
+    const tiny = await client.callTool({ name: 'log_transaction', arguments: { transactions: [{ amount: 0.001, category: 'Other' }] } })
+    expect(tiny.isError).toBe(true)
     await client.close()
   })
 

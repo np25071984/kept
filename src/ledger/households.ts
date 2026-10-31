@@ -1,10 +1,10 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { sql } from 'kysely'
 import { inHousehold, type Db, type Tx } from '../db/db.js'
-import { isTimeZone } from '../domain/dates.js'
+import { isTimeZone, todayIn } from '../domain/dates.js'
 import { isLanguage, SEED_CATEGORIES_RU, type Language } from '../domain/language.js'
 import { INVITE_WINDOW_MS, inviteAllowed } from '../domain/throttle.js'
-import { SEED_CATEGORIES, SETUP_STEPS, STEP_STATES, initialSetup, nextStep, type SetupState } from '../domain/setup.js'
+import { SEED_CATEGORIES, SETUP_STEPS, STEP_STATES, initialSetup, nextStep, startPath, type SetupState } from '../domain/setup.js'
 import type { Caller } from './caller.js'
 import { ApiError, conflict, forbidden, invalid, notFound, tooMany } from './errors.js'
 
@@ -87,13 +87,17 @@ export async function callerFor(db: Db, userId: string): Promise<Caller | null> 
 
 // Setup state for the first conversation (VISION.md §3.6).
 
-export async function getSetup(tx: Tx, caller: Caller) {
+// `start` says where the agent's conversation begins; `today` is the household's local date.
+export async function getSetup(tx: Tx, caller: Caller, now = new Date()) {
   const household = await tx.selectFrom('households').select(['name', 'currency', 'timezone', 'setup']).executeTakeFirstOrThrow()
   const user = await tx.selectFrom('users').select(['name', 'email', 'introduced_at', 'role', 'language']).where('id', '=', caller.user_id).executeTakeFirstOrThrow()
   const setup = { ...initialSetup(), ...household.setup } as SetupState
+  const you = { name: user.name, email: user.email, introduced: user.introduced_at != null, role: user.role, language: user.language }
   return {
     household: { name: household.name, currency: household.currency, currency_locked: await hasPurchases(tx), timezone: household.timezone, steps: setup, next_step: nextStep(setup) },
-    you: { name: user.name, email: user.email, introduced: user.introduced_at != null, role: user.role, language: user.language },
+    you,
+    start: startPath(you, nextStep(setup)),
+    today: todayIn(household.timezone, now),
   }
 }
 

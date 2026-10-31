@@ -5,13 +5,19 @@ import { SOURCE_KINDS } from '../domain/matching.js'
 
 const Nullable = <T extends TSchema>(schema: T) => Type.Union([schema, Type.Null()])
 export const LocalDate = Type.String({ pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Local date, YYYY-MM-DD.' })
-const Amount = Type.Number({ minimum: 0.01, description: 'In the household currency.' })
+// Limits the MCP tools share, so a tool never accepts what the API refuses.
+export const MIN_AMOUNT = 0.01
+export const MIN_SHARE = 0.000001
+export const MAX_BATCH = 500
+export const MAX_PAGE = 500
+
+const Amount = Type.Number({ minimum: MIN_AMOUNT, description: 'In the household currency.' })
 
 export const IdParams = Type.Object({ id: Type.String({ format: 'uuid' }) })
 
 export const SpentFor = Type.Object({
   cost_center: Type.String({ minLength: 1 }),
-  share: Type.Optional(Nullable(Type.Number({ minimum: 0.000001, maximum: 1, description: 'Fraction of the line item. Entries without one split the remainder evenly.' }))),
+  share: Type.Optional(Nullable(Type.Number({ minimum: MIN_SHARE, maximum: 1, description: 'Fraction of the line item. Entries without one split the remainder evenly.' }))),
 })
 
 export const LineItem = Type.Object({
@@ -43,7 +49,7 @@ export const TransactionBody = Type.Object({
   source: Type.Optional(Type.Object({ kind: Type.Optional(SourceKind), extracted: Type.Optional(Type.Record(Type.String(), Type.Unknown())) })),
 })
 
-export const TransactionsBody = Type.Union([TransactionBody, Type.Object({ transactions: Type.Array(TransactionBody, { minItems: 1, maxItems: 500 }) })])
+export const TransactionsBody = Type.Union([TransactionBody, Type.Object({ transactions: Type.Array(TransactionBody, { minItems: 1, maxItems: MAX_BATCH }) })])
 
 export const TransactionPatch = Type.Object({ ...TransactionFields, amount: Type.Optional(Amount), occurred_at: Type.Optional(Nullable(Type.String())) })
 
@@ -67,7 +73,7 @@ export const TransactionQuery = Type.Object({
   category_only: Type.Optional(Type.Array(Type.String(), { description: 'Categories without their subcategories.' })),
   cost_center: Type.Optional(Type.Array(Type.String(), { description: 'Repeat for several.' })),
   no_cost_center: Type.Optional(Type.Boolean({ description: 'Also purchases with a line for nobody in particular.' })),
-  limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 500 })),
+  limit: Type.Optional(Type.Integer({ minimum: 1, maximum: MAX_PAGE })),
   offset: Type.Optional(Type.Integer({ minimum: 0 })),
 })
 

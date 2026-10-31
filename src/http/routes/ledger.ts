@@ -1,7 +1,7 @@
 import { deleteNote, getNotes, saveNote, updateNote } from '../../ledger/notes.js'
 import { createRepeat, listRepeats, stopRepeat, updateRepeat } from '../../ledger/repeats.js'
 import { getSummary } from '../../ledger/summary.js'
-import { getUpdates, markSeen } from '../../ledger/updates.js'
+import { getUpdates, markSeen, takeUpdates } from '../../ledger/updates.js'
 import { addCategory, addCostCenter, deleteCategory, deleteCostCenter, listCategories, listCostCenters, renameCategory, updateCostCenter } from '../../ledger/vocabulary.js'
 import { addWatch, deleteWatch, listWatches } from '../../ledger/watches.js'
 import { addCap, deleteCap, listCaps, updateCap } from '../../ledger/caps.js'
@@ -165,6 +165,10 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   app.get('/api/v1/updates', {
     schema: { tags: ['updates'], summary: 'What the ledger did on its own that the caller hasn\'t seen: repeats registered and possible duplicates.', querystring: UpdatesQuery },
   }, async (request) => ({ updates: await run(request, (tx, caller) => getUpdates(tx, caller, request.query.all)) }))
+
+  app.post('/api/v1/updates/take', {
+    schema: { tags: ['updates'], summary: 'Return the caller\'s unseen updates and mark them seen, for an agent announcing them.' },
+  }, async (request) => ({ updates: await run(request, (tx, caller) => takeUpdates(tx, caller)) }))
 
   app.post('/api/v1/updates/seen', {
     schema: { tags: ['updates'], summary: 'Mark updates as shown to the user.', body: SeenBody },
