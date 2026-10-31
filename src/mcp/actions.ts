@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { Id } from '../api/common.js'
+import { amount, Id } from '../api/common.js'
 import { CapBody, CostCenterBody, NoteBody, RepeatBody, RepeatPatch, WatchBody } from '../api/ledger.js'
 
 // The merged tools' inputs, built from the REST API's fields, and which REST call each action makes. A tool error names
@@ -81,7 +81,7 @@ export const ManageRepeats = z.object({ action: z.enum(['set', 'list', 'update',
   .extend(RepeatPatch.shape)
   .extend({
     transaction_id: RepeatBody.shape.transaction_id.optional().describe('set: the purchase to repeat.'),
-    amount: RepeatPatch.shape.amount.describe('update: the amount from the next date.'),
+    amount: amount('update: the amount from the next date.').optional(),
     paused: RepeatPatch.shape.paused.describe('update: pause or resume.'),
   })
 export type RepeatArgs = z.infer<typeof ManageRepeats>

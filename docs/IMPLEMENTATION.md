@@ -223,7 +223,7 @@ Renaming a category or cost center keeps every link. Repeat templates and `check
 | `date`     | Date      | Yes      | Local date where the purchase happened. Reports group by this date, so a purchase at 11pm on Dec 31 in New York counts in December. |
 | `occurred_at` | Timestamp (UTC) | No | Exact moment, when known (receipt, email, card statement). Always stored in UTC. |
 | `timezone` | String    | Yes      | IANA name where the purchase happened, e.g. `Asia/Tokyo`. Defaults to the household's time zone. |
-| `amount`   | Decimal   | Yes      | In the household currency. A purchase in another currency is converted at the time of purchase, and the original amount and rate go in `notes`, e.g. "¥4,800 at 148.15 JPY/USD". |
+| `amount`   | Decimal   | Yes      | In the household currency, with at most its decimals (none for JPY): a finer amount is refused (`amount_too_precise`), not rounded. A purchase in another currency is converted at the time of purchase, and the original amount and rate go in `notes`, e.g. "¥4,800 at 148.15 JPY/USD". |
 | `spent_by` | UUID      | Yes      | Owner of the transaction. Set from the authenticated identity.     |
 | `private`  | Boolean   | Yes      | Default false. Private transactions are left out of household totals. |
 | `merchant` | String    | No       |                                                                    |

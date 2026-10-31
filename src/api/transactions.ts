@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { SOURCE_KINDS } from '../domain/matching.js'
-import { Amount, flag, Id, LocalDate, localDate, many, MAX_BATCH, MAX_PAGE, MIN_SHARE, ResponseId, Timestamp } from './common.js'
+import { amount, Amount, flag, Id, LocalDate, localDate, many, MAX_BATCH, MAX_PAGE, MIN_SHARE, ResponseId, Timestamp } from './common.js'
 
 export const SpentFor = z.object({
   cost_center: z.string().min(1).describe('An existing person or thing (cost center) by name.'),
@@ -32,7 +32,7 @@ const TransactionFields = z.object({
 })
 
 export const TransactionBody = TransactionFields.extend({
-  amount: Amount.describe('Total paid, in the household currency.'),
+  amount: amount('Total paid.'),
   source: z.object({ kind: SourceKind.optional(), extracted: Extracted.optional() }).optional().describe('Where this came from. Default "talk".'),
 })
 
@@ -43,12 +43,12 @@ export const TransactionBatch = z.object({
 export const TransactionsBody = z.union([TransactionBatch, TransactionBody])
 
 export const TransactionPatch = TransactionFields.extend({
-  amount: Amount.optional().describe('Total paid, in the household currency.'),
+  amount: amount('Total paid.').optional(),
   occurred_at: z.string().nullish().describe('Exact moment, ISO 8601, when a receipt or statement shows it.'),
 })
 
 export const SourceBody = TransactionFields.extend({
-  amount: Amount.optional().describe('The total on the source.'),
+  amount: amount('The total on the source.').optional(),
   kind: SourceKind,
   extracted: Extracted.optional(),
 })

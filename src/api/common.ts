@@ -12,7 +12,11 @@ export const MAX_PAGE = 500
 
 export const localDate = (description: string) => z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe(description)
 export const LocalDate = localDate('Local date, YYYY-MM-DD.')
-export const Amount = z.number().min(MIN_AMOUNT).describe('In the household currency.')
+// Written as people write it, so a model copies a receipt's total instead of converting it. Two decimals at most, as the
+// ledger stores; the ledger refuses decimals the household currency doesn't have.
+const AMOUNT_UNIT = 'Decimal, in the household currency: 60.40 for $60.40, not cents.'
+export const amount = (what: string) => z.number().min(MIN_AMOUNT).multipleOf(0.01).describe(`${what} ${AMOUNT_UNIT}`)
+export const Amount = z.number().min(MIN_AMOUNT).multipleOf(0.01).describe(AMOUNT_UNIT)
 export const Id = z.uuid()
 
 // A query string carries text: one value of a repeatable key arrives bare, and numbers and booleans as strings.

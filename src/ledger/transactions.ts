@@ -11,7 +11,7 @@ import { centsToNumeric, fromCents, numericToCents, toCents } from '../domain/mo
 import { duplicateText } from '../domain/updates.js'
 import { listCaps } from './caps.js'
 import type { Caller } from './caller.js'
-import { invalid, notFound, unwrap } from './errors.js'
+import { checkAmounts, invalid, notFound, unwrap } from './errors.js'
 import { memberLanguage } from './households.js'
 import { loadVocabulary, type Vocabulary } from './vocabulary.js'
 import { watchedGroups } from './watches.js'
@@ -66,6 +66,7 @@ async function prepare(tx: Tx, caller: Caller, body: TransactionBody, vocabulary
   const date = body.date ?? todayIn(timezone, occurredAt ?? now)
   if (!isLocalDate(date)) throw invalid('invalid_date', 'date must be YYYY-MM-DD.')
 
+  checkAmounts(caller.currency, [body.amount, ...(body.line_items ?? []).map((line) => line.amount)])
   const amount = toCents(body.amount)
   const lines = unwrap(
     buildLines({
@@ -351,6 +352,7 @@ export type TransactionPatch = z.infer<typeof api.TransactionPatch>
 
 // The user's own edits are recorded, so a later source can't undo them (VISION.md §3.4, "The user's own edits win").
 export async function patchTransaction(tx: Tx, caller: Caller, id: string, patch: TransactionPatch): Promise<TransactionView> {
+  checkAmounts(caller.currency, [patch.amount, ...(patch.line_items ?? []).map((line) => line.amount)])
   const existing = await loadRaw(tx, caller, id)
   const occurredAt = unwrap(checkWhen({ timezone: patch.timezone, occurred_at: patch.occurred_at }))
   const vocabulary = await loadVocabulary(tx)
