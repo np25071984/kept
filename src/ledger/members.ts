@@ -3,7 +3,7 @@ import { memberChangeProblem } from '../domain/members.js'
 import type { Caller } from './caller.js'
 import { conflict, forbidden, notFound } from './errors.js'
 
-// Settings → Household → Members (VISION.md §3.6): who is in the household and who is invited. Owners change them.
+// Settings → Household → Members (VISION.md §4.C): who is in the household and who is invited. Owners change them.
 
 export async function listMembers(tx: Tx, caller: Caller) {
   const members = await tx.selectFrom('users').select(['id', 'name', 'email', 'role', 'created_at']).orderBy('created_at').execute()

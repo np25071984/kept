@@ -36,18 +36,18 @@ flowchart LR
     Scripts -- "HTTPS, API key" --> API
 ```
 
-Every client calls Kept as one household member, and every request goes through the REST API, which authenticates the caller, validates the request, runs [matching](VISION.md#one-purchase-many-sources) and filters what the caller may see. The MCP server is the main way agents talk to the ledger. It is a thin layer over the REST API and holds no business logic of its own. The web UI, scripts and anything that doesn't speak MCP use the REST API directly. One deployment serves many households from one PostgreSQL database. Every household-scoped row carries `household_id`, and the REST API scopes every query to the caller's household and, for transactions, to the caller. The scheduler creates [repeats](VISION.md#35-repeating-spending-phone-rent-subscriptions) on their dates and records updates for the agent to announce. The sequence diagrams in `VISION.md` §3 show the REST calls underneath each tool.
+Every client calls Kept as one household member, and every request goes through the REST API, which authenticates the caller, validates the request, runs [matching](VISION.md#one-purchase-many-sources) and filters what the caller may see. The MCP server is the main way agents talk to the ledger. The web UI, scripts and anything that doesn't speak MCP use the REST API directly. One deployment serves many households from one PostgreSQL database, and the REST API scopes every query to the caller's household and, for transactions, to the caller. The scheduler creates [repeats](VISION.md#35-repeating-spending-phone-rent-subscriptions) on their dates and records updates for the agent to announce. The sequence diagrams in `VISION.md` §3 show the tools an agent calls; §5.1 gives the REST call underneath each.
 
 ### 1.1 Why MCP and Not Only REST
 
 Kept's own code (the web UI, scripts, the messaging bot) can call a REST API directly. The assistants people already have on their phones can't, and those assistants are the main clients.
 
-- **It's how assistants accept custom tools.** In Claude, Gemini, Grok and Perplexity, adding a custom connector means pasting an MCP server URL. None of them lets a user connect a REST API. ChatGPT's custom GPT Actions are the one exception that takes an OpenAPI spec, which is why the [OpenAPI spec](VISION.md#other-clients) is still published. Without MCP, Kept would need a separate app or bot for each assistant.
-- **It carries the playbook, not just the data.** The product is the agent's behavior (see [§5.2](#52-teaching-the-agent)). MCP has places for it: tool descriptions written for the model, server instructions, prompts and resources. A REST API only has endpoints and developer documentation, so each user would have to paste a long system prompt into every assistant they use.
+- **It's how assistants accept custom tools.** In Claude, Gemini, Grok and Perplexity, adding a custom connector means pasting an MCP server URL. None of them lets a user connect a REST API. ChatGPT's custom GPT Actions are the one exception that takes an OpenAPI spec, which is why the [OpenAPI spec](VISION.md#other-clients) is published. Without MCP, Kept would need a separate app or bot for each assistant.
+- **It carries the playbook.** The product is the agent's behavior (see [§5.2](#52-teaching-the-agent)). MCP has places for it: tool descriptions written for the model, server instructions, prompts and resources. A REST API only has endpoints and developer documentation, so each user would have to paste a long system prompt into every assistant they use.
 - **Each member signs in with their own account.** MCP defines how an assistant signs a user in with OAuth2, including registering itself with the server automatically. A member clicks "Connect" and signs in, and every tool call runs as that person, which [privacy](VISION.md#households-accounts-and-privacy) and `spent_by` depend on. A REST API would mean creating a key and pasting it into each assistant, where an assistant accepts one at all.
 - **Assistants find the tools on their own.** When an assistant connects, it asks the server which tools exist and what each takes. No assistant needs integration code written for it.
 
-The costs are real. MCP is young and the spec still changes. Assistants support it unevenly; most use only tools (see [§5.3](#53-uneven-client-support)). And it is one more layer to run. Keeping it a thin layer over REST limits all three: the business logic, matching and authorization live in the REST API, and the MCP server only describes and forwards.
+MCP has costs. It is young and the spec changes. Assistants support it unevenly; most use only tools (see [§5.3](#53-uneven-client-support)). And it is one more layer to run. Keeping it a thin layer over REST limits all three: the business logic, matching and authorization live in the REST API, and the MCP server only describes and forwards.
 
 ## 2. Data Model
 
@@ -151,7 +151,7 @@ erDiagram
     }
 ```
 
-Every table also carries `household_id`, left out above except where it is the only link. A subcategory belongs to its parent by `path` ("Groceries/Alcohol" under "Groceries"), not by a link. The OAuth tables, `oauth_models`, `oauth_keys`, `sign_in_codes` and `sign_in_requests` ([§5.4](#54-connecting-an-assistant)), link to nothing.
+Every table also carries `household_id` for [row-level security](#4-security), left out above except where it is the only link. A subcategory belongs to its parent by `path` ("Groceries/Alcohol" under "Groceries"). The OAuth tables, `oauth_models`, `oauth_keys`, `sign_in_codes` and `sign_in_requests` ([§5.4](#54-connecting-an-assistant)), link to nothing.
 
 **Households**
 
@@ -187,7 +187,7 @@ Every table also carries `household_id`, left out above except where it is the o
 | `revoked_at`   | Timestamp | No       |                                                             |
 | `kept_at`      | Timestamp | No       | When the member answered "keep" to an unused-key question; silences it for a year. |
 
-Every table carries a `household_id` for [row-level security](#4-security), including those whose rows belong to one member. Cost centers and categories are shared by every member. Transactions, notes and watched groups belong to their user (see [Households, Accounts and Privacy](VISION.md#households-accounts-and-privacy)).
+Cost centers and categories are shared by every member. Transactions, notes and watched groups belong to their user (see [Households, Accounts and Privacy](VISION.md#households-accounts-and-privacy)).
 
 **Categories** (shared by the household)
 
@@ -472,7 +472,7 @@ A changed total resizes the rest line; if the explicit line items would exceed t
 
 Every request except sign-in and discovery carries a bearer token: a member's API key, or an OAuth2 access token issued to an assistant for the MCP address ([§5.4](#54-connecting-an-assistant)). The REST API and `/mcp` accept both. A request without a valid one gets 401 with `WWW-Authenticate: Bearer resource_metadata="…"`, which tells an MCP client where to sign in.
 
-Each household member gets their own API key or OAuth2 login. The ledger sets `spent_by` from the authenticated identity on every write, so the AI never sends it and can't spoof it. A single key shared by the whole household would make every entry look like the same person, and break [privacy](VISION.md#households-accounts-and-privacy), so keys must be per user. Every read is filtered by the caller's identity on the server, not by the client.
+Each household member gets their own API key or OAuth2 login. The ledger sets `spent_by` from the authenticated identity on every write, so the AI never sends it and can't spoof it. A single key shared by the whole household would make every entry look like the same person, and break [privacy](VISION.md#households-accounts-and-privacy), so keys must be per user. Every read is filtered by the caller's identity on the server.
 
 API keys look like `kept_…` and only their SHA-256 hash is stored. Members created by an invite get their first key when they accept it.
 
@@ -540,7 +540,7 @@ Server instructions, resources and prompts are the preferred mechanisms, but not
 
 ### 5.3 Uneven Client Support
 
-Which assistants support what is in [`VISION.md` §4.B](VISION.md#supported-assistants). This shapes the server:
+Which assistants support what is in [`VISION.md` §4.B](VISION.md#supported-assistants). The server follows from it:
 
 - **Everything works through tools.** Every client calls MCP tools, but support for server instructions, resources and prompts is uneven. Claude uses all of them; most others mostly call tools. So the playbook and the household vocabulary are also available from the `get_playbook` tool (see [§5.2](#52-teaching-the-agent)).
 - **Tool descriptions carry the playbook.** Where server instructions are ignored, the description is the only guidance the model gets. "Call `get_playbook` before asking the user anything about an expense" has to be in the tool descriptions themselves.
@@ -585,7 +585,7 @@ sequenceDiagram
 - **Tokens:** PKCE with S256 is required. Access tokens are opaque, bound to `<PUBLIC_URL>/mcp` and scope `kept`; a request with no scope gets `kept`. Refresh tokens rotate and don't end with the browser session, so the assistant stays connected.
 - **Metadata:** `/.well-known/oauth-authorization-server` serves the OAuth part of the OpenID document at `/.well-known/openid-configuration`: the `code` flow only, scope `kept`, and `protected_resources` pointing back to `/mcp`.
 - **The web UI** signs in as the built-in public client `kept-web` with PKCE, redirecting to `<PUBLIC_URL>/app/callback`. It skips the consent page, and asks with `prompt=login`, so every sign-in takes an emailed code and signing out on a shared computer holds. The refresh token stays in `localStorage` and the access token in memory; refreshes run under a Web Lock, because two tabs rotating one refresh token would revoke it.
-- **Clients created ahead of time:** Gemini asks for a client ID and secret instead of registering. Its redirect URI, shown under "Copy redirect URI" in its dialog, contains the member's Google account and Kept's host name, so each member creates their own client on the web UI's Me page (`POST /api/v1/connections/clients`); `create-client` does the same from the command line.
+- **Clients created ahead of time:** Gemini asks for a client ID and secret instead of registering. Its redirect URI, shown under "Copy redirect URI" in its dialog, contains the member's Google account and Kept's host name, so each member creates their own client in the web UI under Settings → Assistants & keys (`POST /api/v1/connections/clients`); `create-client` does the same from the command line.
 - **Language:** the sign-in pages and the code email use the `kept_lang` cookie, else `Accept-Language`. The switch at the top of each page sets the cookie through `POST /language`; the web app sets it too, from the member's saved language. An invite email goes out in the inviter's language. Creating a household saves the page's language to the owner and seeds the starting categories in it.
 - **Connections** are a member's grants grouped by client. Disconnecting deletes the grants and their tokens.
 - **State** (clients, grants, sessions, codes, tokens) lives in `oauth_models`, sign-in codes in `sign_in_codes`, hashed, and code requests in `sign_in_requests`. None belongs to a household, so none has row-level security. The scheduler deletes expired rows, keeping a verified code until its 15 minutes to join are over, and requests older than an hour. `SECURITY DEFINER` functions find a user or an open invite by email and a user's household before the household is known.
@@ -601,5 +601,6 @@ sequenceDiagram
 - **Web UI:** React with React Router, built by Vite from `web/` into `dist/web` and served by the server at `/app/`, under a Content Security Policy that admits only its own files. It is a REST client like any other; what it decides (the purchase editor's form and validation, PKCE) lives in pure functions in `web/src/lib`.
 - **Landing page:** server-rendered at `/` in the visitor's language (§5.4), like the sign-in pages, with a Content Security Policy that admits only its inline scripts: the redirect for a browser already signed in and the example chat. Its example of the per-month chart is inline SVG drawn on the server from sample spending ending in the current month (drawn as at least the 10th, so the running month is never a sliver), with the same layout function as Reports (`src/domain/monthChart.ts`); a phone gets the last 6 months, chosen by CSS.
 - **One look:** the web app, the landing page and the sign-in pages load `/app/site.css` (`web/public/site.css`): the palette in light and dark, base elements, the header bar and its menus, and the per-month chart. The server pages share one header (`src/http/siteHeader.ts`).
-- **Scheduler:** every 15 minutes (`SCHEDULER_INTERVAL_MS`) the server creates due repeats, each on its owner's local date, and deletes expired sign-in state.
+- **Scheduler:** every 15 minutes (`SCHEDULER_INTERVAL_MS`) the server creates due repeats, each on its owner's local date, and deletes expired sign-in state (§5.4).
+- **Health:** `GET /health` answers `{"ok": true}` without a key; `deploy/deploy.sh` checks it after a deploy.
 - **Indexes** follow the lookups by member and by cost center, checked with `EXPLAIN ANALYZE` against a household with five years of purchases. Row-level security hides how many rows a household has from the planner, so an index that looks harmless can pick a worse plan: `line_items(category_id)` made yearly reports several times slower and is left out.

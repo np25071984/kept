@@ -1,6 +1,6 @@
 import { sql, type Kysely } from 'kysely'
 
-// Rules give way to personal notes and watched groups (VISION.md §4.A, "Notes", "Watched Groups"). A watch rule becomes a
+// Rules give way to personal notes and watched groups (VISION.md §4.A, "Notes"; §3.3). A watch rule becomes a
 // watched group, any other rule a note in its own words; anything household-wide goes to every member. A note's end date
 // moves into its text.
 export async function up(db: Kysely<unknown>): Promise<void> {
