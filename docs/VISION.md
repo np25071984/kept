@@ -432,13 +432,14 @@ Joining a household means agreeing to share spending with it. People who want to
 | Their purchases (list and details)  | Yes        | No                                              |
 | Their non-private purchases         | Yes        | Only as part of household totals                |
 | Their private purchases             | Yes        | No, not even in household totals                |
+| Their name                          | Yes        | Yes, in Settings and to their assistants        |
 | Cost centers and categories         | Yes        | Yes, shared and editable by every member        |
 | Their notes, watched groups and caps | Yes       | No                                              |
 
 - **Private is per purchase.** A purchase is private when the user says so ("log this privately", "it's a gift for her"), or when one of their notes says so ("anything at Sephora is private"). The confirmation says so: "Log $80 at Sephora, private?" When a purchase sounds like a gift (the user says gift, present or birthday, or the store or item suggests one) and nothing settles it, the agent offers privacy in the same confirmation: "Log $43 at SuperBestGiftStore. Sounds like a gift: keep it private, so it stays out of household totals?" Otherwise purchases are not private.
 - **Private purchases still count for their owner.** They appear in the owner's history and personal graphs, with their cost centers and watched groups, and are left out only of household totals.
-- **The agent only sees the caller's data.** `list_transactions` returns only the caller's own purchases, so "like your last fill-up" means *your* last fill-up, and an agent can never reveal one member's purchases to another. What the agent knows about the household comes from its shared vocabulary; anything else comes from the caller's own rules and notes, never from other members' transactions.
-- **Household totals don't show who spent.** They are broken down by category, cost center and item, never by member. In a two-person household a member can still subtract their own spending from a total; that is part of agreeing to share spending with the household, and `private` is the way to keep a purchase out.
+- **The agent only sees the caller's data.** `list_transactions` returns only the caller's own purchases, so "like your last fill-up" means *your* last fill-up, and an agent can never reveal one member's purchases to another. What the agent knows about the household comes from its shared vocabulary and its members' names; anything else comes from the caller's own rules and notes, never from other members' transactions.
+- **Household totals don't show who spent.** They are broken down by category, cost center and item, never by member. A member can still subtract their own spending from a total, and the agent does it when asked: "Household groceries this month: $640, yours $410, so the others' shared spending is at least $230." In a two-person household that is the other member's total; that is part of agreeing to share spending with the household, and `private` is the way to keep a purchase out.
 
 ### B. The AI Integration Layer
 

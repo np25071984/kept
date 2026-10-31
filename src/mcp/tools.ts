@@ -34,12 +34,13 @@ const START_WITH: Record<Exclude<StartPath, 'resume'>, string> = {
   done: 'Setup is done. Handle the user\'s request.',
 }
 
-// The playbook, the household's vocabulary, the user's notes and watched groups, and what to do first, in one call.
+// The playbook, the household's vocabulary and members, the user's notes and watched groups, and what to do first, in one call.
 export async function playbook(rest: Rest) {
-  const [setup, categories, costCenters, notes, watches, caps, questions] = await Promise.all([
+  const [setup, categories, costCenters, members, notes, watches, caps, questions] = await Promise.all([
     rest('GET', '/api/v1/setup'),
     rest('GET', '/api/v1/categories'),
     rest('GET', '/api/v1/cost-centers'),
+    rest('GET', '/api/v1/members'),
     rest('GET', '/api/v1/notes'),
     rest('GET', '/api/v1/watches'),
     rest('GET', '/api/v1/caps'),
@@ -54,6 +55,8 @@ export async function playbook(rest: Rest) {
     setup: setup.body,
     categories: (categories.body as { categories: { path: string }[] }).categories.map((c) => c.path),
     cost_centers: (costCenters.body as { cost_centers: unknown[] }).cost_centers,
+    // Names only: who else spends in the household, never what they bought.
+    members: (members.body as { members: { name: string; you: boolean }[] }).members.map(({ name, you }) => ({ name, you })),
     notes: (notes.body as { notes: unknown[] }).notes,
     watching: (watches.body as { watches: unknown[] }).watches,
     caps: (caps.body as { caps: unknown[] }).caps,
@@ -65,7 +68,7 @@ export async function playbook(rest: Rest) {
 export function registerTools(server: McpServer, rest: Rest) {
   server.registerTool('get_playbook', {
     title: 'Get the playbook',
-    description: 'Call this first in every conversation, before asking the user anything about money. Returns how to ask about and log expenses (follow it), what to do first (start_with: the first conversation when setup is unfinished), today\'s date, the household\'s categories and cost centers, and the user\'s notes and watched groups. Read the notes before asking anything.',
+    description: 'Call this first in every conversation, before asking the user anything about money. Returns how to ask about and log expenses (follow it), what to do first (start_with: the first conversation when setup is unfinished), today\'s date, the household\'s categories, cost centers and members, and the user\'s notes and watched groups. Read the notes before asking anything.',
     annotations: read,
   }, async () => ({ content: [{ type: 'text', text: JSON.stringify(await playbook(rest)) }] }))
 
