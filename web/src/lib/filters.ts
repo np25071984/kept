@@ -1,4 +1,6 @@
 import { t } from '../i18n.js'
+import { daysInMonth } from './dates.js'
+import { parentPath } from '../../../src/domain/setup.js'
 
 // My purchases' filters: kept in the URL, turned into API parameters and chips.
 // Categories are a three-state tree: `cats` are whole branches, `only` are parents whose own purchases count while
@@ -55,7 +57,6 @@ export function toParams(f: Filters): URLSearchParams {
 
 const pad = (n: number) => String(n).padStart(2, '0')
 const ymd = (y: number, m: number, d: number) => `${y}-${pad(m)}-${pad(d)}`
-const lastDay = (y: number, m: number) => new Date(Date.UTC(y, m, 0)).getUTCDate()
 
 // The dates a period covers, given today as YYYY-MM-DD.
 export function periodRange(f: Pick<Filters, 'period' | 'from' | 'to'>, today: string): { from?: string; to?: string } {
@@ -64,7 +65,7 @@ export function periodRange(f: Pick<Filters, 'period' | 'from' | 'to'>, today: s
     case 'this_month': return { from: ymd(y, m, 1), to: today }
     case 'last_month': {
       const [ly, lm] = m === 1 ? [y - 1, 12] : [y, m - 1]
-      return { from: ymd(ly, lm, 1), to: ymd(ly, lm, lastDay(ly, lm)) }
+      return { from: ymd(ly, lm, 1), to: ymd(ly, lm, daysInMonth(ly, lm)) }
     }
     case 'this_year': return { from: ymd(y, 1, 1), to: today }
     case 'last_12': {
@@ -90,7 +91,8 @@ export function apiParams(f: Filters, today: string): URLSearchParams {
   return p
 }
 
-const parent = (path: string) => (path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null)
+const parent = parentPath
+// Strictly below, and case-sensitive: the tree holds the household's paths exactly as the server lists them.
 const under = (path: string, ancestor: string) => path.startsWith(`${ancestor}/`)
 const children = (path: string | null, all: string[]) => all.filter((p) => parent(p) === path)
 

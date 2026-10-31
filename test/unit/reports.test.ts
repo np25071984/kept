@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { biggestChange, categoryBars, merchantBars, onTrack, peopleBars, previousRange, trend, withSpending } from '../../web/src/lib/reports.js'
+import { biggestChange, categoryBars, merchantBars, monthlyAverage, onTrack, peopleBars, previousRange, trend, withSpending } from '../../web/src/lib/reports.js'
 
 describe('reports', () => {
   it('compares with the same days of the previous period', () => {
@@ -34,5 +34,22 @@ describe('reports', () => {
     const bars = categoryBars([{ key: 'Groceries', amount: 600 }], [{ key: 'Groceries', amount: 550 }, { key: 'Clothing', amount: 233 }])
     expect(withSpending(bars).map((b) => b.key)).toEqual(['Groceries'])
     expect(biggestChange(bars)?.key).toBe('Clothing')
+  })
+})
+
+describe('monthlyAverage', () => {
+  const months = (amounts: number[]) => amounts.map((amount, i) => ({ month: `m${i}`, amount }))
+
+  it('averages the 11 months before this one, from the first with spending', () => {
+    expect(monthlyAverage(months([0, 0, 0, 0, 0, 0, 0, 0, 100, 0, 200, 999]))).toBe(100)
+    expect(monthlyAverage(months([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50]))).toBeNull()
+  })
+})
+
+describe('previousRange', () => {
+  it('moves a range from the 1st by whole months and any other by its length', () => {
+    expect(previousRange('2026-10-01', '2026-10-29')).toEqual({ from: '2026-09-01', to: '2026-09-29' })
+    expect(previousRange('2026-10-10', '2026-10-16')).toEqual({ from: '2026-10-03', to: '2026-10-09' })
+    expect(onTrack(300, '2026-10-10')).toBe(930)
   })
 })

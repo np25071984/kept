@@ -1,9 +1,10 @@
 import { locale } from '../i18n.js'
 import { NavLink, useSearchParams } from 'react-router'
 import { api } from '../api.js'
+import { todayIn } from '../lib/dates.js'
 import { periodRange, type Period } from '../lib/filters.js'
 import { formatMoney } from '../lib/money.js'
-import { biggestChange, categoryBars, merchantBars, NOBODY, onTrack, OTHER, peopleBars, previousRange, topLevelTotal, trend, withSpending, type Bar, type Row } from '../lib/reports.js'
+import { biggestChange, categoryBars, merchantBars, monthlyAverage, NOBODY, onTrack, OTHER, peopleBars, previousRange, topLevelTotal, trend, withSpending, type Bar, type Row } from '../lib/reports.js'
 import { useLoad, useSession } from '../session.js'
 import { CHART_HEIGHT, CHART_WIDTH, LABEL_Y, monthChartLayout } from '../../../src/domain/monthChart.js'
 import { t } from '../i18n.js'
@@ -11,7 +12,6 @@ import { t } from '../i18n.js'
 type Scope = 'me' | 'household'
 type Tab = 'category' | 'people' | 'merchants'
 
-const todayIn = (zone: string) => new Intl.DateTimeFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
 const monthName = (ym: string, style: 'short' | 'long' = 'short') => new Intl.DateTimeFormat(locale(), { month: style, timeZone: 'UTC' }).format(new Date(`${ym}-01T00:00:00Z`))
 // "Sep 1 – 29" in English, "1–29 сент." in Russian.
 const dayRange = (from: string, to: string) =>
@@ -20,7 +20,7 @@ const dayRange = (from: string, to: string) =>
 // Reports · Mine and Reports · Household: the trend, then a chosen period broken down in tabs.
 export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
   const { setup } = useSession()
-  const today = todayIn(setup.household.timezone)
+  const today = todayIn(setup.household.timezone, new Date())
   const currency = setup.household.currency
   const money = (n: number) => formatMoney(n, currency)
   const [params, setParams] = useSearchParams()
@@ -46,9 +46,7 @@ export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
   const caps = useLoad(() => (scope === 'me' ? api.caps() : Promise.resolve([])), [scope])
 
   const months = trendData.data ? trend(trendData.data.totals, today) : []
-  // Months before anything was logged don't pull the average down.
-  const past = months.slice(0, 11).filter((m, i, all) => m.amount > 0 || all.slice(0, i).some((x) => x.amount > 0))
-  const average = past.length ? past.reduce((s, m) => s + m.amount, 0) / past.length : null
+  const average = monthlyAverage(months)
   const soFar = thisMonth.data ? topLevelTotal(thisMonth.data[0].totals) : 0
   const before = thisMonth.data ? topLevelTotal(thisMonth.data[1].totals) : 0
 

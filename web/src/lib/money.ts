@@ -1,10 +1,8 @@
 import { locale } from '../i18n.js'
 
-// Amounts arrive as numbers in the household currency; sums are done in cents so they don't drift.
-
-export function toCents(amount: number): number {
-  return Math.round(amount * 100)
-}
+// Amounts arrive as numbers in the household currency; sums are done in cents so they don't drift (src/domain/money.ts).
+import { toCents } from '../../../src/domain/money.js'
+export { toCents }
 
 // "1,234.50" and, as in Russian, "1 234,50": a comma before one or two final digits is the decimal mark.
 export function parseAmount(text: string): number | null {
