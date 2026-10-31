@@ -117,4 +117,26 @@ describe('MCP server', () => {
     expect((await call(client, 'get_updates')).body.updates).toEqual([])
     await client.close()
   })
+
+  it('names the household\'s members, so the agent can tell whose spending a household total holds', async () => {
+    const household = await newHousehold(h, 'The Parkers')
+    const sam = await connect(household.api_key)
+    expect((await call(sam, 'get_playbook')).body.members).toEqual([{ name: 'Sam', you: true }])
+
+    const invited = await h.app.inject({ method: 'POST', url: '/api/v1/invites', headers: { authorization: `Bearer ${household.api_key}` }, payload: { email: 'jo@example.com' } })
+    expect(invited.statusCode).toBe(201)
+    const token = h.invites.at(-1)!.link.split('#token=')[1]!
+    const joined = await h.app.inject({ method: 'POST', url: '/api/v1/invites/accept', payload: { token, name: 'Jo' } })
+    const jo = await connect(joined.json().api_key)
+
+    const seen = (await call(jo, 'get_playbook')).body
+    expect(seen.members).toEqual([{ name: 'Sam', you: false }, { name: 'Jo', you: true }])
+    expect(seen.playbook).toContain('## Who sees what')
+    // Names only: another member's email never reaches the caller's assistant.
+    const samSees = (await call(sam, 'get_playbook')).body
+    expect(samSees.members).toEqual([{ name: 'Sam', you: true }, { name: 'Jo', you: false }])
+    expect(JSON.stringify(samSees)).not.toContain('jo@example.com')
+    await sam.close()
+    await jo.close()
+  })
 })
