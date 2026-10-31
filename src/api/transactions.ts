@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { SOURCE_KINDS } from '../domain/matching.js'
-import { Amount, flag, Id, LocalDate, localDate, many, MAX_BATCH, MAX_PAGE, MIN_SHARE } from './common.js'
+import { Amount, flag, Id, LocalDate, localDate, many, MAX_BATCH, MAX_PAGE, MIN_SHARE, ResponseId, Timestamp } from './common.js'
 
 export const SpentFor = z.object({
   cost_center: z.string().min(1).describe('An existing person or thing (cost center) by name.'),
@@ -68,4 +68,53 @@ export const TransactionQuery = z.object({
   no_cost_center: flag('Also purchases with a line for nobody in particular.').optional(),
   limit: z.coerce.number().int().min(1).max(MAX_PAGE).optional(),
   offset: z.coerce.number().int().min(0).optional(),
+})
+
+const Line = z.object({
+  amount: z.number(),
+  category: z.string(),
+  item: z.string().nullable(),
+  notes: z.string().nullable(),
+  rest: z.boolean().describe('The rest line: what the explicit line items leave of the total.'),
+  spent_for: z.array(z.object({ cost_center: z.string(), share: z.number().nullable() })),
+})
+
+export const Transaction = z.object({
+  id: ResponseId,
+  date: z.string(),
+  occurred_at: Timestamp.nullable(),
+  timezone: z.string(),
+  amount: z.number(),
+  merchant: z.string().nullable(),
+  notes: z.string().nullable(),
+  private: z.boolean(),
+  category: z.string().nullable(),
+  repeat_id: ResponseId.nullable(),
+  checked_groups: z.array(z.string()),
+  line_items: z.array(Line),
+  sources: z.array(z.object({ id: ResponseId, kind: z.string(), received_at: Timestamp, extracted: z.record(z.string(), z.unknown()).nullable() })),
+})
+
+const FieldChange = z.object({
+  field: z.enum(['amount', 'date', 'merchant', 'line_items', 'checked_groups', 'private']),
+  from: z.unknown(),
+  to: z.unknown(),
+})
+
+export const WriteResult = z.object({
+  result: z.enum(['created', 'attached', 'possible_duplicate']),
+  transaction: Transaction,
+  possible_duplicate_of: ResponseId.optional(),
+  changes: z.array(FieldChange).optional().describe('What a matching source changed.'),
+  kept: z.array(FieldChange.extend({ reason: z.enum(['user_edit', 'line_items_exceed_amount']) })).optional().describe('Changes not applied, and why.'),
+  warnings: z.array(z.string()).optional().describe('A date the user may not have meant.'),
+  caps: z.array(z.string()).optional().describe('Caps this write took past 80% or over, as lines to say in the confirmation.'),
+})
+
+export const WriteResults = z.union([z.object({ results: z.array(WriteResult) }), WriteResult])
+
+export const TransactionList = z.object({
+  transactions: z.array(Transaction),
+  count: z.number().int().describe('Everything that matches, beyond this page.'),
+  total: z.number().describe('The sum of everything that matches.'),
 })

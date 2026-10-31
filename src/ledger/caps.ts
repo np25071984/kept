@@ -1,7 +1,7 @@
 import type { z } from 'zod'
 import type * as api from '../api/ledger.js'
 import type { Tx } from '../db/db.js'
-import { capRange, capState, type CapPeriod, type CapState } from '../domain/caps.js'
+import { capRange, capState, type CapPeriod } from '../domain/caps.js'
 import { todayIn } from '../domain/dates.js'
 import { fromCents, numericToCents, toCents } from '../domain/money.js'
 import type { Caller } from './caller.js'
@@ -11,15 +11,7 @@ import { loadVocabulary } from './vocabulary.js'
 
 // The caller's caps (VISION.md §4.A, "Caps"): soft reminders on a category or one of the people & things. Nobody else sees them.
 
-export interface CapView {
-  id: string
-  category: string | null
-  cost_center: string | null
-  amount: number
-  period: CapPeriod
-  spent: number
-  state: CapState
-}
+export type CapView = z.infer<typeof api.Cap>
 
 interface Row { id: string; category: string | null; cost_center: string | null; amount: number; period: CapPeriod }
 

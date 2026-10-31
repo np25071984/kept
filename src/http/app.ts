@@ -1,11 +1,11 @@
 import swagger from '@fastify/swagger'
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify'
-import { jsonSchemaTransform, validatorCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod'
+import { jsonSchemaTransform, serializerCompiler, validatorCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod'
 import { inHousehold, type Db, type Tx } from '../db/db.js'
 import type { Caller } from '../ledger/caller.js'
 import { ApiError } from '../ledger/errors.js'
 import { API_KEY_PREFIX, authenticate, callerFor, type Mailer } from '../ledger/households.js'
-import { loadKeys } from '../oauth/keys.js'
+import { loadKeys, type OAuthKeys } from '../oauth/keys.js'
 import { createOAuth, SCOPE, verifyAccessToken } from '../oauth/provider.js'
 import { oauthRoutes, protectedResourceMetadataUrl } from '../oauth/routes.js'
 import { householdRoutes } from './routes/household.js'
@@ -33,6 +33,8 @@ export interface AppDeps {
   trustProxy?: number
   // The built web UI; defaults to dist/web.
   webRoot?: string
+  // OAuth2 keys; by default loaded from the database, created on first start.
+  oauthKeys?: OAuthKeys
 }
 
 export type App = FastifyInstance<any, any, any, any, ZodTypeProvider>
@@ -45,6 +47,7 @@ export interface RouteDeps extends AppDeps {
 export async function buildApp(deps: AppDeps): Promise<App> {
   const app = Fastify({ logger: deps.logger ?? false, trustProxy: (_address: string, hop: number) => hop < (deps.trustProxy ?? 0) }).withTypeProvider<ZodTypeProvider>()
   app.setValidatorCompiler(validatorCompiler)
+  app.setSerializerCompiler(serializerCompiler)
 
   await app.register(swagger, {
     openapi: {
@@ -55,7 +58,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
     transform: jsonSchemaTransform,
   })
 
-  const oauth = createOAuth(deps.db, await loadKeys(deps.db), deps.publicUrl)
+  const oauth = createOAuth(deps.db, deps.oauthKeys ?? await loadKeys(deps.db), deps.publicUrl)
 
   // A bearer token is a member's API key or an OAuth2 access token issued for the MCP address (IMPLEMENTATION.md §4).
   app.decorateRequest('caller', null)

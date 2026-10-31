@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { deleteNote, getNotes, saveNote, updateNote } from '../../ledger/notes.js'
 import { createRepeat, listRepeats, stopRepeat, updateRepeat } from '../../ledger/repeats.js'
 import { getSummary } from '../../ledger/summary.js'
@@ -9,24 +10,25 @@ import { answerQuestion, flagMissingCharge, listQuestions } from '../../ledger/q
 import type { App, RouteDeps } from '../app.js'
 import { IdParams } from '../../api/common.js'
 import {
-  CategoryBody, CategoryQuery, CategoryRename, CostCenterBody, CostCenterName, CostCenterPatch, NoteBody, RepeatBody, RepeatPatch,
-  SeenBody, SummaryQuery, UpdatesQuery, WatchBody, CapBody, CapPatch, QuestionParams, AnswerBody, MissingBody,
+  AnswerBody, Cap, CapBody, CapPatch, Category, CategoryBody, CategoryQuery, CategoryRename, CostCenter, CostCenterBody, CostCenterName,
+  CostCenterPatch, MissingBody, MissingFlagged, Note, NoteBody, Question, QuestionParams, Repeat, RepeatBody, RepeatList, RepeatPatch,
+  SeenBody, Summary, SummaryQuery, Update, UpdatesQuery, Watch, WatchBody,
 } from '../../api/ledger.js'
 
 export function ledgerRoutes(app: App, { run }: RouteDeps) {
   app.get('/api/v1/categories', {
-    schema: { tags: ['vocabulary'], summary: 'The household\'s categories and subcategories.' },
+    schema: { tags: ['vocabulary'], summary: 'The household\'s categories and subcategories.', response: { 200: z.object({ categories: z.array(Category) }) } },
   }, async (request) => ({ categories: await run(request, (tx) => listCategories(tx)) }))
 
   app.post('/api/v1/categories', {
-    schema: { tags: ['vocabulary'], summary: 'Add a category or subcategory. A subcategory\'s parent must exist.', body: CategoryBody },
+    schema: { tags: ['vocabulary'], summary: 'Add a category or subcategory. A subcategory\'s parent must exist.', body: CategoryBody, response: { 201: Category } },
   }, async (request, reply) => {
     reply.status(201)
     return run(request, (tx, caller) => addCategory(tx, caller, request.body.path))
   })
 
   app.patch('/api/v1/categories', {
-    schema: { tags: ['vocabulary'], summary: 'Rename or move a category. Purchases, watched groups and repeats keep pointing at it.', body: CategoryRename },
+    schema: { tags: ['vocabulary'], summary: 'Rename or move a category. Purchases, watched groups and repeats keep pointing at it.', body: CategoryRename, response: { 200: Category } },
   }, async (request) => run(request, (tx) => renameCategory(tx, request.body.path, request.body.new_path)))
 
   app.delete('/api/v1/categories', {
@@ -37,18 +39,18 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.get('/api/v1/cost-centers', {
-    schema: { tags: ['vocabulary'], summary: 'The household\'s cost centers with their kind.' },
+    schema: { tags: ['vocabulary'], summary: 'The household\'s cost centers with their kind.', response: { 200: z.object({ cost_centers: z.array(CostCenter) }) } },
   }, async (request) => ({ cost_centers: await run(request, (tx) => listCostCenters(tx)) }))
 
   app.post('/api/v1/cost-centers', {
-    schema: { tags: ['vocabulary'], summary: 'Add a cost center with its kind: Car, Home, Child, Pet or anything else.', body: CostCenterBody },
+    schema: { tags: ['vocabulary'], summary: 'Add a cost center with its kind: Car, Home, Child, Pet or anything else.', body: CostCenterBody, response: { 201: CostCenter } },
   }, async (request, reply) => {
     reply.status(201)
     return run(request, (tx, caller) => addCostCenter(tx, caller, request.body))
   })
 
   app.patch('/api/v1/cost-centers', {
-    schema: { tags: ['vocabulary'], summary: 'Rename a cost center or change its kind. Purchases and repeats keep pointing at it.', body: CostCenterPatch },
+    schema: { tags: ['vocabulary'], summary: 'Rename a cost center or change its kind. Purchases and repeats keep pointing at it.', body: CostCenterPatch, response: { 200: CostCenter } },
   }, async (request) => {
     const { name, ...patch } = request.body
     return run(request, (tx) => updateCostCenter(tx, name, patch))
@@ -62,11 +64,11 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.get('/api/v1/watches', {
-    schema: { tags: ['memory'], summary: 'The caller\'s watched groups.' },
+    schema: { tags: ['memory'], summary: 'The caller\'s watched groups.', response: { 200: z.object({ watches: z.array(Watch) }) } },
   }, async (request) => ({ watches: await run(request, (tx, caller) => listWatches(tx, caller)) }))
 
   app.post('/api/v1/watches', {
-    schema: { tags: ['memory'], summary: 'Watch a category or an item. Watching one already watched returns it.', body: WatchBody },
+    schema: { tags: ['memory'], summary: 'Watch a category or an item. Watching one already watched returns it.', body: WatchBody, response: { 201: Watch } },
   }, async (request, reply) => {
     reply.status(201)
     return run(request, (tx, caller) => addWatch(tx, caller, request.body))
@@ -80,7 +82,7 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.get('/api/v1/questions', {
-    schema: { tags: ['questions'], summary: 'Kept\'s open questions for the caller, most important first: connecting an assistant, possible duplicates, caps passed, recurring charges missing from a statement, API keys unused for a year.' },
+    schema: { tags: ['questions'], summary: 'Kept\'s open questions for the caller, most important first: connecting an assistant, possible duplicates, caps passed, recurring charges missing from a statement, API keys unused for a year.', response: { 200: z.object({ questions: z.array(Question) }) } },
   }, async (request) => ({ questions: await run(request, (tx, caller) => listQuestions(tx, caller)) }))
 
   app.post('/api/v1/questions/:id/answer', {
@@ -91,25 +93,25 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.post('/api/v1/repeats/:id/missing', {
-    schema: { tags: ['repeats'], summary: 'Record that a statement lacked this recurring charge, as an open question.', params: IdParams, body: MissingBody },
+    schema: { tags: ['repeats'], summary: 'Record that a statement lacked this recurring charge, as an open question.', params: IdParams, body: MissingBody, response: { 201: MissingFlagged } },
   }, async (request, reply) => {
     reply.status(201)
     return run(request, (tx, caller) => flagMissingCharge(tx, caller, request.params.id, request.body.period))
   })
 
   app.get('/api/v1/caps', {
-    schema: { tags: ['memory'], summary: 'The caller\'s caps with what is spent toward each this month or year, private purchases included.' },
+    schema: { tags: ['memory'], summary: 'The caller\'s caps with what is spent toward each this month or year, private purchases included.', response: { 200: z.object({ caps: z.array(Cap) }) } },
   }, async (request) => ({ caps: await run(request, (tx, caller) => listCaps(tx, caller)) }))
 
   app.post('/api/v1/caps', {
-    schema: { tags: ['memory'], summary: 'Set a cap on a category or one of the people & things, per month or year. A reminder, never a block.', body: CapBody },
+    schema: { tags: ['memory'], summary: 'Set a cap on a category or one of the people & things, per month or year. A reminder, never a block.', body: CapBody, response: { 201: Cap } },
   }, async (request, reply) => {
     reply.status(201)
     return run(request, (tx, caller) => addCap(tx, caller, request.body))
   })
 
   app.patch('/api/v1/caps/:id', {
-    schema: { tags: ['memory'], summary: 'Change a cap\'s amount or period.', params: IdParams, body: CapPatch },
+    schema: { tags: ['memory'], summary: 'Change a cap\'s amount or period.', params: IdParams, body: CapPatch, response: { 200: Cap } },
   }, async (request) => run(request, (tx, caller) => updateCap(tx, caller, request.params.id, request.body)))
 
   app.delete('/api/v1/caps/:id', {
@@ -120,18 +122,18 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.get('/api/v1/notes', {
-    schema: { tags: ['memory'], summary: 'The caller\'s notes, newest first.' },
+    schema: { tags: ['memory'], summary: 'The caller\'s notes, newest first.', response: { 200: z.object({ notes: z.array(Note) }) } },
   }, async (request) => ({ notes: await run(request, (tx, caller) => getNotes(tx, caller)) }))
 
   app.post('/api/v1/notes', {
-    schema: { tags: ['memory'], summary: 'Save a note the user agreed to.', body: NoteBody },
+    schema: { tags: ['memory'], summary: 'Save a note the user agreed to.', body: NoteBody, response: { 201: Note } },
   }, async (request, reply) => {
     reply.status(201)
     return run(request, (tx, caller) => saveNote(tx, caller, request.body.text))
   })
 
   app.patch('/api/v1/notes/:id', {
-    schema: { tags: ['memory'], summary: 'Change a note\'s text.', params: IdParams, body: NoteBody },
+    schema: { tags: ['memory'], summary: 'Change a note\'s text.', params: IdParams, body: NoteBody, response: { 200: Note } },
   }, async (request) => run(request, (tx, caller) => updateNote(tx, caller, request.params.id, request.body.text)))
 
   app.delete('/api/v1/notes/:id', {
@@ -142,18 +144,18 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.get('/api/v1/repeats', {
-    schema: { tags: ['repeats'], summary: 'The caller\'s repeats with their next date, amount and last logged purchase, and this month\'s recurring total with how much is still to come.' },
+    schema: { tags: ['repeats'], summary: 'The caller\'s repeats with their next date, amount and last logged purchase, and this month\'s recurring total with how much is still to come.', response: { 200: RepeatList } },
   }, async (request) => run(request, (tx, caller) => listRepeats(tx, caller)))
 
   app.post('/api/v1/repeats', {
-    schema: { tags: ['repeats'], summary: 'Make a transaction repeat. It is the first occurrence.', body: RepeatBody },
+    schema: { tags: ['repeats'], summary: 'Make a transaction repeat. It is the first occurrence.', body: RepeatBody, response: { 201: Repeat } },
   }, async (request, reply) => {
     reply.status(201)
     return run(request, (tx, caller) => createRepeat(tx, caller, request.body))
   })
 
   app.patch('/api/v1/repeats/:id', {
-    schema: { tags: ['repeats'], summary: 'Change the amount, schedule or end from the next occurrence, or pause and resume.', params: IdParams, body: RepeatPatch },
+    schema: { tags: ['repeats'], summary: 'Change the amount, schedule or end from the next occurrence, or pause and resume.', params: IdParams, body: RepeatPatch, response: { 200: Repeat } },
   }, async (request) => run(request, (tx, caller) => updateRepeat(tx, caller, request.params.id, request.body)))
 
   app.delete('/api/v1/repeats/:id', {
@@ -164,18 +166,18 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.get('/api/v1/updates', {
-    schema: { tags: ['updates'], summary: 'What the ledger did on its own that the caller hasn\'t seen: repeats registered and possible duplicates.', querystring: UpdatesQuery },
+    schema: { tags: ['updates'], summary: 'What the ledger did on its own that the caller hasn\'t seen: repeats registered and possible duplicates.', querystring: UpdatesQuery, response: { 200: z.object({ updates: z.array(Update) }) } },
   }, async (request) => ({ updates: await run(request, (tx, caller) => getUpdates(tx, caller, request.query.all)) }))
 
   app.post('/api/v1/updates/take', {
-    schema: { tags: ['updates'], summary: 'Return the caller\'s unseen updates and mark them seen, for an agent announcing them.' },
+    schema: { tags: ['updates'], summary: 'Return the caller\'s unseen updates and mark them seen, for an agent announcing them.', response: { 200: z.object({ updates: z.array(Update) }) } },
   }, async (request) => ({ updates: await run(request, (tx, caller) => takeUpdates(tx, caller)) }))
 
   app.post('/api/v1/updates/seen', {
-    schema: { tags: ['updates'], summary: 'Mark updates as shown to the user.', body: SeenBody },
+    schema: { tags: ['updates'], summary: 'Mark updates as shown to the user.', body: SeenBody, response: { 200: z.object({ marked: z.number().int() }) } },
   }, async (request) => ({ marked: await run(request, (tx, caller) => markSeen(tx, caller, request.body.ids)) }))
 
   app.get('/api/v1/expenses/summary', {
-    schema: { tags: ['summary'], summary: 'Totals by category, cost center or item. scope=me includes the caller\'s private purchases; scope=household covers every member\'s non-private ones.', querystring: SummaryQuery },
+    schema: { tags: ['summary'], summary: 'Totals by category, cost center or item. scope=me includes the caller\'s private purchases; scope=household covers every member\'s non-private ones.', querystring: SummaryQuery, response: { 200: Summary } },
   }, async (request) => run(request, (tx, caller) => getSummary(tx, caller, request.query)))
 }

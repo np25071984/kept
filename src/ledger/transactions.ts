@@ -22,41 +22,11 @@ export type LineBody = z.infer<typeof api.LineItem>
 export type TransactionBody = z.infer<typeof api.TransactionBody>
 export type SourceBody = NonNullable<TransactionBody['source']>
 
-export interface LineView {
-  amount: number
-  category: string
-  item: string | null
-  notes: string | null
-  rest: boolean
-  spent_for: { cost_center: string; share: number | null }[]
-}
+export type LineView = TransactionView['line_items'][number]
 
-export interface TransactionView {
-  id: string
-  date: string
-  occurred_at: string | null
-  timezone: string
-  amount: number
-  merchant: string | null
-  notes: string | null
-  private: boolean
-  category: string | null
-  repeat_id: string | null
-  checked_groups: string[]
-  line_items: LineView[]
-  sources: { id: string; kind: string; received_at: string; extracted: Record<string, unknown> | null }[]
-}
+export type TransactionView = z.infer<typeof api.Transaction>
 
-export interface WriteResult {
-  result: 'created' | 'attached' | 'possible_duplicate'
-  transaction: TransactionView
-  possible_duplicate_of?: string
-  changes?: FieldChange[]
-  kept?: KeptField[]
-  warnings?: string[]
-  // Caps this write took past 80% or over, as lines to say in the confirmation (VISION.md §4.A, "Caps").
-  caps?: string[]
-}
+export type WriteResult = z.infer<typeof api.WriteResult>
 
 // Every write is matched against the caller's own transactions first (VISION.md §3.4, "One purchase, many sources").
 export async function createTransactions(tx: Tx, caller: Caller, bodies: TransactionBody[], now = new Date()): Promise<WriteResult[]> {

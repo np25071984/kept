@@ -16,7 +16,7 @@
     "migrate": "tsx --env-file-if-exists=.env src/cli/migrate.ts",
     "create-household": "tsx --env-file-if-exists=.env src/cli/create-household.ts",
     "create-client": "tsx --env-file-if-exists=.env src/cli/create-client.ts",
-    "openapi": "tsx src/cli/openapi.ts",
+    "openapi": "tsx src/cli/openapi.ts > docs/openapi.json",
     "test": "vitest run",
     "test:unit": "vitest run test/unit"
   },

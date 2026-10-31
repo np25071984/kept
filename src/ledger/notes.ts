@@ -1,14 +1,12 @@
+import type { z } from 'zod'
+import type * as api from '../api/ledger.js'
 import type { Tx } from '../db/db.js'
 import type { Caller } from './caller.js'
 import { notFound } from './errors.js'
 
 // The caller's notes, what their assistants remember (VISION.md §4.A, "Notes"). Nobody else sees them.
 
-export interface NoteView {
-  id: string
-  text: string
-  created_at: string
-}
+export type NoteView = z.infer<typeof api.Note>
 
 export async function getNotes(tx: Tx, caller: Caller): Promise<NoteView[]> {
   const rows = await tx.selectFrom('notes').select(['id', 'text', 'created_at']).where('user_id', '=', caller.user_id).orderBy('created_at', 'desc').execute()

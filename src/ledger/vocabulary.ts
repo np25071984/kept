@@ -71,10 +71,7 @@ export async function addCategory(tx: Tx, caller: Caller, path: string): Promise
   return { path: clean }
 }
 
-export interface CostCenterView {
-  name: string
-  kind: string
-}
+export type CostCenterView = z.infer<typeof api.CostCenter>
 
 export async function listCostCenters(tx: Tx): Promise<CostCenterView[]> {
   return tx.selectFrom('cost_centers').select(['name', 'kind']).orderBy('name').execute()

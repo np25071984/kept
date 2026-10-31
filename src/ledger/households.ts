@@ -94,7 +94,7 @@ export async function getSetup(tx: Tx, caller: Caller, now = new Date()) {
   const household = await tx.selectFrom('households').select(['name', 'currency', 'timezone', 'setup']).executeTakeFirstOrThrow()
   const user = await tx.selectFrom('users').select(['name', 'email', 'introduced_at', 'role', 'language']).where('id', '=', caller.user_id).executeTakeFirstOrThrow()
   const setup = { ...initialSetup(), ...household.setup } as SetupState
-  const you = { name: user.name, email: user.email, introduced: user.introduced_at != null, role: user.role, language: user.language }
+  const you = { name: user.name, email: user.email, introduced: user.introduced_at != null, role: user.role, language: isLanguage(user.language) ? user.language : null }
   return {
     household: { name: household.name, currency: household.currency, currency_locked: await hasPurchases(tx), timezone: household.timezone, steps: setup, next_step: nextStep(setup) },
     you,
@@ -192,7 +192,7 @@ export async function createInvite(tx: Tx, caller: Caller, email: string, mailer
   const mail = { to: address, inviter: caller.name, household: household.name, language: isLanguage(inviter?.language) ? inviter.language : 'en' } as const
   if (taken) await mailer.sendInviteToMember(mail)
   else await mailer.sendInvite({ ...mail, link: `${base}/invite#token=${token}`, connect: `${base}/mcp` })
-  return invite
+  return { ...invite, expires_at: invite.expires_at.toISOString() }
 }
 
 async function emailTaken(db: Db | Tx, email: string): Promise<boolean> {
@@ -225,7 +225,8 @@ export async function joinHousehold(tx: Tx, invite: { id: string; household_id: 
 }
 
 export async function listApiKeys(tx: Tx, caller: Caller) {
-  return tx.selectFrom('api_keys').select(['id', 'name', 'created_at', 'last_used_at']).where('user_id', '=', caller.user_id).where('revoked_at', 'is', null).orderBy('created_at').execute()
+  const keys = await tx.selectFrom('api_keys').select(['id', 'name', 'created_at', 'last_used_at']).where('user_id', '=', caller.user_id).where('revoked_at', 'is', null).orderBy('created_at').execute()
+  return keys.map((k) => ({ ...k, created_at: k.created_at.toISOString(), last_used_at: k.last_used_at?.toISOString() ?? null }))
 }
 
 export async function revokeApiKey(tx: Tx, caller: Caller, id: string) {

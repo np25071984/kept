@@ -392,7 +392,7 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `DELETE` | `/api/v1/api-keys/{id}`     | Revoke one of the caller's API keys.                                                              |
 | `GET`  | `/api/v1/expenses/summary`    | Query monthly and yearly totals by category, subcategory, cost center, item or merchant (e.g., fuel per car, alcohol per month). With `scope=household` and `group_by=merchant`, a merchant fewer than two members bought from folds into "Other merchants". `scope=me` covers the caller's own purchases, private included; `scope=household` covers every member's non-private purchases, never broken down by member. Watched groups include their [coverage](VISION.md#coverage). |
 
-Errors have one shape, `{"error": {"code", "message", "details"?}}`: 400 for a malformed request, 401 without a valid key, 403 for an owner-only action, 404 for anything outside the caller's own data, 409 for a conflict, 410 for a used or expired invite, 429 past the invite limit (`invite_limited`), and 422 when the ledger's rules reject it. A category or cost center the household doesn't have is rejected (`unknown_category`, `unknown_cost_center`, with the known ones in `details`), so the agent asks before adding one. The server serves the OpenAPI spec at `/api/v1/openapi.json`.
+Errors have one shape, `{"error": {"code", "message", "details"?}}`: 400 for a malformed request, 401 without a valid key, 403 for an owner-only action, 404 for anything outside the caller's own data, 409 for a conflict, 410 for a used or expired invite, 429 past the invite limit (`invite_limited`), and 422 when the ledger's rules reject it. A category or cost center the household doesn't have is rejected (`unknown_category`, `unknown_cost_center`, with the known ones in `details`), so the agent asks before adding one. The server serves the OpenAPI spec at `/api/v1/openapi.json`; the repository keeps a copy at `docs/openapi.json`.
 
 ### 3.1 Request Examples
 
@@ -580,7 +580,7 @@ sequenceDiagram
 
 ## 6. Stack and Deployment
 
-- **Server:** TypeScript on Node with Fastify. Each request shape is one Zod schema in `src/api`: it validates the request, generates the OpenAPI spec (§3), is the input schema of the MCP tool that forwards to that route (§5.1), and gives the ledger its type. The MCP server uses the official MCP TypeScript SDK.
+- **Server:** TypeScript on Node with Fastify. Each request and response shape is one Zod schema in `src/api`. A request schema validates the request and is the input schema of the MCP tool that forwards to that route (§5.1). A response schema serializes the response, dropping any field it doesn't list. Both generate the OpenAPI spec (§3) and give the ledger and the web UI their types. The MCP server uses the official MCP TypeScript SDK.
 - **Database:** PostgreSQL, one database for every household (§1).
 - **Database access:** Kysely for typed queries and migrations.
 - **Hosting:** one VPS running Docker Compose: PostgreSQL, the Kept server with its scheduler, and Caddy in front for HTTPS with automatic certificates. Assistants' connectors need the public HTTPS URL ([`VISION.md` §4.B](VISION.md#supported-assistants)). The server applies migrations on start. The host needs a domain name of its own: Gemini rejects wildcard IP names such as `sslip.io` before sign-in starts.

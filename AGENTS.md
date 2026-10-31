@@ -23,6 +23,7 @@ Kept teaches the user's own AI assistant to track a household's expenses: what t
 - `docs/ROADMAP.md`: remaining tasks and their order, without arguing scope.
 - `docs/DEVELOPMENT.md`: running Kept and its tests locally, deploying it, and the source layout.
 - `docs/icons/`: the app icon's master SVG, its detailed large version, and how the served copies are made.
+- `docs/openapi.json`: the REST API's endpoints and payloads, generated from the schemas by `npm run openapi`.
 - `README.md`: what Kept is, for someone arriving at the repository, pointing to the documents above.
 - `CONTRIBUTING.md`: how outside contributors work and the contributor license agreement.
 - `SECURITY.md`: how to report a vulnerability.

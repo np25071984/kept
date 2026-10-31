@@ -1,30 +1,33 @@
+import { z } from 'zod'
 import { acceptInvite, createInvite, deleteInvite, getSetup, issueApiKey, listApiKeys, revokeApiKey, updateMe, updateSetup } from '../../ledger/households.js'
 import { listMembers, removeMember, updateMember } from '../../ledger/members.js'
 import type { App, RouteDeps } from '../app.js'
 import { IdParams } from '../../api/common.js'
-import { AcceptBody, ApiKeyBody, InviteBody, MePatch, MemberPatch, SetupPatch } from '../../api/household.js'
+import {
+  AcceptBody, Accepted, ApiKey, ApiKeyBody, Invite, InviteBody, IssuedKey, MePatch, MemberPatch, Members, Setup, SetupPatch,
+} from '../../api/household.js'
 
 export function householdRoutes(app: App, deps: RouteDeps) {
   const { run } = deps
 
   app.get('/api/v1/setup', {
-    schema: { tags: ['setup'], summary: 'The household\'s setup steps and whether the caller has been introduced.' },
+    schema: { tags: ['setup'], summary: 'The household\'s setup steps and whether the caller has been introduced.', response: { 200: Setup } },
   }, async (request) => run(request, (tx, caller) => getSetup(tx, caller)))
 
   app.patch('/api/v1/setup', {
-    schema: { tags: ['setup'], summary: 'Save confirmed setup answers: the household\'s name, currency (before the first transaction) and time zone, owners only; step states; the introduction.', body: SetupPatch },
+    schema: { tags: ['setup'], summary: 'Save confirmed setup answers: the household\'s name, currency (before the first transaction) and time zone, owners only; step states; the introduction.', body: SetupPatch, response: { 200: Setup } },
   }, async (request) => run(request, (tx, caller) => updateSetup(tx, caller, request.body)))
 
   app.patch('/api/v1/me', {
-    schema: { tags: ['setup'], summary: 'Change the caller\'s own name. Returns the setup.', body: MePatch },
+    schema: { tags: ['setup'], summary: 'Change the caller\'s own name. Returns the setup.', body: MePatch, response: { 200: Setup } },
   }, async (request) => run(request, (tx, caller) => updateMe(tx, caller, request.body)))
 
   app.get('/api/v1/members', {
-    schema: { tags: ['setup'], summary: 'The household\'s members and open invites.' },
+    schema: { tags: ['setup'], summary: 'The household\'s members and open invites.', response: { 200: Members } },
   }, async (request) => run(request, (tx, caller) => listMembers(tx, caller)))
 
   app.patch('/api/v1/members/:id', {
-    schema: { tags: ['setup'], summary: 'Owners only. Make a member an owner or a member; a household keeps at least one owner.', params: IdParams, body: MemberPatch },
+    schema: { tags: ['setup'], summary: 'Owners only. Make a member an owner or a member; a household keeps at least one owner.', params: IdParams, body: MemberPatch, response: { 200: Members } },
   }, async (request) => run(request, (tx, caller) => updateMember(tx, caller, request.params.id, request.body.role)))
 
   app.delete('/api/v1/members/:id', {
@@ -35,7 +38,7 @@ export function householdRoutes(app: App, deps: RouteDeps) {
   })
 
   app.post('/api/v1/invites', {
-    schema: { tags: ['setup'], summary: 'Owners only. Invite a member by email; Kept sends the sign-in link.', body: InviteBody },
+    schema: { tags: ['setup'], summary: 'Owners only. Invite a member by email; Kept sends the sign-in link.', body: InviteBody, response: { 201: Invite } },
   }, async (request, reply) => {
     reply.status(201)
     return run(request, (tx, caller) => createInvite(tx, caller, request.body.email, deps.mailer, deps.publicUrl))
@@ -50,18 +53,18 @@ export function householdRoutes(app: App, deps: RouteDeps) {
 
   app.post('/api/v1/invites/accept', {
     config: { public: true },
-    schema: { tags: ['setup'], summary: 'Accept an invite with the token from its link. Creates the member and returns their first API key.', body: AcceptBody, security: [] },
+    schema: { tags: ['setup'], summary: 'Accept an invite with the token from its link. Creates the member and returns their first API key.', body: AcceptBody, security: [], response: { 201: Accepted } },
   }, async (request, reply) => {
     reply.status(201)
     return acceptInvite(deps.db, request.body)
   })
 
   app.get('/api/v1/api-keys', {
-    schema: { tags: ['api keys'], summary: 'The caller\'s active API keys.' },
+    schema: { tags: ['api keys'], summary: 'The caller\'s active API keys.', response: { 200: z.object({ api_keys: z.array(ApiKey) }) } },
   }, async (request) => ({ api_keys: await run(request, (tx, caller) => listApiKeys(tx, caller)) }))
 
   app.post('/api/v1/api-keys', {
-    schema: { tags: ['api keys'], summary: 'Create an API key for the caller. The key is shown only once.', body: ApiKeyBody },
+    schema: { tags: ['api keys'], summary: 'Create an API key for the caller. The key is shown only once.', body: ApiKeyBody, response: { 201: IssuedKey } },
   }, async (request, reply) => {
     reply.status(201)
     return run(request, (tx, caller) => issueApiKey(tx, caller.household_id, caller.user_id, request.body.name))

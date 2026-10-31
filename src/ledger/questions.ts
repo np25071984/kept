@@ -1,3 +1,5 @@
+import type { z } from 'zod'
+import type * as api from '../api/ledger.js'
 import type { Tx } from '../db/db.js'
 import { todayIn } from '../domain/dates.js'
 import { missingChargeText } from '../domain/updates.js'
@@ -9,16 +11,11 @@ import type { Caller } from './caller.js'
 import { invalid, notFound } from './errors.js'
 import { memberLanguage, revokeApiKey } from './households.js'
 import { stopRepeat } from './repeats.js'
-import { loadViews, mergeTransactions, type TransactionView } from './transactions.js'
+import { loadViews, mergeTransactions } from './transactions.js'
 
 // Kept's open questions for the caller (VISION.md §4.B, "Open questions"): Notifications on the web, one per conversation in chat.
 
-export type Question =
-  | { id: string; kind: 'connect'; created_at: string }
-  | { id: string; kind: 'duplicate'; created_at: string; first: TransactionView; later: TransactionView }
-  | { id: string; kind: 'cap'; created_at: string; cap: { id: string; name: string; amount: number; spent: number; period: 'month' | 'year' } }
-  | { id: string; kind: 'missing_charge'; created_at: string; text: string; repeat_id: string }
-  | { id: string; kind: 'unused_key'; created_at: string; key: { id: string; name: string; last_used_at: string | null } }
+export type Question = z.infer<typeof api.Question>
 
 export async function listQuestions(tx: Tx, caller: Caller, now = new Date()): Promise<Question[]> {
   const today = todayIn(caller.timezone, now)

@@ -11,10 +11,14 @@ export interface OAuthKeys {
 export async function loadKeys(db: Db): Promise<OAuthKeys> {
   const existing = await db.selectFrom('oauth_keys').select(['jwks', 'cookie_keys']).where('id', '=', 1).executeTakeFirst()
   if (existing) return { jwks: existing.jwks, cookieKeys: existing.cookie_keys }
-  const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 })
-  const jwk = { ...privateKey.export({ format: 'jwk' }), kid: randomUUID(), alg: 'RS256', use: 'sig' }
-  const cookieKeys = [randomBytes(32).toString('base64url')]
-  await db.insertInto('oauth_keys').values({ id: 1, jwks: JSON.stringify({ keys: [jwk] }), cookie_keys: cookieKeys }).onConflict((oc) => oc.column('id').doNothing()).execute()
+  const { jwks, cookieKeys } = newKeys()
+  await db.insertInto('oauth_keys').values({ id: 1, jwks: JSON.stringify(jwks), cookie_keys: cookieKeys }).onConflict((oc) => oc.column('id').doNothing()).execute()
   const stored = await db.selectFrom('oauth_keys').select(['jwks', 'cookie_keys']).where('id', '=', 1).executeTakeFirstOrThrow()
   return { jwks: stored.jwks, cookieKeys: stored.cookie_keys }
+}
+
+export function newKeys(): OAuthKeys {
+  const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 })
+  const jwk = { ...privateKey.export({ format: 'jwk' }), kid: randomUUID(), alg: 'RS256', use: 'sig' }
+  return { jwks: { keys: [jwk] }, cookieKeys: [randomBytes(32).toString('base64url')] }
 }

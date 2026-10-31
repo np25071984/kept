@@ -9,12 +9,7 @@ import { loadVocabulary } from './vocabulary.js'
 
 // The caller's watched groups (VISION.md §3.3). Nobody else sees them.
 
-export interface WatchView {
-  id: string
-  category: string | null
-  item: string | null
-  group: string
-}
+export type WatchView = z.infer<typeof api.Watch>
 
 export async function listWatches(tx: Tx, caller: Caller): Promise<WatchView[]> {
   const rows = await tx

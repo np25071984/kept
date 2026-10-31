@@ -1,4 +1,5 @@
-import { ClientBody, ClientParams } from '../../api/connections.js'
+import { z } from 'zod'
+import { ClientBody, ClientParams, Connection, CreatedClient } from '../../api/connections.js'
 import type { Db } from '../../db/db.js'
 import { checkRedirectUri } from '../../domain/connections.js'
 import { invalid, notFound } from '../../ledger/errors.js'
@@ -12,7 +13,7 @@ export function connectionRoutes(app: App, deps: { db: Db; oauth: OAuth }) {
   const tags = ['connections']
 
   app.get('/api/v1/connections', {
-    schema: { tags, summary: 'Assistants and browsers the caller has signed in, newest use first.' },
+    schema: { tags, summary: 'Assistants and browsers the caller has signed in, newest use first.', response: { 200: z.object({ connections: z.array(Connection) }) } },
   }, async (request) => ({ connections: await listConnections(deps.db, deps.oauth, request.caller!.user_id) }))
 
   app.delete('/api/v1/connections/:client_id', {
@@ -23,7 +24,7 @@ export function connectionRoutes(app: App, deps: { db: Db; oauth: OAuth }) {
   })
 
   app.post('/api/v1/connections/clients', {
-    schema: { tags, summary: 'Create a client ID and secret for an assistant that asks for them instead of registering itself, such as Gemini. The secret is shown once.', body: ClientBody },
+    schema: { tags, summary: 'Create a client ID and secret for an assistant that asks for them instead of registering itself, such as Gemini. The secret is shown once.', body: ClientBody, response: { 201: CreatedClient } },
   }, async (request, reply) => {
     const problem = checkRedirectUri(request.body.redirect_uri)
     if (problem) throw invalid('invalid_redirect_uri', problem)

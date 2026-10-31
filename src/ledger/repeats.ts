@@ -17,21 +17,7 @@ import { loadVocabulary } from './vocabulary.js'
 
 const FREQUENCIES: Frequency[] = ['weekly', 'monthly', 'yearly']
 
-export interface RepeatView {
-  id: string
-  frequency: Frequency
-  interval: number
-  anchor: string
-  next_date: string
-  ends_on: string | null
-  remaining: number | null
-  paused: boolean
-  amount: number
-  merchant: string | null
-  category: string | null
-  spent_for: string[]
-  last: { amount: number; date: string } | null
-}
+export type RepeatView = z.infer<typeof api.Repeat>
 
 export async function listRepeats(tx: Tx, caller: Caller, now = new Date()) {
   const rows = await tx.selectFrom('repeats').selectAll().where('user_id', '=', caller.user_id).orderBy('paused').orderBy('next_date').execute()

@@ -1,5 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { sql } from 'kysely'
+import type { z } from 'zod'
+import type * as api from '../api/connections.js'
 import type { Db } from '../db/db.js'
 import { groupConnections, type GrantRow } from '../domain/connections.js'
 import type { OAuth } from './provider.js'
@@ -8,13 +10,7 @@ import { WEB_CLIENT_ID } from './provider.js'
 // A member's connected assistants, and OAuth clients created ahead of time for assistants that ask for a client ID and
 // secret instead of registering (IMPLEMENTATION.md §5.4). OAuth state has no household, so these filter by account.
 
-export interface ConnectionView {
-  client_id: string
-  name: string
-  web: boolean
-  connected_at: string
-  last_used_at: string
-}
+export type ConnectionView = z.infer<typeof api.Connection>
 
 async function grantsOf(db: Db, userId: string, clientId?: string) {
   return db
@@ -64,10 +60,7 @@ export async function disconnect(db: Db, userId: string, clientId: string): Prom
   return ids.length
 }
 
-export interface CreatedClient {
-  client_id: string
-  client_secret: string
-}
+export type CreatedClient = z.infer<typeof api.CreatedClient>
 
 // Stores a confidential client with these redirect URIs. Called again with the same id, it replaces the secret.
 export async function saveClient(db: Db, input: { id: string; name: string; redirectUris: string[] }): Promise<CreatedClient> {
