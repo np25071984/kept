@@ -1,5 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { sql } from 'kysely'
+import type { z } from 'zod'
+import type * as api from '../api/household.js'
 import { inHousehold, type Db, type Tx } from '../db/db.js'
 import { isTimeZone, todayIn } from '../domain/dates.js'
 import { isLanguage, SEED_CATEGORIES_RU, type Language } from '../domain/language.js'
@@ -113,7 +115,7 @@ async function hasPurchases(tx: Tx): Promise<boolean> {
 }
 
 // The caller's own profile (VISION.md §4.C, Settings → Profile).
-export async function updateMe(tx: Tx, caller: Caller, patch: { name?: string; language?: string | null }) {
+export async function updateMe(tx: Tx, caller: Caller, patch: z.infer<typeof api.MePatch>) {
   if (patch.language !== undefined) {
     if (patch.language !== null && !isLanguage(patch.language)) throw invalid('invalid_language', 'Language is en or ru.')
     await tx.updateTable('users').set({ language: patch.language }).where('id', '=', caller.user_id).execute()
@@ -126,13 +128,7 @@ export async function updateMe(tx: Tx, caller: Caller, patch: { name?: string; l
   return getSetup(tx, caller)
 }
 
-export interface SetupPatch {
-  name?: string
-  currency?: string
-  timezone?: string
-  steps?: Record<string, string>
-  introduced?: boolean
-}
+export type SetupPatch = z.infer<typeof api.SetupPatch>
 
 export async function updateSetup(tx: Tx, caller: Caller, patch: SetupPatch) {
   if (patch.currency !== undefined) {
@@ -210,7 +206,7 @@ export async function deleteInvite(tx: Tx, caller: Caller, id: string) {
 }
 
 // The invite link's token signs the new member in once; they join as a member and get their first API key.
-export async function acceptInvite(db: Db, input: { token: string; name: string }) {
+export async function acceptInvite(db: Db, input: z.infer<typeof api.AcceptBody>) {
   const found = await sql<{ id: string; household_id: string; email: string; expires_at: Date; accepted_at: Date | null }>`select * from kept_find_invite(${hashSecret(input.token)})`.execute(db)
   const invite = found.rows[0]
   if (!invite || invite.accepted_at || invite.expires_at < new Date() || (await emailTaken(db, invite.email))) throw new ApiError(410, 'invite_invalid', 'This invite link is invalid, used or expired.')

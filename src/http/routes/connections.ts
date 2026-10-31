@@ -1,4 +1,4 @@
-import { Type } from 'typebox'
+import { ClientBody, ClientParams } from '../../api/connections.js'
 import type { Db } from '../../db/db.js'
 import { checkRedirectUri } from '../../domain/connections.js'
 import { invalid, notFound } from '../../ledger/errors.js'
@@ -7,12 +7,6 @@ import type { OAuth } from '../../oauth/provider.js'
 import type { App } from '../app.js'
 
 // The caller's connected assistants (IMPLEMENTATION.md §5.4). Only the caller's own grants are visible.
-
-const ClientParams = Type.Object({ client_id: Type.String({ minLength: 1 }) })
-const ClientBody = Type.Object({
-  name: Type.String({ minLength: 1, maxLength: 60, description: 'The assistant, e.g. "Gemini".' }),
-  redirect_uri: Type.String({ minLength: 1, description: 'The redirect URI the assistant shows for this connection.' }),
-})
 
 export function connectionRoutes(app: App, deps: { db: Db; oauth: OAuth }) {
   const tags = ['connections']

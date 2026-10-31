@@ -2,7 +2,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
-import { TransactionBatch } from '../../src/http/transactionSchemas.js'
+import { TransactionBatch } from '../../src/api/transactions.js'
 import { newHousehold, startHarness, type Harness } from './helpers.js'
 
 let h: Harness

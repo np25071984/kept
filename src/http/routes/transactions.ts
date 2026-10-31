@@ -2,12 +2,13 @@ import {
   addSource, createTransactions, deleteTransaction, getTransaction, mergeTransactions, patchTransaction,
 } from '../../ledger/transactions.js'
 import { listPurchases } from '../../ledger/purchaseList.js'
-import type { RouteDeps, ZodApp } from '../app.js'
-import { IdParams, MergeBody, SourceBody, TransactionPatch, TransactionQuery, TransactionsBody } from '../transactionSchemas.js'
+import { IdParams } from '../../api/common.js'
+import { MergeBody, SourceBody, TransactionPatch, TransactionQuery, TransactionsBody } from '../../api/transactions.js'
+import type { App, RouteDeps } from '../app.js'
 
 const tags = ['transactions']
 
-export function transactionRoutes(app: ZodApp, { run }: RouteDeps) {
+export function transactionRoutes(app: App, { run }: RouteDeps) {
   app.post('/api/v1/transactions', {
     schema: {
       tags,

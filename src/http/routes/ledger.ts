@@ -7,10 +7,11 @@ import { addWatch, deleteWatch, listWatches } from '../../ledger/watches.js'
 import { addCap, deleteCap, listCaps, updateCap } from '../../ledger/caps.js'
 import { answerQuestion, flagMissingCharge, listQuestions } from '../../ledger/questions.js'
 import type { App, RouteDeps } from '../app.js'
+import { IdParams } from '../../api/common.js'
 import {
-  CategoryBody, CategoryQuery, CategoryRename, CostCenterBody, CostCenterName, CostCenterPatch, IdParams, NoteBody, RepeatBody, RepeatPatch,
+  CategoryBody, CategoryQuery, CategoryRename, CostCenterBody, CostCenterName, CostCenterPatch, NoteBody, RepeatBody, RepeatPatch,
   SeenBody, SummaryQuery, UpdatesQuery, WatchBody, CapBody, CapPatch, QuestionParams, AnswerBody, MissingBody,
-} from '../schemas.js'
+} from '../../api/ledger.js'
 
 export function ledgerRoutes(app: App, { run }: RouteDeps) {
   app.get('/api/v1/categories', {

@@ -1,19 +1,6 @@
 import { z } from 'zod'
 import { SOURCE_KINDS } from '../domain/matching.js'
-import { MAX_BATCH, MAX_PAGE, MIN_AMOUNT, MIN_SHARE } from './schemas.js'
-
-// The transaction schemas. They validate REST requests, generate the OpenAPI spec (IMPLEMENTATION.md §6) and are the
-// MCP tools' input schemas, so a description is written for both a developer and a model.
-
-const localDate = (description: string) => z.string().regex(/^\d{4}-\d{2}-\d{2}$/).describe(description)
-const LocalDate = localDate('Local date, YYYY-MM-DD.')
-
-// A query string carries text: one value of a repeatable key arrives bare, and numbers and booleans as strings.
-// JSON from an MCP tool passes through unchanged.
-const many = (description: string) => z.preprocess((v) => (v === undefined || Array.isArray(v) ? v : [v]), z.array(z.string())).describe(description)
-const flag = (description: string) => z.preprocess((v) => (v === 'true' ? true : v === 'false' ? false : v), z.boolean()).describe(description)
-
-export const IdParams = z.object({ id: z.uuid() })
+import { Amount, flag, Id, LocalDate, localDate, many, MAX_BATCH, MAX_PAGE, MIN_SHARE } from './common.js'
 
 export const SpentFor = z.object({
   cost_center: z.string().min(1).describe('An existing person or thing (cost center) by name.'),
@@ -21,7 +8,7 @@ export const SpentFor = z.object({
 })
 
 export const LineItem = z.object({
-  amount: z.number().min(MIN_AMOUNT).describe('In the household currency.'),
+  amount: Amount,
   category: z.string().min(1).describe('An existing category path, e.g. "Car/Fuel".'),
   item: z.string().nullish().describe('Free text to track, e.g. "snacks", "shoes".'),
   notes: z.string().nullish(),
@@ -43,8 +30,6 @@ const TransactionFields = z.object({
   line_items: z.array(LineItem).optional().describe('Only the parts priced separately; the rest goes to category.'),
   checked_groups: z.array(z.string()).optional().describe('Watched groups the user answered about, "no" included.'),
 })
-
-const Amount = z.number().min(MIN_AMOUNT)
 
 export const TransactionBody = TransactionFields.extend({
   amount: Amount.describe('Total paid, in the household currency.'),
@@ -68,7 +53,7 @@ export const SourceBody = TransactionFields.extend({
   extracted: Extracted.optional(),
 })
 
-export const MergeBody = z.object({ other_id: z.uuid().describe('The transaction merged into this one and then deleted.') })
+export const MergeBody = z.object({ other_id: Id.describe('The transaction merged into this one and then deleted.') })
 
 export const TransactionQuery = z.object({
   from: LocalDate.optional(),

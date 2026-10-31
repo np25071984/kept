@@ -1,4 +1,6 @@
 import { sql } from 'kysely'
+import type { z } from 'zod'
+import type * as api from '../api/ledger.js'
 import { inHousehold, type Db, type Tx } from '../db/db.js'
 import { isLocalDate, todayIn } from '../domain/dates.js'
 import { resizeLines, type Line } from '../domain/lines.js'
@@ -65,14 +67,7 @@ function view(row: { id: string; frequency: Frequency; interval: number; anchor:
   }
 }
 
-export interface RepeatBody {
-  transaction_id: string
-  frequency: string
-  interval?: number
-  anchor?: string
-  ends_on?: string | null
-  remaining?: number | null
-}
+export type RepeatBody = z.infer<typeof api.RepeatBody>
 
 // The transaction is the first occurrence; the next one follows on the schedule.
 export async function createRepeat(tx: Tx, caller: Caller, body: RepeatBody): Promise<RepeatView> {
@@ -105,15 +100,7 @@ export async function createRepeat(tx: Tx, caller: Caller, body: RepeatBody): Pr
   return view(row)
 }
 
-export interface RepeatPatch {
-  amount?: number
-  frequency?: string
-  interval?: number
-  anchor?: string
-  ends_on?: string | null
-  remaining?: number | null
-  paused?: boolean
-}
+export type RepeatPatch = z.infer<typeof api.RepeatPatch>
 
 // Changes apply from the next occurrence; transactions already created stay as they are.
 export async function updateRepeat(tx: Tx, caller: Caller, id: string, patch: RepeatPatch, now = new Date()): Promise<RepeatView> {

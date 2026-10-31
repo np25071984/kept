@@ -1,7 +1,8 @@
 import { acceptInvite, createInvite, deleteInvite, getSetup, issueApiKey, listApiKeys, revokeApiKey, updateMe, updateSetup } from '../../ledger/households.js'
 import { listMembers, removeMember, updateMember } from '../../ledger/members.js'
 import type { App, RouteDeps } from '../app.js'
-import { AcceptBody, ApiKeyBody, IdParams, InviteBody, MePatch, MemberPatch, SetupPatch } from '../schemas.js'
+import { IdParams } from '../../api/common.js'
+import { AcceptBody, ApiKeyBody, InviteBody, MePatch, MemberPatch, SetupPatch } from '../../api/household.js'
 
 export function householdRoutes(app: App, deps: RouteDeps) {
   const { run } = deps

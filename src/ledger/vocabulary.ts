@@ -1,4 +1,6 @@
 import { sql } from 'kysely'
+import type { z } from 'zod'
+import type * as api from '../api/ledger.js'
 import type { Tx } from '../db/db.js'
 import { similarNames } from '../domain/names.js'
 import {
@@ -78,7 +80,7 @@ export async function listCostCenters(tx: Tx): Promise<CostCenterView[]> {
   return tx.selectFrom('cost_centers').select(['name', 'kind']).orderBy('name').execute()
 }
 
-export async function addCostCenter(tx: Tx, caller: Caller, input: { name: string; kind: string }): Promise<CostCenterView> {
+export async function addCostCenter(tx: Tx, caller: Caller, input: z.infer<typeof api.CostCenterBody>): Promise<CostCenterView> {
   const name = input.name.trim()
   if (!name) throw invalid('invalid_cost_center', 'A person or thing needs a name.')
   const existing = await tx.selectFrom('cost_centers').select('name').where((eb) => eb(eb.fn('lower', ['name']), '=', name.toLowerCase())).executeTakeFirst()
@@ -148,10 +150,7 @@ export async function deleteCategory(tx: Tx, path: string): Promise<void> {
   await tx.deleteFrom('categories').where('id', '=', category.id).execute()
 }
 
-export interface CostCenterPatch {
-  new_name?: string
-  kind?: string
-}
+export type CostCenterPatch = Omit<z.infer<typeof api.CostCenterPatch>, 'name'>
 
 // Renames a cost center or changes its kind.
 export async function updateCostCenter(tx: Tx, name: string, patch: CostCenterPatch): Promise<CostCenterView> {
