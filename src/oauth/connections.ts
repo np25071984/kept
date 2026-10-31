@@ -27,6 +27,11 @@ async function grantsOf(db: Db, userId: string, clientId?: string) {
     .execute()
 }
 
+// The clients the member has a live grant for, the web UI's included.
+export async function connectedClientIds(db: Db, userId: string): Promise<string[]> {
+  return (await grantsOf(db, userId)).map((g) => g.client_id)
+}
+
 export async function listConnections(db: Db, oauth: OAuth, userId: string): Promise<ConnectionView[]> {
   const grants = await grantsOf(db, userId)
   if (grants.length === 0) return []

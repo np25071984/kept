@@ -66,7 +66,7 @@ function format(date: Date): LocalDate {
   return date.toISOString().slice(0, 10)
 }
 // Days back past which a date said in conversation is checked with the user: the usual slip there is the wrong year.
-export const TALK_DATE_CHECK_DAYS = 60
+const TALK_DATE_CHECK_DAYS = 60
 
 // Why a purchase's date may not be what the user meant, or null. The purchase is written either way.
 export function dateWarning(date: LocalDate, today: LocalDate, fromTalk: boolean): string | null {

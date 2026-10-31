@@ -28,11 +28,11 @@ export function periodOf(date: string, period: Period): string | null {
   return null
 }
 
-export const OTHER_MERCHANTS = 'Other merchants'
+const OTHER_MERCHANTS = 'Other merchants'
 
 // Merchants bought from by fewer than `minMembers` members fold into "Other merchants", so a household total can't
 // single out one member's habit (VISION.md §4.A).
-export function sharedMerchants(lines: SummaryLine[], minMembers: number): Set<string> {
+function sharedMerchants(lines: SummaryLine[], minMembers: number): Set<string> {
   const members = new Map<string, Set<string>>()
   for (const line of lines) {
     const key = (line.merchant ?? '').toLowerCase()

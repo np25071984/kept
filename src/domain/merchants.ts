@@ -1,4 +1,4 @@
-export function normalizeMerchant(merchant: string): string {
+function normalizeMerchant(merchant: string): string {
   return merchant
     .toLowerCase()
     .replace(/['’]/g, '')
@@ -21,7 +21,7 @@ export function relateMerchants(a: string | null | undefined, b: string | null |
   return looksLikeDescriptor(a) || looksLikeDescriptor(b) ? 'unknown' : 'different'
 }
 
-export function looksLikeDescriptor(merchant: string): boolean {
+function looksLikeDescriptor(merchant: string): boolean {
   return /[*#]/.test(merchant) || /\d{3,}/.test(merchant) || (merchant === merchant.toUpperCase() && /[A-Z]{2,}/.test(merchant))
 }
 

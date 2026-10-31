@@ -291,7 +291,7 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `id`             | UUID      | Yes      |                                                                  |
 | `user_id`        | UUID      | Yes      | Only this user sees it.                                          |
 | `kind`           | String    | Yes      | `repeat_registered`, `possible_duplicate`, `missing_charge`      |
-| `text`           | Text      | Yes      | E.g. "Registered repeating phone expense, $50."                  |
+| `text`           | Text      | Yes      | In the member's language, e.g. "Logged your recurring Verizon bill, $50.00." |
 | `transaction_id` | UUID      | No       | The transaction created, or the new one of a possible duplicate. |
 | `other_transaction_id` | UUID | No      | For `possible_duplicate`: the purchase it may duplicate.         |
 | `repeat_id`      | UUID      | No       | For `missing_charge`: the repeat a statement lacked.             |
