@@ -128,10 +128,12 @@ ${problem(lang, error)}
 ${cancel(lang, uid)}`)
 }
 
-export function consentPage(lang: Language, uid: string, clientName: string): string {
+// Any app can register under any name, so the page leads with the host the member goes back to.
+export function consentPage(lang: Language, uid: string, client: { name: string; host: string }): string {
   return layout(lang, tr(lang, 'Allow access'), `
-<h1>${escape(tr(lang, 'Allow {client}?', { client: clientName }))}</h1>
-<p>${escape(tr(lang, "{client} will be able to log and edit your purchases, read your spending and household totals, change the household's categories, and keep your notes and watched groups, as you.", { client: clientName }))}</p>
+<h1>${escape(tr(lang, 'Allow the app at {host}?', { host: client.host }))}</h1>
+<p>${escape(tr(lang, "It calls itself “{client}”. It will be able to log and edit your purchases, read your spending and household totals, change the household's categories, and keep your notes and watched groups, as you.", { client: client.name }))}</p>
+<p>${escape(tr(lang, 'Only allow it if you were connecting Kept from {host} just now.', { host: client.host }))}</p>
 <form method="post" action="/oauth/interaction/${escape(uid)}/consent"><button type="submit">${tr(lang, 'Allow')}</button></form>
 ${cancel(lang, uid)}`)
 }

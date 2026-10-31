@@ -27,6 +27,16 @@ export function groupConnections(grants: GrantRow[]): Connection[] {
   return [...byClient.values()].sort((a, b) => b.last_used_at - a.last_used_at)
 }
 
+// Where the consent page says the member will be sent back to: the host, which an app can't fake the way it can its name.
+// An app-scheme URI without one shows whole.
+export function redirectHost(uri: string): string {
+  try {
+    return new URL(uri).host || uri
+  } catch {
+    return uri
+  }
+}
+
 // A redirect URI an assistant gave for a client created ahead of time: https, no fragment.
 export function checkRedirectUri(value: string): string | null {
   let url: URL

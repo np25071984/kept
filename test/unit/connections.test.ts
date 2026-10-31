@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkRedirectUri, groupConnections } from '../../src/domain/connections.js'
+import { checkRedirectUri, groupConnections, redirectHost } from '../../src/domain/connections.js'
 
 describe('groupConnections', () => {
   it('shows one connection per assistant, most recently used first', () => {
@@ -11,6 +11,14 @@ describe('groupConnections', () => {
       { client_id: 'gemini', connected_at: 100, last_used_at: 500 },
       { client_id: 'claude', connected_at: 200, last_used_at: 200 },
     ])
+  })
+})
+
+describe('redirectHost', () => {
+  it('names where the member is sent back to', () => {
+    expect(redirectHost('https://claude.ai/api/mcp/auth_callback')).toBe('claude.ai')
+    expect(redirectHost('http://localhost:7777/callback')).toBe('localhost:7777')
+    expect(redirectHost('com.example.app:/oauth')).toBe('com.example.app:/oauth')
   })
 })
 

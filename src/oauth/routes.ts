@@ -1,5 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { Db } from '../db/db.js'
+import { redirectHost } from '../domain/connections.js'
 import type { App } from '../http/app.js'
 import type { Mailer } from '../ledger/households.js'
 import { codePage, consentPage, createPage, emailPage, errorPage, joinPage } from './pages.js'
@@ -123,7 +124,7 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
       if (interaction.prompt.name === 'login') return html(reply, emailPage(langOf(request), interaction.uid, await emailClient(interaction.params.client_id)))
       // Kept's own web UI needs no permission to act as the member who just signed in.
       if (interaction.params.client_id === WEB_CLIENT_ID) return consent(request, reply, interaction)
-      return html(reply, consentPage(langOf(request), interaction.uid, await clientName(interaction.params.client_id)))
+      return html(reply, consentPage(langOf(request), interaction.uid, { name: await clientName(interaction.params.client_id), host: redirectHost(String(interaction.params.redirect_uri)) }))
     })
 
     scope.post<{ Params: { uid: string }; Body: Form }>('/oauth/interaction/:uid/email', options, async (request, reply) => {

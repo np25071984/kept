@@ -98,7 +98,9 @@ async function authorize(email: string, onJoin?: (browser: Browser, uid: string)
   page = await browser.form(`/oauth/interaction/${uid}/code`, { code: code.code })
   if (onJoin) page = await onJoin(browser, uid)
   page = await follow(browser, page)
-  expect(await page.text()).toContain('Allow Test Assistant?')
+  const consentText = await page.text()
+  expect(consentText).toContain('Allow the app at localhost:7777?')
+  expect(consentText).toContain('It calls itself “Test Assistant”.')
   const consentUid = new URL(page.url).pathname.split('/')[3]!
 
   const done = await follow(browser, await browser.form(`/oauth/interaction/${consentUid}/consent`, {}))
