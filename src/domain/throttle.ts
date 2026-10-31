@@ -9,3 +9,19 @@ export function codeAllowed(toEmail: readonly Date[], fromIp: readonly Date[], n
   const recent = (times: readonly Date[]) => times.filter((t) => t.getTime() > since).length
   return recent(toEmail) < CODES_PER_EMAIL && recent(fromIp) < CODES_PER_IP
 }
+
+// A code expires after 10 minutes or 5 tries, right or wrong. A verified email has 15 minutes to join or create a household.
+export const CODE_MINUTES = 10
+export const MAX_ATTEMPTS = 5
+export const JOIN_MINUTES = 15
+
+// Whether a code may be checked, given its row after this try was counted: the count is raised before the code is
+// compared, so tries sent at once each see their own number.
+export function codeUsable(code: { expires_at: Date; attempts: number; verified_at: Date | null }, now: Date): boolean {
+  return code.verified_at === null && code.expires_at.getTime() > now.getTime() && code.attempts <= MAX_ATTEMPTS
+}
+
+// Whether a verified email may still join or create a household.
+export function withinJoinWindow(verifiedAt: Date | null, now: Date): boolean {
+  return verifiedAt !== null && now.getTime() - verifiedAt.getTime() <= JOIN_MINUTES * 60_000
+}

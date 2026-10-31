@@ -181,6 +181,21 @@ describe('OAuth2 for MCP clients', () => {
     expect(done.status).toBe(303)
   })
 
+  it('counts wrong codes sent at once, so the limit holds against a burst', async () => {
+    const { metadata, clientId } = await register()
+    const browser = new Browser()
+    const params = new URLSearchParams({ response_type: 'code', client_id: clientId, redirect_uri: REDIRECT, code_challenge: 'x'.repeat(43), code_challenge_method: 'S256', scope: 'kept' })
+    const page = await follow(browser, await browser.fetch(`${metadata.authorization_endpoint}?${params}`))
+    const uid = new URL(page.url).pathname.split('/')[3]!
+    await browser.form(`/oauth/interaction/${uid}/email`, { email: 'burst@example.com' })
+    const right = h.codes.at(-1)!.code
+    const wrong = right === '000000' ? '111111' : '000000'
+    await Promise.all(Array.from({ length: 20 }, () => browser.form(`/oauth/interaction/${uid}/code`, { code: wrong })))
+    const row = await h.owner.selectFrom('sign_in_codes').select('attempts').where('interaction_uid', '=', uid).executeTakeFirstOrThrow()
+    expect(row.attempts).toBe(20)
+    expect((await browser.form(`/oauth/interaction/${uid}/code`, { code: right })).status).toBe(400)
+  })
+
   it('refuses more codes for one email than the hourly limit', async () => {
     const { metadata, clientId } = await register()
     const browser = new Browser()
@@ -223,13 +238,17 @@ describe('OAuth2 for MCP clients', () => {
       { name: 'AccessToken', id: 'expired-token', payload: '{}', expires_at: past },
       { name: 'AccessToken', id: 'live-token', payload: '{}', expires_at: future },
     ]).execute()
-    await h.owner.insertInto('sign_in_codes').values({ interaction_uid: 'old', email: 'old@example.com', code_hash: 'x', expires_at: past }).execute()
+    await h.owner.insertInto('sign_in_codes').values([
+      { interaction_uid: 'old', email: 'old@example.com', code_hash: 'x', expires_at: past },
+      { interaction_uid: 'joining', email: 'joining@example.com', code_hash: 'x', expires_at: past, verified_at: new Date(Date.now() - 5 * 60_000) },
+    ]).execute()
     await h.owner.insertInto('sign_in_requests').values({ email: 'old@example.com', ip: '192.0.2.1', created_at: new Date(Date.now() - 2 * 3_600_000) }).execute()
     expect(await pruneExpired(h.db)).toBeGreaterThanOrEqual(3)
     expect(await h.owner.selectFrom('sign_in_requests').select('id').where('ip', '=', '192.0.2.1').execute()).toEqual([])
     const left = await h.owner.selectFrom('oauth_models').select('id').where('id', 'in', ['expired-token', 'live-token']).execute()
     expect(left.map((r) => r.id)).toEqual(['live-token'])
     expect(await h.owner.selectFrom('sign_in_codes').select('id').where('interaction_uid', '=', 'old').execute()).toEqual([])
+    expect(await h.owner.selectFrom('sign_in_codes').select('id').where('interaction_uid', '=', 'joining').execute()).toHaveLength(1)
   })
 
   it('records when a key was last used without writing on every request', async () => {

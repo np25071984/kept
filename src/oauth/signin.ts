@@ -1,17 +1,13 @@
-import { createHash, randomInt } from 'node:crypto'
+import { createHash, randomInt, timingSafeEqual } from 'node:crypto'
 import { sql } from 'kysely'
 import { inHousehold, type Db } from '../db/db.js'
 import type { Language } from '../domain/language.js'
-import { CODE_WINDOW_MS, codeAllowed } from '../domain/throttle.js'
+import { CODE_MINUTES, CODE_WINDOW_MS, codeAllowed, codeUsable, withinJoinWindow } from '../domain/throttle.js'
 import { createHouseholdForEmail, joinHousehold, type Mailer } from '../ledger/households.js'
 
-// Members sign in with a six-digit code emailed to them (IMPLEMENTATION.md §6). The code is typed into the browser that
+// Members sign in with a six-digit code emailed to them (IMPLEMENTATION.md §5.4). The code is typed into the browser that
 // started sign-in: on a phone the assistant's sign-in browser and the mail app's browser are different, so a link alone
 // would arrive without the sign-in session.
-
-const CODE_MINUTES = 10
-const JOIN_MINUTES = 15
-const MAX_ATTEMPTS = 5
 
 function hashCode(uid: string, code: string): string {
   return createHash('sha256').update(`${uid}:${code}`).digest('hex')
@@ -54,12 +50,15 @@ export async function sendCode(db: Db, mailer: Mailer, uid: string, email: strin
 export type Verified = { kind: 'user'; user_id: string } | { kind: 'invite'; invite: OpenInvite; email: string } | { kind: 'new'; email: string } | { kind: 'invalid' }
 
 export async function verifyCode(db: Db, uid: string, code: string): Promise<Verified> {
-  const row = await db.selectFrom('sign_in_codes').selectAll().where('interaction_uid', '=', uid).executeTakeFirst()
-  if (!row || row.verified_at || row.expires_at < new Date() || row.attempts >= MAX_ATTEMPTS) return { kind: 'invalid' }
-  if (row.code_hash !== hashCode(uid, code.replace(/\D/g, ''))) {
-    await db.updateTable('sign_in_codes').set({ attempts: row.attempts + 1 }).where('id', '=', row.id).execute()
-    return { kind: 'invalid' }
-  }
+  // Counting the try in the same statement that reads the row keeps tries sent at once from sharing one count.
+  const row = await db
+    .updateTable('sign_in_codes')
+    .set((eb) => ({ attempts: eb('attempts', '+', 1) }))
+    .where('interaction_uid', '=', uid)
+    .returningAll()
+    .executeTakeFirst()
+  if (!row || !codeUsable(row, new Date())) return { kind: 'invalid' }
+  if (!timingSafeEqual(Buffer.from(row.code_hash, 'hex'), Buffer.from(hashCode(uid, code.replace(/\D/g, '')), 'hex'))) return { kind: 'invalid' }
   await db.updateTable('sign_in_codes').set({ verified_at: new Date() }).where('id', '=', row.id).execute()
   const user = await findUser(db, row.email)
   if (user) return { kind: 'user', user_id: user.user_id }
@@ -75,7 +74,7 @@ export async function joinWithVerifiedEmail(db: Db, uid: string, name: string): 
     .where('interaction_uid', '=', uid)
     .where('verified_at', 'is not', null)
     .executeTakeFirst()
-  if (!row?.verified_at || Date.now() - new Date(row.verified_at).getTime() > JOIN_MINUTES * 60_000) return null
+  if (!row || !withinJoinWindow(row.verified_at, new Date())) return null
   const invite = await findInvite(db, row.email)
   if (!invite) return null
   const userId = await inHousehold(db, invite.household_id, (tx) => joinHousehold(tx, { ...invite, email: row.email }, name))
@@ -84,13 +83,13 @@ export async function joinWithVerifiedEmail(db: Db, uid: string, name: string): 
 }
 
 export async function invitedHousehold(db: Db, uid: string): Promise<OpenInvite | null> {
-  const row = await db.selectFrom('sign_in_codes').select('email').where('interaction_uid', '=', uid).where('verified_at', 'is not', null).executeTakeFirst()
-  return row ? findInvite(db, row.email) : null
+  const row = await db.selectFrom('sign_in_codes').select(['email', 'verified_at']).where('interaction_uid', '=', uid).where('verified_at', 'is not', null).executeTakeFirst()
+  return row && withinJoinWindow(row.verified_at, new Date()) ? findInvite(db, row.email) : null
 }
 // A verified email with no account and no invite creates a household and becomes its owner.
 export async function createWithVerifiedEmail(db: Db, uid: string, input: { name: string; owner_name: string; currency: string; timezone: string; language?: Language }): Promise<string | null> {
   const row = await db.selectFrom('sign_in_codes').select(['email', 'verified_at']).where('interaction_uid', '=', uid).where('verified_at', 'is not', null).executeTakeFirst()
-  if (!row?.verified_at || Date.now() - new Date(row.verified_at).getTime() > JOIN_MINUTES * 60_000) return null
+  if (!row || !withinJoinWindow(row.verified_at, new Date())) return null
   if ((await findUser(db, row.email)) || (await findInvite(db, row.email))) return null
   const created = await createHouseholdForEmail(db, { ...input, email: row.email })
   await db.deleteFrom('sign_in_codes').where('interaction_uid', '=', uid).execute()
@@ -99,6 +98,6 @@ export async function createWithVerifiedEmail(db: Db, uid: string, input: { name
 
 export async function verifiedNewEmail(db: Db, uid: string): Promise<string | null> {
   const row = await db.selectFrom('sign_in_codes').select(['email', 'verified_at']).where('interaction_uid', '=', uid).where('verified_at', 'is not', null).executeTakeFirst()
-  if (!row?.verified_at || (await findUser(db, row.email)) || (await findInvite(db, row.email))) return null
+  if (!row || !withinJoinWindow(row.verified_at, new Date()) || (await findUser(db, row.email)) || (await findInvite(db, row.email))) return null
   return row.email
 }
