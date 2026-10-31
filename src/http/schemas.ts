@@ -5,13 +5,13 @@ import { SOURCE_KINDS } from '../domain/matching.js'
 
 const Nullable = <T extends TSchema>(schema: T) => Type.Union([schema, Type.Null()])
 export const LocalDate = Type.String({ pattern: '^\\d{4}-\\d{2}-\\d{2}$', description: 'Local date, YYYY-MM-DD.' })
-const Amount = Type.Number({ exclusiveMinimum: 0, description: 'In the household currency.' })
+const Amount = Type.Number({ minimum: 0.01, description: 'In the household currency.' })
 
 export const IdParams = Type.Object({ id: Type.String({ format: 'uuid' }) })
 
 export const SpentFor = Type.Object({
   cost_center: Type.String({ minLength: 1 }),
-  share: Type.Optional(Nullable(Type.Number({ exclusiveMinimum: 0, maximum: 1, description: 'Fraction of the line item. Entries without one split the remainder evenly.' }))),
+  share: Type.Optional(Nullable(Type.Number({ minimum: 0.000001, maximum: 1, description: 'Fraction of the line item. Entries without one split the remainder evenly.' }))),
 })
 
 export const LineItem = Type.Object({

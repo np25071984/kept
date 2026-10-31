@@ -1,4 +1,4 @@
-import { createDb } from './db/db.js'
+import { checkRole, createDb } from './db/db.js'
 import { loadConfig } from './config.js'
 import { buildApp } from './http/app.js'
 import { runDueRepeats } from './ledger/repeats.js'
@@ -8,6 +8,11 @@ import { pruneExpired } from './oauth/prune.js'
 
 const config = loadConfig()
 const db = createDb(config.databaseUrl)
+const roleError = await checkRole(db)
+if (roleError) {
+  console.error(roleError)
+  process.exit(1)
+}
 const mailer = config.resendApiKey ? resendMailer({ apiKey: config.resendApiKey, from: config.mailFrom }) : logMailer()
 const app = await buildApp({ db, mailer, publicUrl: config.publicUrl, logger: true, trustProxy: config.trustProxy })
 

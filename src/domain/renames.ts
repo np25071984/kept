@@ -67,13 +67,12 @@ export function mentions(renamer: Renamer, template: RepeatTemplate): boolean {
   return JSON.stringify(template) !== JSON.stringify(renameTemplate(template, renamer))
 }
 
-export type Usage = Partial<Record<'purchases' | 'subcategories' | 'watched groups' | 'repeats', number>>
+export type Usage = Partial<Record<'purchases' | 'subcategories' | 'watched groups' | 'repeats' | 'caps', number>>
 
 // Why a category or cost center can't be deleted yet, or null when nothing uses it. `what` prefixes the name, e.g. "Category ".
 export function usageProblem(what: string, name: string, usage: Usage): Problem | null {
-  const parts = Object.entries(usage)
-    .filter(([, count]) => (count ?? 0) > 0)
-    .map(([kind, count]) => `${count} ${count === 1 ? kind.replace(/ies$/, 'y').replace(/s$/, '') : kind}`)
+  // Kinds only, no counts: the counts include other members' purchases, private ones too.
+  const parts = Object.entries(usage).filter(([, count]) => (count ?? 0) > 0).map(([kind]) => kind)
   if (parts.length === 0) return null
   return { code: 'in_use', message: `${what}"${name}" is still used by ${parts.join(', ')}. Move or change those first, or rename it instead.` }
 }

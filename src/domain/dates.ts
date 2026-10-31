@@ -19,6 +19,16 @@ export function isTimeZone(value: string): boolean {
   }
 }
 
+// Where and when a purchase happened, as a client sent them: the time zone must be an IANA name and the moment a timestamp.
+// Returns the moment as ISO 8601, or what is wrong.
+export function checkWhen(input: { timezone?: string; occurred_at?: string | null }): { ok: true; value: string | null | undefined } | { ok: false; error: string; message: string } {
+  if (input.timezone !== undefined && !isTimeZone(input.timezone)) return { ok: false, error: 'invalid_timezone', message: `"${input.timezone}" is not an IANA time zone name.` }
+  if (input.occurred_at === undefined || input.occurred_at === null) return { ok: true, value: input.occurred_at }
+  const moment = new Date(input.occurred_at)
+  if (Number.isNaN(moment.getTime())) return { ok: false, error: 'invalid_occurred_at', message: 'occurred_at must be an ISO timestamp.' }
+  return { ok: true, value: moment.toISOString() }
+}
+
 export function todayIn(timeZone: string, now: Date): LocalDate {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now)
   const get = (type: string) => parts.find((part) => part.type === type)?.value ?? ''

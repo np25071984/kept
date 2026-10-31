@@ -136,11 +136,13 @@ export async function deleteCategory(tx: Tx, path: string): Promise<void> {
     .executeTakeFirstOrThrow()
   // Any member's watched groups count, without saying whose.
   const watches = await tx.selectFrom('watches').select((eb) => eb.fn.countAll<string>().as('count')).where('category_id', '=', category.id).executeTakeFirstOrThrow()
+  const caps = await tx.selectFrom('caps').select((eb) => eb.fn.countAll<string>().as('count')).where('category_id', '=', category.id).executeTakeFirstOrThrow()
   const problem = usageProblem('Category ', category.path, {
     purchases: Number(purchases.count),
     subcategories: categories.filter((c) => c.path.toLowerCase().startsWith(`${category.path.toLowerCase()}/`)).length,
     'watched groups': Number(watches.count),
     repeats: await repeatsMentioning(tx, categoryRenamer(category.path, '\0')),
+    caps: Number(caps.count),
   })
   if (problem) fail(problem)
   await tx.deleteFrom('categories').where('id', '=', category.id).execute()
@@ -182,7 +184,8 @@ export async function deleteCostCenter(tx: Tx, name: string): Promise<void> {
     .select((eb) => eb.fn.count<string>('line_items.transaction_id').distinct().as('count'))
     .where('line_item_cost_centers.cost_center_id', '=', center.id)
     .executeTakeFirstOrThrow()
-  const problem = usageProblem('', center.name, { purchases: Number(purchases.count), repeats: await repeatsMentioning(tx, costCenterRenamer(center.name, '\0')) })
+  const caps = await tx.selectFrom('caps').select((eb) => eb.fn.countAll<string>().as('count')).where('cost_center_id', '=', center.id).executeTakeFirstOrThrow()
+  const problem = usageProblem('', center.name, { purchases: Number(purchases.count), repeats: await repeatsMentioning(tx, costCenterRenamer(center.name, '\0')), caps: Number(caps.count) })
   if (problem) fail(problem)
   await tx.deleteFrom('cost_centers').where('id', '=', center.id).execute()
 }
