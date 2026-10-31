@@ -64,7 +64,7 @@ Connect an assistant to `https://KEPT_HOST/mcp`. With `RESEND_API_KEY` set in `.
 docker compose logs kept | grep -E "Sign-in code|Invite"
 ```
 
-Update from a development machine with `deploy/deploy.sh [ssh-host]`. It deploys only the pushed `main`: it refuses uncommitted changes or a `main` that differs from `origin/main`, copies the checkout to the server (keeping the server's `deploy/.env`), records the commit in `REVISION`, rebuilds, and checks the site from the server. In Claude Code, the project skill `deploy` (`.claude/skills/deploy`) runs the typecheck and tests first, then the script.
+Update from a development machine with `deploy/deploy.sh [ssh-host]`. It deploys the pushed `main`: the server, whose `/opt/kept` is a clone of the repository, fetches it from GitHub and checks out that commit, so nothing on the development machine reaches it. Files ignored by git, such as `deploy/.env`, stay. It then rebuilds and checks the site from the server; `git rev-parse HEAD` on the server shows what runs. `KEPT_REV=<commit>` deploys an earlier commit of `main` to roll back. In Claude Code, the project skill `deploy` (`.claude/skills/deploy`) runs the typecheck and tests first, then the script.
 
 ## Layout
 
