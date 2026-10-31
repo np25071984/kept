@@ -82,7 +82,7 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.get('/api/v1/questions', {
-    schema: { tags: ['questions'], summary: 'Kept\'s open questions for the caller, most important first: connecting an assistant, possible duplicates, caps passed, recurring charges missing from a statement, API keys unused for a year.', response: { 200: z.object({ questions: z.array(Question) }) } },
+    schema: { tags: ['questions'], summary: 'Kept\'s open questions for the caller, most important first: connecting an assistant, possible duplicates, caps passed, recurring charges missing from a statement, API keys unused for a year. Connecting is worked out on each request, open while the caller has no assistant connected and no API key, and takes no answer.', response: { 200: z.object({ questions: z.array(Question) }) } },
   }, async (request) => ({ questions: await run(request, (tx, caller) => listQuestions(tx, caller)) }))
 
   app.post('/api/v1/questions/:id/answer', {
@@ -148,7 +148,7 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   }, async (request) => run(request, (tx, caller) => listRepeats(tx, caller)))
 
   app.post('/api/v1/repeats', {
-    schema: { tags: ['repeats'], summary: 'Make a transaction repeat. It is the first occurrence.', body: RepeatBody, response: { 201: Repeat } },
+    schema: { tags: ['repeats'], summary: 'Make a transaction repeat. It is the first occurrence; 409 already_repeats if it already repeats.', body: RepeatBody, response: { 201: Repeat } },
   }, async (request, reply) => {
     reply.status(201)
     return run(request, (tx, caller) => createRepeat(tx, caller, request.body))
@@ -178,6 +178,6 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   }, async (request) => ({ marked: await run(request, (tx, caller) => markSeen(tx, caller, request.body.ids)) }))
 
   app.get('/api/v1/expenses/summary', {
-    schema: { tags: ['summary'], summary: 'Totals by category, cost center or item. scope=me includes the caller\'s private purchases; scope=household covers every member\'s non-private ones.', querystring: SummaryQuery, response: { 200: Summary } },
+    schema: { tags: ['summary'], summary: 'Totals by category, cost center, item or merchant. scope=me includes the caller\'s private purchases; scope=household covers every member\'s non-private ones, and folds a merchant fewer than two members bought from into "Other merchants".', querystring: SummaryQuery, response: { 200: Summary } },
   }, async (request) => run(request, (tx, caller) => getSummary(tx, caller, request.query)))
 }

@@ -19,7 +19,7 @@ export function householdRoutes(app: App, deps: RouteDeps) {
   }, async (request) => run(request, (tx, caller) => updateSetup(tx, caller, request.body)))
 
   app.patch('/api/v1/me', {
-    schema: { tags: ['setup'], summary: 'Change the caller\'s own name. Returns the setup.', body: MePatch, response: { 200: Setup } },
+    schema: { tags: ['setup'], summary: 'Change the caller\'s own name or language. Returns the setup.', body: MePatch, response: { 200: Setup } },
   }, async (request) => run(request, (tx, caller) => updateMe(tx, caller, request.body)))
 
   app.get('/api/v1/members', {
@@ -38,7 +38,7 @@ export function householdRoutes(app: App, deps: RouteDeps) {
   })
 
   app.post('/api/v1/invites', {
-    schema: { tags: ['setup'], summary: 'Owners only. Invite a member by email; Kept sends the sign-in link.', body: InviteBody, response: { 201: Invite } },
+    schema: { tags: ['setup'], summary: 'Owners only. Invite a member by email; Kept emails them how to join and the address to add to their assistant.', body: InviteBody, response: { 201: Invite } },
   }, async (request, reply) => {
     reply.status(201)
     return run(request, (tx, caller) => createInvite(tx, caller, request.body.email, deps.mailer, deps.publicUrl))

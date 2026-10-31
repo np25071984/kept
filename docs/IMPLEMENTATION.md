@@ -339,60 +339,9 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 
 ## 3. REST API
 
-| Method | Endpoint                      | Description                                                                                       |
-| ------ | ----------------------------- | ------------------------------------------------------------------------------------------------- |
-| `POST` | `/api/v1/transactions`        | Add one entry, or several as `{"transactions": [...]}`, each with optional line items and a source. Each entry is [matched](VISION.md#one-purchase-many-sources) against the caller's existing transactions; the response says whether it was attached or created. |
-| `GET`  | `/api/v1/transactions`        | List the caller's own transactions, newest first, with the `count` and `total` of everything that matches. Filters: dates, `merchant`, `item`, `q` (merchant or item), `private`, repeated `category` (with subcategories), `category_only`, `cost_center` and `no_cost_center`; paged by `limit` and `offset`. Used by the AI for best guesses and by the web UI. Never returns other members' transactions. |
-| `GET`    | `/api/v1/transactions/{id}` | One of the caller's transactions.                                                                 |
-| `PATCH`  | `/api/v1/transactions/{id}` | Edit one of the caller's transactions, including marking it private.                              |
-| `DELETE` | `/api/v1/transactions/{id}` | Delete one of the caller's transactions.                                                          |
-| `GET`  | `/api/v1/cost-centers`        | List the household's cost centers (cars, homes, kids, pets) with their kind.                      |
-| `POST`   | `/api/v1/cost-centers`      | Add a cost center for the household.                                                              |
-| `PATCH`  | `/api/v1/cost-centers`      | Rename a cost center or change its kind: `{"name", "new_name"?, "kind"?}`.                       |
-| `DELETE` | `/api/v1/cost-centers?name=` | Delete a cost center nothing uses.                                                               |
-| `GET`    | `/api/v1/categories`        | List the household's categories and subcategories.                                                |
-| `POST`   | `/api/v1/categories`        | Add a category or subcategory for the household.                                                  |
-| `PATCH`  | `/api/v1/categories`        | Rename or move a category with its subcategories: `{"path", "new_path"}`.                         |
-| `DELETE` | `/api/v1/categories?path=`  | Delete a category nothing uses.                                                                   |
-| `GET`    | `/api/v1/connections`       | The caller's connected assistants and web sign-ins, one per client, with when each was last used. |
-| `DELETE` | `/api/v1/connections/{client_id}` | Disconnect one: its grants and tokens are deleted, so it has to sign in again.              |
-| `POST`   | `/api/v1/connections/clients` | Create a client ID and secret for an assistant that asks for them, with its redirect URI. The secret is shown once. |
-| `GET`    | `/api/v1/watches`           | List the caller's watched groups.                                                                 |
-| `POST`   | `/api/v1/watches`           | Watch a category or an item. Watching one already watched returns it.                             |
-| `DELETE` | `/api/v1/watches/{id}`      | Stop watching, e.g. "stop tracking snacks".                                                       |
-| `GET`    | `/api/v1/questions`         | Kept's open questions for the caller, most important first: connecting an assistant, possible duplicates, caps passed, recurring charges missing from a statement, API keys unused for a year. The first is worked out on each request, true while the caller has no assistant connected and no API key, and has no answers. |
-| `POST`   | `/api/v1/questions/{id}/answer` | Answer one: `merge` or `different`; `remove` or `keep`; `stop` or `still_paying`; `revoke` or `keep`. "Keep" on a cap silences it for the period; on a key, for a year. |
-| `POST`   | `/api/v1/repeats/{id}/missing` | Record that a statement lacked this recurring charge, as an open question. |
-| `GET`    | `/api/v1/caps`              | The caller's caps with `spent` this month or year (own purchases, private included) and `state`: `under`, `close` (from 80%) or `over`. |
-| `POST`   | `/api/v1/caps`              | Set a cap. `PATCH` and `DELETE` on `/api/v1/caps/{id}` change or remove one. A write that takes a cap past 80% or over returns the lines to say in `caps`. |
-| `GET`    | `/api/v1/notes`             | List the caller's notes, newest first.                                                            |
-| `POST`   | `/api/v1/notes`             | Save a note.                                                                                      |
-| `PATCH`  | `/api/v1/notes/{id}`        | Change a note's text.                                                                             |
-| `DELETE` | `/api/v1/notes/{id}`        | Delete a note.                                                                                    |
-| `POST`   | `/api/v1/transactions/{id}/sources` | Attach a source (what the agent read from a photo, document or email) to one of the caller's transactions, e.g. a receipt added later. |
-| `POST`   | `/api/v1/transactions/{id}/merge` | Merge another of the caller's transactions into this one, keeping both sets of sources.     |
-| `GET`    | `/api/v1/repeats`           | The caller's repeats with next date, amount, who they're for and the last purchase each logged, plus this `month`'s recurring `total` and how much is still `to_come`. |
-| `POST`   | `/api/v1/repeats`           | Make a transaction repeat on a schedule; `409 already_repeats` if it already does.                |
-| `PATCH`  | `/api/v1/repeats/{id}`      | Change the amount, schedule or end date from the next occurrence, or pause it.                    |
-| `DELETE` | `/api/v1/repeats/{id}`      | Stop repeating. Transactions already created are kept.                                            |
-| `GET`    | `/api/v1/updates`           | What the ledger did on its own since the caller last checked: repeats registered, plus possible duplicates still to resolve. |
-| `POST`   | `/api/v1/updates/take`      | Return the unseen updates and mark them shown, in one transaction.                                |
-| `POST`   | `/api/v1/updates/seen`      | Mark updates as shown.                                                                            |
-| `GET`    | `/api/v1/setup`             | The household's setup steps, whether the caller has been introduced, `start` (where the conversation begins: `first_member`, `new_member`, `resume` or `done`) and `today` in the household's time zone. |
-| `PATCH`  | `/api/v1/setup`             | Save confirmed setup answers: the household's name, currency and time zone (owners), step states, the introduction. The response's `currency_locked` says the first purchase fixed the currency. |
-| `PATCH`  | `/api/v1/me`                | Change the caller's own name or language (`en`, `ru`).                                            |
-| `GET`    | `/api/v1/members`           | The household's members and open invites.                                                         |
-| `PATCH`  | `/api/v1/members/{id}`      | Owners only: make someone an owner or a member. A household keeps at least one owner.             |
-| `DELETE` | `/api/v1/members/{id}`      | Owners only: remove a member and everything they logged; never the last owner.                    |
-| `POST`   | `/api/v1/invites`           | Owners only. Invite a member by email; Kept emails them the address to add to their assistant.    |
-| `DELETE` | `/api/v1/invites/{id}`      | Cancel an invite that hasn't been accepted.                                                       |
-| `POST`   | `/api/v1/invites/accept`    | No API key. Accept with the token from the link: creates the member and returns their first API key. |
-| `GET`    | `/api/v1/api-keys`          | The caller's active API keys.                                                                     |
-| `POST`   | `/api/v1/api-keys`          | Create an API key for the caller, shown once.                                                     |
-| `DELETE` | `/api/v1/api-keys/{id}`     | Revoke one of the caller's API keys.                                                              |
-| `GET`  | `/api/v1/expenses/summary`    | Query monthly and yearly totals by category, subcategory, cost center, item or merchant (e.g., fuel per car, alcohol per month). With `scope=household` and `group_by=merchant`, a merchant fewer than two members bought from folds into "Other merchants". `scope=me` covers the caller's own purchases, private included; `scope=household` covers every member's non-private purchases, never broken down by member. Watched groups include their [coverage](VISION.md#coverage). |
+Every endpoint, with its parameters and its request and response bodies, is in `docs/openapi.json`, generated from the schemas in `src/api` (§6).
 
-Errors have one shape, `{"error": {"code", "message", "details"?}}`: 400 for a malformed request, 401 without a valid key, 403 for an owner-only action, 404 for anything outside the caller's own data, 409 for a conflict, 410 for a used or expired invite, 429 past the invite limit (`invite_limited`), and 422 when the ledger's rules reject it. A category or cost center the household doesn't have is rejected (`unknown_category`, `unknown_cost_center`, with the known ones in `details`), so the agent asks before adding one. The server serves the OpenAPI spec at `/api/v1/openapi.json`, which gives every route this error body for 4xx and 5xx; the repository keeps a copy at `docs/openapi.json`.
+Errors have one shape, `{"error": {"code", "message", "details"?}}`: 400 for a malformed request, 401 without a valid key, 403 for an owner-only action, 404 for anything outside the caller's own data, 409 for a conflict, 410 for a used or expired invite, 429 past the invite limit (`invite_limited`), and 422 when the ledger's rules reject it. A category or cost center the household doesn't have is rejected (`unknown_category`, `unknown_cost_center`, with the known ones in `details`), so the agent asks before adding one. The spec gives every route this error body for 4xx and 5xx, and the server serves it at `/api/v1/openapi.json`.
 
 ### 3.1 Request Examples
 
