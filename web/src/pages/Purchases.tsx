@@ -3,6 +3,7 @@ import { Repeat, Search, SlidersHorizontal, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { api } from '../api.js'
+import { todayIn } from '../lib/dates.js'
 import { apiParams, chips, filterCount, fromParams, NO_FILTERS, tick, toggle, toParams, type Filters } from '../lib/filters.js'
 import { formatDate, formatMoney, toCents } from '../lib/money.js'
 import type { Transaction } from '../lib/types.js'
@@ -12,7 +13,6 @@ import { plural, t as tr } from '../i18n.js'
 
 const PAGE = 50
 
-const todayIn = (zone: string) => new Intl.DateTimeFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
 
 // The member's own purchases: a search, a Filters panel with chips for what's on, grouped by month, paged.
 export function PurchasesPage() {
@@ -20,7 +20,7 @@ export function PurchasesPage() {
   const [params, setParams] = useSearchParams()
   const filters = fromParams(params)
   const key = params.toString()
-  const today = todayIn(setup.household.timezone)
+  const today = todayIn(setup.household.timezone, new Date())
   const [page, setPage] = useState<{ key: string; items: Transaction[]; count: number; total: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

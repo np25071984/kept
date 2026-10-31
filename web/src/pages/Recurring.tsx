@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useLocation } from 'react-router'
 import { api } from '../api.js'
 import { IconButton } from '../IconButton.js'
+import { todayIn } from '../lib/dates.js'
 import { formatMoney, parseAmount } from '../lib/money.js'
 import { cadence } from '../lib/recurring.js'
 import type { Recurring } from '../lib/types.js'
@@ -40,6 +41,7 @@ export function RecurringPage() {
 }
 
 function Row({ r, currency, onEdit, onChanged }: { r: Recurring; currency: string; onEdit: () => void; onChanged: () => void }) {
+  const year = todayIn(useSession().setup.household.timezone, new Date()).slice(0, 4)
   const [confirming, setConfirming] = useState(false)
   const { busy, error, act } = useAction()
   const name = r.merchant ?? r.category ?? t('This bill')
@@ -56,7 +58,7 @@ function Row({ r, currency, onEdit, onChanged }: { r: Recurring; currency: strin
       </div>
       <div className="amount-col">
         <strong className="num">{formatMoney(r.amount, currency)}</strong>
-        <span className="small muted">{r.paused ? t('Paused') : t('Next {date}', { date: short(r.next_date, !r.next_date.startsWith(String(new Date().getFullYear()))) })}</span>
+        <span className="small muted">{r.paused ? t('Paused') : t('Next {date}', { date: short(r.next_date, !r.next_date.startsWith(year)) })}</span>
       </div>
       {confirming ? (
         <div className="row tight">

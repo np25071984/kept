@@ -16,6 +16,12 @@ export function trend(rows: Row[], today: string): { month: string; amount: numb
   return months.map((month) => ({ month, amount: (sums.get(month) ?? 0) / 100 }))
 }
 
+// The average of the 11 months before this one; months before anything was logged don't pull it down.
+export function monthlyAverage(months: { amount: number }[]): number | null {
+  const past = months.slice(0, 11).filter((m, i, all) => m.amount > 0 || all.slice(0, i).some((x) => x.amount > 0))
+  return past.length ? past.reduce((s, m) => s + m.amount, 0) / past.length : null
+}
+
 export const topLevelTotal = (rows: Row[]) => rows.filter((r) => !r.key.includes('/')).reduce((s, r) => s + Math.round(r.amount * 100), 0) / 100
 
 export interface Bar { key: string; label: string; amount: number; prev: number; sub: boolean }
