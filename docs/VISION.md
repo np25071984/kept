@@ -221,9 +221,10 @@ sequenceDiagram
     AI->>User: "Logged $40.00 at Whole Foods, including $11.48 of snacks."
 ```
 
-- **It groups lines, it doesn't copy them.** Forty receipt lines become a few line items: one per watched group that appears, plus anything for a different category or cost center. Everything else goes into the rest line. This is what avoids the "too granular" problem of classic receipt OCR.
+- **It groups lines, it doesn't copy them.** Forty receipt lines become a few line items: at most one per watched group that appears and per other category or cost center. Everything else, tax included, goes into the rest line, so the receipt's total stays the total. This is what avoids the "too granular" problem of classic receipt OCR.
 - **A receipt checks every watched group,** including the ones the user didn't mention, so "no alcohol" is recorded as a known $0.
-- **Names stay consistent.** The AI maps "chips" and "cookies" to the item "snacks" and puts the details in the line item's `notes`. It reuses existing item and category names rather than inventing new spellings.
+- **Names stay consistent.** The AI maps "chips" and "cookies" to the item "snacks" and puts the details in the line item's `notes`. It reuses existing item and category names rather than inventing new spellings, and names items in plain words, never the receipt's codes. It never guesses a category from a code it can't read ("DUR ALKAAA24" is batteries, not a car part): it leaves the line in the rest or asks.
+- **The confirmation is a split, not a list.** It gives the total and the amount per category, naming only what's outside the main one: "Log $78.24 at Walmart: Groceries $32.40, Other $36.84 (batteries), Clothing $9.00 (top)?" A wrong category stands out there; a list of every line hides it.
 - **The receipt wins on the total.** If the receipt total differs from what the user said, the AI uses the receipt amount and points out the difference in the confirmation.
 - **Scanning is always optional.** If the user skips the photo, the AI logs what is known and offers to add the receipt later.
 
