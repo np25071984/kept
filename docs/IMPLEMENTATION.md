@@ -527,6 +527,13 @@ sequenceDiagram
 - **Connections** are a member's grants grouped by client. Disconnecting deletes the grants and their tokens.
 - **State** (clients, grants, sessions, codes, tokens) lives in `oauth_models`, sign-in codes in `sign_in_codes`, hashed, and code requests in `sign_in_requests`. None belongs to a household, so none has row-level security. The scheduler deletes expired rows, keeping a verified code until its 15 minutes to join are over, and requests older than an hour. `SECURITY DEFINER` functions find a user or an open invite by email and a user's household before the household is known.
 
+### 5.5 Changing Tools
+
+An assistant keeps the tool list it fetched when it connected, for as long as it chooses: Claude fetches it for each conversation, ChatGPT keeps it until the connector is refreshed. The server is stateless, so it can't announce a change. Tool names and parameters are a public API:
+- **Safe:** a new tool, optional parameter or response field, and new wording in the playbook or a description. An old list doesn't use the new parts, and the playbook is fetched for each conversation.
+- **Safe with a clear error:** tighter validation, when the error says what to send instead.
+- **Breaking:** renaming or removing a tool, or renaming a parameter or making one required. The old name keeps working for a transition period, as an alias that forwards to the new tool and whose description names it, and the pull request says when the alias goes. Until a household outside testing uses Kept, a pull request may skip the alias and say so.
+
 ## 6. Stack and Deployment
 
 - **Server:** TypeScript on Node with Fastify. Each request and response shape is one Zod schema in `src/api`. A request schema validates the request and is the input schema of the MCP tool that forwards to that route (§5.1). A response schema serializes the response, dropping any field it doesn't list. Both generate the OpenAPI spec (§3) and give the ledger and the web UI their types. The MCP server uses the official MCP TypeScript SDK.
