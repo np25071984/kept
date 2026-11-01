@@ -34,11 +34,15 @@ git checkout -q --force --detach "$rev"
 # Files gone from the repository go from the server too; ignored ones, such as deploy/.env, stay.
 git clean -q -fd
 cd deploy
-docker compose up -d --build 2>&1 | tail -n 2
+KEPT_REVISION="$rev" docker compose up -d --build 2>&1 | tail -n 2
+# Wait for the new build to answer, not just for something to answer: the old container may still be up.
+running=""
 for _ in $(seq 1 30); do
-  [ "$(curl -s -o /dev/null -w '%{http_code}' "$url/health")" = 200 ] && break
+  running="$(curl -s "$url/health" | sed -n 's/.*"version":"\([^"]*\)".*/\1/p')"
+  [ "$running" = "$rev" ] && break
   sleep 2
 done
+echo "Running: ${running:-nothing}"
 # </dev/null: exec forwards stdin, which here is the rest of this script, and would swallow the checks below.
 echo "Newest migration: $(docker compose exec -T postgres psql -U kept -d kept -Atc 'select name from kysely_migration order by name desc limit 1' </dev/null)"
 failed=0
@@ -47,6 +51,7 @@ for path in /health / /app/ /app/site.css; do
   echo "$code $path"
   [ "$code" = 200 ] || failed=1
 done
+[ "$running" = "$rev" ] || failed=1
 [ "$failed" = 0 ] || { docker compose logs --tail 30 kept; exit 1; }
 REMOTE
 

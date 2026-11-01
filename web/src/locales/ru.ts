@@ -28,6 +28,7 @@ export const ru: Record<string, string> = {
   Cancel: 'Отмена',
   Save: 'Сохранить',
   'Saved.': 'Сохранено.',
+  'Version {version}': 'Версия {version}',
   Delete: 'Удалить',
   Edit: 'Изменить',
   Rename: 'Переименовать',

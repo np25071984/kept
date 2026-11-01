@@ -9,6 +9,8 @@ export default defineConfig({
   root: 'web',
   base: '/app/',
   plugins: [react()],
+  // The deployed commit, shown in Settings; the image build passes it like the server's (src/version.ts).
+  define: { __KEPT_VERSION__: JSON.stringify(process.env.KEPT_REVISION || 'dev') },
   build: { outDir: '../dist/web', emptyOutDir: true },
   server: {
     port: 5173,

@@ -15,6 +15,7 @@ import { transactionRoutes } from './routes/transactions.js'
 import { connectionRoutes } from './routes/connections.js'
 import { webRoutes } from './web.js'
 import { mcpRoutes } from '../mcp/server.js'
+import { VERSION } from '../version.js'
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -110,7 +111,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
     },
   }
 
-  app.get('/health', { config: { public: true }, schema: { hide: true } }, async () => ({ ok: true }))
+  app.get('/health', { config: { public: true }, schema: { hide: true } }, async () => ({ ok: true, version: VERSION }))
   app.get('/api/v1/openapi.json', { config: { public: true }, schema: { hide: true } }, async () => app.swagger())
 
   transactionRoutes(app, routeDeps)

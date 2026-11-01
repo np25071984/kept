@@ -3,6 +3,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { TransactionBatch } from '../../src/api/transactions.js'
+import { VERSION } from '../../src/version.js'
 import { newHousehold, startHarness, type Harness } from './helpers.js'
 
 let h: Harness
@@ -37,6 +38,8 @@ describe('MCP server', () => {
   it('sends the playbook as instructions and lists every tool, prompt and resource', async () => {
     const client = await connect(key)
     expect(client.getInstructions()).toContain('Call get_playbook before the first question about money')
+    expect(client.getServerVersion()).toMatchObject({ name: 'kept', version: VERSION })
+    expect((await h.app.inject({ method: 'GET', url: '/health' })).json()).toEqual({ ok: true, version: VERSION })
     const tools = (await client.listTools()).tools.map((t) => t.name).sort()
     expect(tools).toEqual([
       'add_source', 'answer_question', 'delete_transaction', 'edit_transaction', 'flag_missing_charge', 'get_playbook', 'get_summary', 'get_updates', 'invite_member',
