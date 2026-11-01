@@ -19,6 +19,7 @@ export function SettingsLayout() {
       <div className="page-head"><h1>{t('Settings')}{current && <span className="phone-only"> · {current.label}</span>}</h1></div>
       <Tabs items={pages} className="settings-tabs" />
       <Outlet />
+      <p className="muted small">{t('Version {version}', { version: __KEPT_VERSION__ })}</p>
     </>
   )
 }

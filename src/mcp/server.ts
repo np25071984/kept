@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import type { App } from '../http/app.js'
+import { VERSION } from '../version.js'
 import { PLAYBOOK } from './playbook.js'
 import { playbook, registerTools, type Rest } from './tools.js'
 
@@ -8,7 +9,7 @@ import { playbook, registerTools, type Rest } from './tools.js'
 // every tool forwards to the REST API with that same token, so validation and access rules live only there (IMPLEMENTATION.md §5).
 
 export function createMcpServer(rest: Rest): McpServer {
-  const server = new McpServer({ name: 'kept', title: 'Kept', version: '1.0.0' }, { instructions: PLAYBOOK })
+  const server = new McpServer({ name: 'kept', title: 'Kept', version: VERSION }, { instructions: PLAYBOOK })
   registerTools(server, rest)
 
   server.registerResource('household', 'kept://household', {

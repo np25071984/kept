@@ -17,7 +17,11 @@ services:
       retries: 10
 
   kept:
-    build: ..
+    build:
+      context: ..
+      # deploy.sh sets the commit; it shows in /health, the MCP server's version and Settings.
+      args:
+        KEPT_REVISION: ${KEPT_REVISION:-dev}
     restart: unless-stopped
     depends_on:
       postgres:

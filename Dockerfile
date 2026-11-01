@@ -6,11 +6,15 @@ RUN npm ci
 COPY tsconfig.json tsconfig.build.json vite.config.ts ./
 COPY src src
 COPY web web
+# The deployed commit, for the web UI's build (vite.config.ts) and the server (src/version.ts).
+ARG KEPT_REVISION=dev
 RUN npm run build && npm prune --omit=dev
 
 FROM node:22-slim
 WORKDIR /app
 ENV NODE_ENV=production
+ARG KEPT_REVISION=dev
+ENV KEPT_REVISION=$KEPT_REVISION
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules node_modules
 COPY --from=build /app/dist dist
