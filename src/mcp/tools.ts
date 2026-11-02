@@ -171,7 +171,7 @@ export function registerTools(server: McpServer, rest: Rest) {
 
   server.registerTool('get_summary', {
     title: 'Get a spending summary',
-    description: 'Totals by category, person or thing (group_by cost_center), item or merchant, per month, year or in total. scope "me" (default) is the user\'s own spending, private included; "household" is every member\'s non-private spending, never by member. Watched groups come with checked_share and estimate: say how reliable the total is.',
+    description: 'Totals by category, person or thing (group_by cost_center), item or merchant, per month, year or in total. A category\'s total includes its subcategories, which come as their own rows. scope "me" (default) is the user\'s own spending, private included; "household" is every member\'s non-private spending, never by member. Watched groups come with checked_share and estimate: say how reliable the total is.',
     inputSchema: SummaryQuery,
     annotations: read,
   }, async (args) => result(await rest('GET', `/api/v1/expenses/summary${query(args)}`)))
