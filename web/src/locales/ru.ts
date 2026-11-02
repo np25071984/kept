@@ -183,7 +183,6 @@ export const ru: Record<string, string> = {
   ' A merchant shows by name only when at least two members bought there.': ' Магазин показан по названию, только если там покупали хотя бы двое.',
   'Other merchants': 'Другие магазины',
   'Show as table': 'Показать таблицей',
-  Before: 'Раньше',
   Spent: 'Потрачено',
   'This month so far': 'Этот месяц на сегодня',
   '12-month average': 'Среднее за 12 месяцев',
