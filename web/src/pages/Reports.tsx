@@ -124,8 +124,8 @@ export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
           {tab === 'people' && <p className="small muted">{t('A shared bill counts toward each by its share; "Nobody in particular" is spending with no person or thing.')}</p>}
           {tab === 'merchants' && <p className="small muted">{t('The five biggest merchants of the period; the rest add up as "Other merchants".')}{scope === 'household' && t(' A merchant shows by name only when at least two members bought there.')}</p>}
           <details className="table-view"><summary>{t('Show as table')}</summary>
-            <table className="lines"><thead><tr><th></th><th className="num">{t('This period')}</th><th className="num">{t('Before')}</th></tr></thead>
-              <tbody>{bars.map((b) => <tr key={b.key}><td>{b.sub ? '   ' : ''}{b.label}</td><td className="num">{money(b.amount)}</td><td className="num">{money(b.prev)}</td></tr>)}
+            <table className="lines"><thead><tr><th>{t(tab === 'category' ? 'Category' : tab === 'people' ? 'People & things' : 'Merchant')}</th><th className="num">{t('This period')}</th><th className="num">{t('Same days last period')}</th></tr></thead>
+              <tbody>{bars.map((b) => <tr key={b.key}><td className={b.sub ? 'sub' : undefined}>{b.key === NOBODY || b.key === OTHER ? t(b.label) : b.label}</td><td className="num">{money(b.amount)}</td><td className="num">{money(b.prev)}</td></tr>)}
                 <tr><td><strong>{t('Total')}</strong></td><td className="num"><strong>{money(total)}</strong></td><td className="num">{money(prevTotal)}</td></tr></tbody>
             </table>
           </details>
