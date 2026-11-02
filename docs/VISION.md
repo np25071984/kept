@@ -306,6 +306,7 @@ A month later, the next time the user talks to the agent:
 
 #### Setting up a repeat
 
+- **Only from spending that happened.** A bill still to come belongs in the user's calendar; the agent logs nothing and offers to make it recurring once it's paid.
 - **From any transaction.** In conversation ("make this monthly"), or with "Make it recurring" on any purchase in the web UI. Past transactions work too: "the gym from last month repeats."
 - **Common schedules:** weekly, every N weeks, monthly on a day, yearly on a date, with an optional end date or number of times. A day that doesn't exist in a month (the 31st) falls on the month's last day.
 - **The agent suggests repeats.** When the same merchant and amount shows up three times on a regular schedule, it offers: "Netflix has been $15.49 on the 3rd for three months. Make it recurring, monthly?"
