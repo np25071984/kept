@@ -149,6 +149,19 @@ describe('repeats', () => {
     expect((await sam.get('/api/v1/repeats')).body.repeats[0].amount).toBe(55)
   })
 
+  it('copies an edited purchase into its repeat, and only its own', async () => {
+    const repeat = (await sam.get('/api/v1/repeats')).body.repeats[0]
+    const own = (await sam.get('/api/v1/transactions?merchant=Verizon')).body.transactions[0]
+    await sam.patch(`/api/v1/transactions/${own.id}`, { merchant: 'Verizon Wireless', notes: 'Family plan' })
+    expect((await sam.get('/api/v1/repeats')).body.repeats[0].merchant).toBe('Verizon')
+    const updated = await sam.patch(`/api/v1/repeats/${repeat.id}`, { transaction_id: own.id })
+    expect(updated.body).toMatchObject({ merchant: 'Verizon Wireless', next_date: repeat.next_date })
+    const other = await sam.post('/api/v1/transactions', { date: '2026-10-20', amount: 9, merchant: 'Netflix', category: 'Phone' })
+    const refused = await sam.patch(`/api/v1/repeats/${repeat.id}`, { transaction_id: other.body.transaction.id })
+    expect(refused.status).toBe(422)
+    expect(refused.body.error.code).toBe('not_this_repeat')
+  })
+
   it('pauses, resumes past missed dates, and stops', async () => {
     const id = (await sam.get('/api/v1/repeats')).body.repeats[0].id
     await sam.patch(`/api/v1/repeats/${id}`, { paused: true })

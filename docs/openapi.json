@@ -5080,7 +5080,7 @@
     },
     "/api/v1/repeats/{id}": {
       "patch": {
-        "summary": "Change the amount, schedule or end from the next occurrence, or pause and resume.",
+        "summary": "Change the amount, schedule or end from the next occurrence, copy one of its purchases into it, or pause and resume. 422 not_this_repeat if the purchase is not the repeat's.",
         "tags": [
           "repeats"
         ],
@@ -5131,6 +5131,12 @@
                   },
                   "paused": {
                     "type": "boolean"
+                  },
+                  "transaction_id": {
+                    "description": "Copy this purchase's merchant, amount, line items, cost centers, notes and privacy into the repeat. It must be one of the repeat's own purchases.",
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
                   }
                 }
               }
