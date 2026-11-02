@@ -321,6 +321,7 @@ A month later, the next time the user talks to the agent:
 #### Stopping and changing
 
 - "Stop the gym," "the phone is $55 from now on," or "rent moves to the 1st" change the repeat from the next date. Transactions already created are kept.
+- **An edited purchase can update its repeat.** A new amount carries over on its own. After any other edit to a recurring purchase (a merchant, a category, who it was for), the agent asks: "Update your recurring Kia loan to match from now on?" On a yes, the repeat copies that purchase.
 - When the agent reads a statement that should include a recurring charge and doesn't, it asks: "No Spotify charge this month. Did you cancel it?"
 - Every member sees their own repeats on the web UI's Recurring page with the next date and amount, and can pause, edit or stop them.
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dueOccurrences, firstNextDate, nextDateAfterChange, occurrence, occurrenceAfter, occurrenceOnOrAfter, stillToCome } from '../../src/domain/repeats.js'
+import { dueOccurrences, firstNextDate, nextDateAfterChange, occurrence, occurrenceAfter, occurrenceOnOrAfter, stillToCome, templateFrom } from '../../src/domain/repeats.js'
 
 describe('occurrence', () => {
   it('moves the 31st to the last day of shorter months', () => {
@@ -75,5 +75,19 @@ describe('the next date', () => {
     expect(nextDateAfterChange(monthly, '2026-10-27', '2027-01-03', false)).toBe('2026-10-27')
     expect(nextDateAfterChange(monthly, '2026-10-27', '2027-01-03', true)).toBe('2027-01-27')
     expect(nextDateAfterChange(monthly, '2026-11-27', '2026-10-30', true)).toBe('2026-11-27')
+  })
+})
+
+
+describe('templateFrom', () => {
+  it('copies everything but the date, with the rest line marked', () => {
+    const purchase = {
+      id: 'x', date: '2026-11-02', amount: 984, merchant: 'Kia Finance', notes: 'Car loan payment', private: false, category: 'Car',
+      line_items: [{ amount: 984, category: 'Car', item: null, notes: null, spent_for: [{ cost_center: 'Kia Carnival', share: null }], rest: true }],
+    }
+    expect(templateFrom(purchase)).toEqual({
+      amount: 984, merchant: 'Kia Finance', notes: 'Car loan payment', private: false, category: 'Car',
+      line_items: [{ amount: 984, category: 'Car', item: null, notes: null, spent_for: [{ cost_center: 'Kia Carnival', share: null }], is_rest: true }],
+    })
   })
 })

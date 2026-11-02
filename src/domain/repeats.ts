@@ -18,6 +18,25 @@ export interface RepeatTemplate {
   line_items: { amount: number; category: string; item?: string | null; notes?: string | null; spent_for?: { cost_center: string; share?: number | null }[]; is_rest?: boolean }[]
 }
 
+// What a repeat copies from a logged purchase: everything but its date (VISION.md §3.5).
+export function templateFrom(purchase: {
+  amount: number
+  merchant: string | null
+  notes: string | null
+  private: boolean
+  category: string | null
+  line_items: { amount: number; category: string; item: string | null; notes: string | null; spent_for: { cost_center: string; share: number | null }[]; rest: boolean }[]
+}): RepeatTemplate {
+  return {
+    amount: purchase.amount,
+    merchant: purchase.merchant,
+    notes: purchase.notes,
+    private: purchase.private,
+    category: purchase.category,
+    line_items: purchase.line_items.map((l) => ({ amount: l.amount, category: l.category, item: l.item, notes: l.notes, spent_for: l.spent_for, is_rest: l.rest })),
+  }
+}
+
 export interface RepeatState extends Schedule {
   next_date: LocalDate
   ends_on: LocalDate | null

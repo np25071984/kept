@@ -6,7 +6,7 @@ import { isLocalDate, todayIn } from '../domain/dates.js'
 import { resizeLines, type Line } from '../domain/lines.js'
 import { fromCents, toCents } from '../domain/money.js'
 import { repeatLoggedText } from '../domain/updates.js'
-import { dueOccurrences, firstNextDate, nextDateAfterChange, stillToCome, type Frequency, type RepeatTemplate, type Schedule } from '../domain/repeats.js'
+import { dueOccurrences, firstNextDate, nextDateAfterChange, stillToCome, templateFrom, type Frequency, type RepeatTemplate, type Schedule } from '../domain/repeats.js'
 import type { Caller } from './caller.js'
 import { checkAmounts, conflict, invalid, notFound, unwrap } from './errors.js'
 import { getTransaction, insertTransaction } from './transactions.js'
@@ -61,14 +61,7 @@ export async function createRepeat(tx: Tx, caller: Caller, body: RepeatBody): Pr
   if (source.repeat_id) throw conflict('already_repeats', 'This purchase already repeats. Change that repeat instead.')
   const schedule = checkSchedule({ frequency: body.frequency as Frequency, interval: body.interval ?? 1, anchor: body.anchor ?? source.date })
   checkEnd(body.ends_on, body.remaining)
-  const template: RepeatTemplate = {
-    amount: source.amount,
-    merchant: source.merchant,
-    notes: source.notes,
-    private: source.private,
-    category: source.category,
-    line_items: source.line_items.map((l) => ({ amount: l.amount, category: l.category, item: l.item, notes: l.notes, spent_for: l.spent_for, is_rest: l.rest })),
-  }
+  const template = templateFrom(source)
   const row = await tx
     .insertInto('repeats')
     .values({
@@ -104,6 +97,11 @@ export async function updateRepeat(tx: Tx, caller: Caller, id: string, patch: Re
   const resumed = patch.paused === false && row.paused
   const nextDate = nextDateAfterChange(schedule, row.next_date, today, rescheduled || resumed)
   let template = row.template
+  if (patch.transaction_id !== undefined) {
+    const purchase = await getTransaction(tx, caller, patch.transaction_id)
+    if (purchase.repeat_id !== row.id) throw invalid('not_this_repeat', 'transaction_id must be a purchase this repeat logged or started from.')
+    template = templateFrom(purchase)
+  }
   if (patch.amount !== undefined) {
     const lines: Line[] = template.line_items.map((l) => ({ ...l, amount: toCents(l.amount), is_rest: l.is_rest ?? false }))
     const resized = unwrap(resizeLines(lines, toCents(patch.amount), template.category))

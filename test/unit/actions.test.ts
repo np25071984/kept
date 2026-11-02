@@ -79,6 +79,10 @@ describe('repeatCall', () => {
     expect(repeatCall({ action: 'set', frequency: 'monthly' })).toEqual(missing('transaction_id'))
   })
 
+  it('updates a repeat from one of its purchases', () => {
+    expect(repeatCall({ action: 'update', id, transaction_id: id })).toEqual({ ok: true, call: { method: 'PATCH', url: `/api/v1/repeats/${id}`, body: { transaction_id: id } } })
+  })
+
   it('updates with null clearing an end, and stops by id', () => {
     expect(repeatCall({ action: 'update', id, amount: 55, ends_on: null, paused: false })).toEqual({ ok: true, call: { method: 'PATCH', url: `/api/v1/repeats/${id}`, body: { amount: 55, ends_on: null, paused: false } } })
     expect(repeatCall({ action: 'stop', id })).toEqual({ ok: true, call: { method: 'DELETE', url: `/api/v1/repeats/${id}` } })

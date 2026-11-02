@@ -155,7 +155,7 @@ export function ledgerRoutes(app: App, { run }: RouteDeps) {
   })
 
   app.patch('/api/v1/repeats/:id', {
-    schema: { tags: ['repeats'], summary: 'Change the amount, schedule or end from the next occurrence, or pause and resume.', params: IdParams, body: RepeatPatch, response: { 200: Repeat } },
+    schema: { tags: ['repeats'], summary: 'Change the amount, schedule or end from the next occurrence, copy one of its purchases into it, or pause and resume. 422 not_this_repeat if the purchase is not the repeat\'s.', params: IdParams, body: RepeatPatch, response: { 200: Repeat } },
   }, async (request) => run(request, (tx, caller) => updateRepeat(tx, caller, request.params.id, request.body)))
 
   app.delete('/api/v1/repeats/:id', {

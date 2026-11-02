@@ -80,7 +80,7 @@ export const ManageRepeats = z.object({ action: z.enum(['set', 'list', 'update',
   .extend(RepeatBody.partial().shape)
   .extend(RepeatPatch.shape)
   .extend({
-    transaction_id: RepeatBody.shape.transaction_id.optional().describe('set: the purchase to repeat.'),
+    transaction_id: RepeatBody.shape.transaction_id.optional().describe('set: the purchase to repeat. update: one of the repeat\'s purchases to copy merchant, amount, category, people and things, notes and privacy from.'),
     amount: amount('update: the amount from the next date.').optional(),
     paused: RepeatPatch.shape.paused.describe('update: pause or resume.'),
   })
@@ -94,6 +94,6 @@ export function repeatCall(args: RepeatArgs): Planned {
     return args.transaction_id ? call('POST', '/api/v1/repeats', pick(args, ['transaction_id', ...SCHEDULE])) : missing('transaction_id', 'set a repeat')
   }
   if (!args.id) return missing('id', `${args.action} a repeat`)
-  if (args.action === 'update') return call('PATCH', `/api/v1/repeats/${args.id}`, pick(args, ['amount', ...SCHEDULE, 'paused']))
+  if (args.action === 'update') return call('PATCH', `/api/v1/repeats/${args.id}`, pick(args, ['transaction_id', 'amount', ...SCHEDULE, 'paused']))
   return call('DELETE', `/api/v1/repeats/${args.id}`)
 }

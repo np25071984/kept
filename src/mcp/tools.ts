@@ -164,7 +164,7 @@ export function registerTools(server: McpServer, rest: Rest) {
 
   server.registerTool('manage_repeats', {
     title: 'Recurring purchases',
-    description: 'set: make a logged purchase repeat, after the user confirmed the schedule ("repeat it on the 27th of every month?"); the ledger then logs it on each date and get_updates announces it. Only spending that happened: for a bill still to come, log nothing and suggest a calendar reminder. list: the user\'s repeats with their next date and amount. update: change a repeat from its next date ("the phone is $55 from now on", "rent moves to the 1st"), or pause and resume it. stop: stop repeating; purchases already logged stay.',
+    description: 'set: make a logged purchase repeat, after the user confirmed the schedule ("repeat it on the 27th of every month?"); the ledger then logs it on each date and get_updates announces it. Only spending that happened: for a bill still to come, log nothing and suggest a calendar reminder. list: the user\'s repeats with their next date and amount. update: change a repeat from its next date ("the phone is $55 from now on", "rent moves to the 1st"), copy an edited purchase into it with transaction_id, or pause and resume it. stop: stop repeating; purchases already logged stay.',
     inputSchema: ManageRepeats,
     annotations: destroy,
   }, async (args) => forward(rest, repeatCall(args)))

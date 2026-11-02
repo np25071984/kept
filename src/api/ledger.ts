@@ -41,7 +41,11 @@ const Schedule = z.object({
   remaining: z.number().int().min(0).nullish().describe('How many more times it repeats.'),
 })
 export const RepeatBody = Schedule.extend({ transaction_id: Id.describe('The first occurrence; the repeat copies it.') })
-export const RepeatPatch = Schedule.partial().extend({ amount: Amount.optional(), paused: z.boolean().optional() })
+export const RepeatPatch = Schedule.partial().extend({
+  amount: Amount.optional(),
+  paused: z.boolean().optional(),
+  transaction_id: Id.optional().describe('Copy this purchase\'s merchant, amount, line items, cost centers, notes and privacy into the repeat. It must be one of the repeat\'s own purchases.'),
+})
 
 export const UpdatesQuery = z.object({ all: flag('Include updates already seen.').optional() })
 export const SeenBody = z.object({ ids: z.array(Id) })

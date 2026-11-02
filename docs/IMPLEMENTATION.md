@@ -448,7 +448,7 @@ The MCP server is stateless Streamable HTTP at `POST /mcp`, in the same process 
 | `manage_notes`        | `POST /api/v1/notes`, `PATCH`, `DELETE /api/v1/notes/{id}` | `save` something the user said after telling them, `update` a note's text, or `delete` it. |
 | `add_source`          | `POST /api/v1/transactions/{id}/sources` | Attach what the agent read from a photo, document or email to an existing transaction, e.g. a receipt added later. |
 | `merge_transactions`  | `POST /api/v1/transactions/{id}/merge` | Merge a duplicate after the user agrees they're the same purchase. |
-| `manage_repeats`      | `POST`, `GET /api/v1/repeats`, `PATCH`, `DELETE /api/v1/repeats/{id}` | `set` a repeat after the user confirms the schedule, `list` the user's repeats with next date and amount, `update` (including pause and resume), or `stop`. |
+| `manage_repeats`      | `POST`, `GET /api/v1/repeats`, `PATCH`, `DELETE /api/v1/repeats/{id}` | `set` a repeat after the user confirms the schedule, `list` the user's repeats with next date and amount, `update` (including pause and resume, or copying one of the repeat's own purchases into it with `transaction_id`), or `stop`. |
 | `get_updates`         | `POST /api/v1/updates/take`    | What happened since the user last talked to the agent; called at the start of a conversation. Marks what it returns as seen. |
 | `get_summary`         | `GET /api/v1/expenses/summary` | Totals by category, cost center or item for a period, with coverage for watched groups. |
 | `manage_vocabulary`   | `POST`, `PATCH`, `DELETE /api/v1/categories` or `/api/v1/cost-centers` | `add`, `rename` or `delete` a category or cost center the user confirmed; `delete` only when nothing uses it. |
