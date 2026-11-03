@@ -48,6 +48,12 @@ export async function sendCode(db: Db, mailer: Mailer, uid: string, email: strin
   return 'sent'
 }
 
+// The address this sign-in last sent a code to.
+export async function codeSentTo(db: Db, uid: string): Promise<string | null> {
+  const row = await db.selectFrom('sign_in_codes').select('email').where('interaction_uid', '=', uid).executeTakeFirst()
+  return row?.email ?? null
+}
+
 export type Verified = { kind: 'user'; user_id: string } | { kind: 'invite'; invite: OpenInvite; email: string } | { kind: 'new'; email: string } | { kind: 'invalid' }
 
 export async function verifyCode(db: Db, uid: string, code: string): Promise<Verified> {

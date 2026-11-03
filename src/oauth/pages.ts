@@ -55,7 +55,7 @@ const cancel = (lang: Language, uid: string) =>
 // Error messages arrive in English and are shown in the page's language.
 const problem = (lang: Language, error?: string) => (error ? `<p class="error">${escape(tr(lang, error))}</p>` : '')
 
-// The Turnstile widget for a form that sends a code; it shows itself only when Cloudflare wants a click (turnstile.ts).
+// The Turnstile widget for the email form; it shows itself only when Cloudflare wants a click (turnstile.ts).
 const humanCheck = (lang: Language, siteKey: string | null) => (siteKey
   ? `<div class="cf-turnstile" data-sitekey="${escape(siteKey)}" data-language="${lang}" data-appearance="interaction-only" data-size="flexible" data-before-interactive-callback="turnstileShown"></div>`
   : '')
@@ -82,7 +82,7 @@ ${problem(lang, error)}
 ${clientName ? cancel(lang, uid) : ''}${humanCheckScript(siteKey)}`)
 }
 
-export function codePage(lang: Language, uid: string, email: string, error?: string, siteKey: string | null = null): string {
+export function codePage(lang: Language, uid: string, email: string, error?: string): string {
   return layout(lang, tr(lang, 'Enter your code'), `
 <h1>${tr(lang, 'Check your email')}</h1>
 <p>${escape(tr(lang, 'We sent a 6-digit code to {email}. It works for 10 minutes.', { email: email === 'your email' ? tr(lang, 'your email') : email }))}</p>
@@ -94,9 +94,8 @@ ${problem(lang, error)}
 </form>
 <form method="post" action="/oauth/interaction/${escape(uid)}/email">
   <input type="hidden" name="email" value="${escape(email)}">
-  ${humanCheck(lang, siteKey)}
   <button class="secondary" type="submit">${tr(lang, 'Send a new code')}</button>
-</form>${humanCheckScript(siteKey)}`)
+</form>`)
 }
 
 export function joinPage(lang: Language, uid: string, household: string, inviter: string, error?: string): string {
