@@ -9,6 +9,8 @@ export interface Config {
   mailFrom: string
   // Behind Caddy, 1: the client's address is the one the proxy puts in X-Forwarded-For. 0 when nothing is in front.
   trustProxy: number
+  // Cloudflare Turnstile keys; without them the sign-in page has no human check.
+  turnstile: { siteKey: string; secretKey: string } | null
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -26,5 +28,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     resendApiKey: env.RESEND_API_KEY || null,
     mailFrom: env.MAIL_FROM || `Kept <noreply@${new URL(env.PUBLIC_URL ?? 'http://localhost').hostname}>`,
     trustProxy: Number(env.TRUST_PROXY ?? 0),
+    turnstile: turnstileKeys(env.TURNSTILE_SITE_KEY, env.TURNSTILE_SECRET_KEY),
   }
+}
+
+function turnstileKeys(siteKey: string | undefined, secretKey: string | undefined): Config['turnstile'] {
+  if (!siteKey && !secretKey) return null
+  if (!siteKey || !secretKey) throw new Error('Set both TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY, or neither.')
+  return { siteKey, secretKey }
 }

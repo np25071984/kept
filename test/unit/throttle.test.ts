@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CODES_PER_EMAIL, CODES_PER_IP, CODE_WINDOW_MS, INVITES_PER_DAY, INVITES_PER_HOUR, JOIN_MINUTES, MAX_ATTEMPTS, codeAllowed, inviteAllowed, codeUsable, withinJoinWindow } from '../../src/domain/throttle.js'
+import { CODES_PER_EMAIL, CODES_PER_HOUR, CODES_PER_IP, CODE_WINDOW_MS, INVITES_PER_DAY, INVITES_PER_HOUR, JOIN_MINUTES, MAX_ATTEMPTS, codeAllowed, inviteAllowed, codeUsable, withinJoinWindow } from '../../src/domain/throttle.js'
 
 const now = new Date('2026-10-30T12:00:00Z')
 const ago = (minutes: number) => new Date(now.getTime() - minutes * 60_000)
@@ -7,19 +7,24 @@ const times = (n: number, minutes = 5) => Array.from({ length: n }, () => ago(mi
 
 describe('codeAllowed', () => {
   it('allows codes until an email has had its hourly share', () => {
-    expect(codeAllowed([], [], now)).toBe(true)
-    expect(codeAllowed(times(CODES_PER_EMAIL - 1), times(CODES_PER_EMAIL - 1), now)).toBe(true)
-    expect(codeAllowed(times(CODES_PER_EMAIL), times(CODES_PER_EMAIL), now)).toBe(false)
+    expect(codeAllowed([], [], [], now)).toBe(true)
+    expect(codeAllowed(times(CODES_PER_EMAIL - 1), times(CODES_PER_EMAIL - 1), times(CODES_PER_EMAIL - 1), now)).toBe(true)
+    expect(codeAllowed(times(CODES_PER_EMAIL), times(CODES_PER_EMAIL), times(CODES_PER_EMAIL), now)).toBe(false)
   })
 
   it('limits one IP address across many emails', () => {
-    expect(codeAllowed([], times(CODES_PER_IP - 1), now)).toBe(true)
-    expect(codeAllowed([], times(CODES_PER_IP), now)).toBe(false)
+    expect(codeAllowed([], times(CODES_PER_IP - 1), times(CODES_PER_IP - 1), now)).toBe(true)
+    expect(codeAllowed([], times(CODES_PER_IP), times(CODES_PER_IP), now)).toBe(false)
+  })
+
+  it("stops every code once the hour's total is reached, whatever the email and address", () => {
+    expect(codeAllowed([], [], times(CODES_PER_HOUR - 1), now)).toBe(true)
+    expect(codeAllowed([], [], times(CODES_PER_HOUR), now)).toBe(false)
   })
 
   it('forgets codes older than the window', () => {
     const old = times(CODES_PER_EMAIL, CODE_WINDOW_MS / 60_000)
-    expect(codeAllowed(old, old, now)).toBe(true)
+    expect(codeAllowed(old, old, times(CODES_PER_HOUR, CODE_WINDOW_MS / 60_000), now)).toBe(true)
   })
 })
 

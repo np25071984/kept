@@ -9,6 +9,8 @@ import { API_KEY_PREFIX, authenticate, callerFor, type Mailer } from '../ledger/
 import { loadKeys, type OAuthKeys } from '../oauth/keys.js'
 import { createOAuth, SCOPE, verifyAccessToken } from '../oauth/provider.js'
 import { oauthRoutes, protectedResourceMetadataUrl } from '../oauth/routes.js'
+import type { HumanCheck } from '../oauth/turnstile.js'
+import { limitRequests } from './requestLimits.js'
 import { householdRoutes } from './routes/household.js'
 import { ledgerRoutes } from './routes/ledger.js'
 import { transactionRoutes } from './routes/transactions.js'
@@ -37,6 +39,10 @@ export interface AppDeps {
   webRoot?: string
   // OAuth2 keys; by default loaded from the database, created on first start.
   oauthKeys?: OAuthKeys
+  // Per-IP request limits (src/domain/requestLimits.ts); on unless a test turns them off.
+  limitRequests?: boolean
+  // Cloudflare Turnstile on the sign-in email page; none when its keys aren't set.
+  humanCheck?: HumanCheck | null
 }
 
 export type App = FastifyInstance<any, any, any, any, ZodTypeProvider>
@@ -71,6 +77,9 @@ export async function buildApp(deps: AppDeps): Promise<App> {
     if (!route.url.startsWith('/api/v1/') || route.schema?.hide) return
     route.schema = { ...route.schema, response: { ...(route.schema?.response as object), '4xx': error, '5xx': error } }
   })
+
+  // Before authentication, so a refused request costs no database query.
+  if (deps.limitRequests ?? true) limitRequests(app)
 
   app.addHook('onRequest', async (request, reply) => {
     if (request.routeOptions.config?.public) return
@@ -119,7 +128,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   householdRoutes(app, routeDeps)
   connectionRoutes(app, { db: deps.db, oauth })
   mcpRoutes(app)
-  oauthRoutes(app, { db: deps.db, mailer: deps.mailer, oauth })
+  oauthRoutes(app, { db: deps.db, mailer: deps.mailer, oauth, humanCheck: deps.humanCheck ?? null })
   await webRoutes(app, deps.webRoot)
   return app
 }

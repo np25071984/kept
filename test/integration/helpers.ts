@@ -29,7 +29,8 @@ export async function startHarness(): Promise<Harness> {
     async sendInviteToMember({ to }) { invites.push({ to, link: '' }) },
     async sendSignInCode(input) { codes.push(input) },
   }
-  const app = await buildApp({ db, mailer, publicUrl: 'https://kept.test' })
+  // Tests make more requests from one address than a person would; oauth.test.ts checks the limits.
+  const app = await buildApp({ db, mailer, publicUrl: 'https://kept.test', limitRequests: false })
   return {
     app, db, owner, invites, codes,
     async close() {

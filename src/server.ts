@@ -5,6 +5,7 @@ import { runDueRepeats } from './ledger/repeats.js'
 import { logMailer } from './mail/log.js'
 import { resendMailer } from './mail/resend.js'
 import { pruneExpired } from './oauth/prune.js'
+import { turnstile } from './oauth/turnstile.js'
 
 const config = loadConfig()
 const db = createDb(config.databaseUrl)
@@ -14,7 +15,8 @@ if (roleError) {
   process.exit(1)
 }
 const mailer = config.resendApiKey ? resendMailer({ apiKey: config.resendApiKey, from: config.mailFrom }) : logMailer()
-const app = await buildApp({ db, mailer, publicUrl: config.publicUrl, logger: true, trustProxy: config.trustProxy })
+const humanCheck = config.turnstile ? turnstile(config.turnstile.siteKey, config.turnstile.secretKey) : null
+const app = await buildApp({ db, mailer, publicUrl: config.publicUrl, logger: true, trustProxy: config.trustProxy, humanCheck })
 
 // Repeats come due at midnight in each owner's time zone, so the scheduler runs often and creates whatever is due.
 // It also deletes expired sign-in state.

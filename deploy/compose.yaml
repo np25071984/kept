@@ -33,6 +33,8 @@ services:
       PUBLIC_URL: https://${KEPT_HOST:?}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       MAIL_FROM: ${MAIL_FROM:-}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
       # Caddy sets X-Forwarded-For to the client's address.
       TRUST_PROXY: 1
 
