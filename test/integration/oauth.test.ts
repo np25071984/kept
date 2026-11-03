@@ -307,6 +307,15 @@ describe('OAuth2 for MCP clients', () => {
     expect((await authorizeWith('https://elsewhere.example/cb')).status).toBe(400)
   })
 
+  it('serves robots.txt and a sitemap at the public address', async () => {
+    const robots = await fetch(`${base}/robots.txt`)
+    expect(robots.headers.get('content-type')).toContain('text/plain')
+    expect(await robots.text()).toContain(`Sitemap: ${base}/sitemap.xml`)
+    const sitemap = await fetch(`${base}/sitemap.xml`)
+    expect(sitemap.headers.get('content-type')).toContain('application/xml')
+    expect(await sitemap.text()).toContain(`<loc>${base}/</loc>`)
+  })
+
   it('serves the landing page at / in the browser\'s language', async () => {
     const page = await fetch(`${base}/`, { headers: { 'accept-language': 'ru-RU,ru;q=0.9' } })
     expect(page.status).toBe(200)

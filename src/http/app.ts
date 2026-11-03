@@ -129,6 +129,6 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   connectionRoutes(app, { db: deps.db, oauth })
   mcpRoutes(app)
   oauthRoutes(app, { db: deps.db, mailer: deps.mailer, oauth, humanCheck: deps.humanCheck ?? null })
-  await webRoutes(app, deps.webRoot)
+  await webRoutes(app, deps.publicUrl, deps.webRoot)
   return app
 }

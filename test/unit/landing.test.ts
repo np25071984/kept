@@ -4,19 +4,32 @@ import { LANDING_CSP, landingPage } from '../../src/http/landing.js'
 import { landingChart, sampleDay, sampleMonths } from '../../src/http/landingChart.js'
 import { chatData, conversations } from '../../src/http/landingChat.js'
 
+const ORIGIN = 'https://kept-ledger.com'
+
 describe('landing page', () => {
   it('renders in the visitor\'s language with the switch set to it', () => {
-    const ru = landingPage('ru')
+    const ru = landingPage('ru', ORIGIN)
     expect(ru).toContain('<html lang="ru">')
     expect(ru).toContain('Расскажите ассистенту, что потратили.')
     expect(ru).toContain('value="ru" lang="ru" aria-checked="true"')
-    expect(landingPage('en')).toContain('Tell your assistant what you spent.')
+    expect(landingPage('en', ORIGIN)).toContain('Tell your assistant what you spent.')
     expect(ru).toContain('По месяцам')
-    expect(landingPage('en')).toContain('<svg class="chart"')
+    expect(landingPage('en', ORIGIN)).toContain('<svg class="chart"')
+  })
+
+  it('names what Kept is and which assistants it works with, for search results and shared links', () => {
+    const en = landingPage('en', ORIGIN)
+    expect(en).toContain('<title>Kept: household expense tracker for ChatGPT, Claude and Gemini</title>')
+    expect(en).toContain('<link rel="canonical" href="https://kept-ledger.com/">')
+    expect(en).toContain('<meta property="og:image" content="https://kept-ledger.com/app/icon-512.png">')
+    expect(en).toContain('<h3>Does Kept connect to my bank?</h3>')
+    const ru = landingPage('ru', ORIGIN)
+    expect(ru).toContain('<meta property="og:locale" content="ru_RU">')
+    expect(ru).toContain('<h3>Kept подключается к моему банку?</h3>')
   })
 
   it('allows only its own inline scripts', () => {
-    const scripts = [...landingPage('en').matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]!)
+    const scripts = [...landingPage('en', ORIGIN).matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]!)
     expect(scripts).toHaveLength(2)
     for (const script of scripts) expect(LANDING_CSP).toContain(`'sha256-${createHash('sha256').update(script).digest('base64')}'`)
   })
