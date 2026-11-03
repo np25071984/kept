@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import fastifyStatic from '@fastify/static'
 import { requestLanguage } from '../oauth/language.js'
+import { robotsTxt, sitemapXml } from '../domain/crawlers.js'
 import type { App } from './app.js'
 import { LANDING_CSP, landingPage } from './landing.js'
 
@@ -21,7 +22,11 @@ function isFile(path: string): boolean {
   return existsSync(path) && statSync(path).isFile()
 }
 
-export async function webRoutes(app: App, webRoot?: string) {
+export async function webRoutes(app: App, publicUrl: string, webRoot?: string) {
+  const origin = publicUrl.replace(/\/$/, '')
+  const page = { config: { public: true }, schema: { hide: true } }
+  app.get('/robots.txt', page, async (_request, reply) => reply.type('text/plain; charset=utf-8').header('cache-control', 'public, max-age=3600').send(robotsTxt(origin)))
+  app.get('/sitemap.xml', page, async (_request, reply) => reply.type('application/xml; charset=utf-8').header('cache-control', 'public, max-age=3600').send(sitemapXml(origin)))
   // The shared stylesheet, also used by the landing and sign-in pages: from source while developing, so edits show
   // without a build, else from the build.
   app.get('/app/site.css', { config: { public: true }, schema: { hide: true } }, async (_request, reply) => {
