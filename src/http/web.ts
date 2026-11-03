@@ -43,7 +43,7 @@ export async function webRoutes(app: App, publicUrl: string, webRoot?: string) {
       .header('referrer-policy', 'same-origin')
       .header('vary', 'cookie, accept-language')
       .header('cache-control', 'no-cache')
-      .send(landingPage(requestLanguage(request.headers.cookie, request.headers['accept-language']))),
+      .send(landingPage(requestLanguage(request.headers.cookie, request.headers['accept-language']), origin)),
   )
   const root = (webRoot ? [webRoot] : ROOTS).find((dir) => existsSync(join(dir, 'index.html')))
   if (!root) {

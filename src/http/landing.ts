@@ -12,6 +12,14 @@ import { CHAT_SCRIPT, CHAT_STYLE, chatData, conversations } from './landingChat.
 // A visitor already signed in on this browser goes straight to the app.
 const SCRIPT = "try { if (localStorage.getItem('kept.refresh_token')) location.replace('/app/') } catch {}"
 
+// Questions people search for, answered in a line or two.
+const FAQ: [string, string][] = [
+  ["Can ChatGPT track my expenses?", "On its own, it forgets last week's purchases and files the same store differently each time. With Kept connected, it logs each purchase to your household's ledger once you confirm it, and answers questions like “How much on groceries this month?”"],
+  ["Does Kept connect to my bank?", "No. Show your assistant a receipt, an order email or a statement you downloaded: it reads it, and Kept keeps the purchases, not the file."],
+  ["Can my partner and I track spending together?", "Yes. Each of you signs in with your own email and uses your own assistant. You share categories and household totals; each person's purchases stay theirs, and private ones stay out of the totals."],
+  ["Which assistants work with Kept?", "Claude on any plan, Gemini on personal accounts in the US, and ChatGPT in Developer Mode, mostly on paid plans. You add Kept once in the assistant's settings on the web."],
+]
+
 const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>'
 
 const hash = (script: string) => `'sha256-${createHash('sha256').update(script).digest('base64')}'`
@@ -49,6 +57,7 @@ section { margin-bottom: 28px; }
 .list { list-style: none; padding: 0; margin: 8px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
 .list li { padding: 10px 14px; }
 .list li + li { border-top: 1px solid var(--line); }
+.list h3 { font-size: inherit; margin: 0 0 2px; }
 .assistants { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
 .assistants span { padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-weight: 600; font-size: 14px; }
 .chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; }
@@ -65,7 +74,8 @@ footer { border-top: 1px solid var(--line); margin-top: 32px; padding-top: 16px;
 
 
 // `today` is the server's date (UTC): the chart's sample ends in the current month.
-export function landingPage(lang: Language, today = new Date().toISOString().slice(0, 10)): string {
+// `origin` is the public address, for the canonical link and the preview card that chat apps show for a shared link.
+export function landingPage(lang: Language, origin: string, today = new Date().toISOString().slice(0, 10)): string {
   const t = (text: string) => escape(tr(lang, text))
   const chats = conversations(lang)
   const first = chats[0]!
@@ -74,8 +84,17 @@ export function landingPage(lang: Language, today = new Date().toISOString().sli
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${t('Kept: tell your assistant what you spent')}</title>
-<meta name="description" content="${t("Kept teaches the AI you already use to track your household's spending: what to ask, how to file it, and what to remember. No forms, no bank logins.")}">
+<title>${t('Kept: household expense tracker for ChatGPT, Claude and Gemini')}</title>
+<meta name="description" content="${t('Track household expenses by chatting with ChatGPT, Claude or Gemini. Kept files each purchase and shows where the money goes. No forms, no bank logins.')}">
+<link rel="canonical" href="${origin}/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kept">
+<meta property="og:url" content="${origin}/">
+<meta property="og:title" content="${t('Kept: household expense tracker for ChatGPT, Claude and Gemini')}">
+<meta property="og:description" content="${t('Track household expenses by chatting with ChatGPT, Claude or Gemini. Kept files each purchase and shows where the money goes. No forms, no bank logins.')}">
+<meta property="og:image" content="${origin}/app/icon-512.png">
+<meta property="og:locale" content="${lang === 'ru' ? 'ru_RU' : 'en_US'}">
+<meta name="twitter:card" content="summary">
 <link rel="icon" href="/app/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/app/apple-touch-icon.png">
 <link rel="stylesheet" href="/app/site.css">
@@ -91,7 +110,7 @@ ${siteHeader(lang, {
 <section class="hero">
   <div>
     <h1>${t('Tell your assistant what you spent. Kept keeps the books.')}</h1>
-    <p class="muted">${t("Kept teaches the AI you already use to track your household's spending: what to ask, how to file it, and what to remember. No forms, no bank logins.")}</p>
+    <p class="muted">${t('Kept is a household expense tracker that lives in the AI you already use: it knows what to ask, how to file it, and what to remember.')}</p>
     <ul class="points">
       ${[
         ['No new AI to learn.', 'Kept works inside the assistant you already use: Claude, ChatGPT or Gemini.'],
@@ -122,7 +141,7 @@ ${siteHeader(lang, {
   </div>
 </section>
 <section id="reports">
-  <h2>${t('Where the money goes')}</h2>
+  <h2>${t('Where the money goes: household spending by month')}</h2>
   <p class="muted">${t('Month by month for the whole household: everyone\'s purchases except private ones, never broken down by member.')}</p>
   ${landingChart(lang, today)}
 </section>
@@ -134,9 +153,15 @@ ${siteHeader(lang, {
   </ul>
 </section>
 <section class="card" id="assistants">
-  <h2>${t('Works with the assistant you already use')}</h2>
+  <h2>${t('Track expenses in ChatGPT, Claude or Gemini')}</h2>
   <div class="assistants"><span>Claude</span><span>ChatGPT</span><span>Gemini</span></div>
   <p class="muted" style="margin:0">${t('Add Kept to your assistant once and keep chatting as usual. Use more than one, or switch any time: your history and notes stay in Kept.')}</p>
+</section>
+<section id="faq">
+  <h2>${t('Questions')}</h2>
+  <ul class="list">
+    ${FAQ.map(([question, answer]) => `<li><h3>${t(question)}</h3><div class="small muted">${t(answer)}</div></li>`).join('')}
+  </ul>
 </section>
 <footer class="small muted"><span>Kept</span><a href="mailto:support@kept-ledger.com">support@kept-ledger.com</a></footer>
 </main>

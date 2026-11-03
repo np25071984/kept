@@ -1,4 +1,4 @@
-// What search engines may crawl: the landing page, and the stylesheet and icons it renders with. The web app, sign-in,
+// What search engines may crawl: the landing page, and the stylesheet and icons it renders and previews with. The web app, sign-in,
 // the API and /mcp are for signed-in members and assistants (IMPLEMENTATION.md §6).
 export function robotsTxt(origin: string): string {
   return `User-agent: *
@@ -6,6 +6,7 @@ Allow: /$
 Allow: /app/site.css
 Allow: /app/icon.svg
 Allow: /app/apple-touch-icon.png
+Allow: /app/icon-512.png
 Disallow: /app/
 Disallow: /oauth/
 Disallow: /api/
