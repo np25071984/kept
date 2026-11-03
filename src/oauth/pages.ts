@@ -29,6 +29,7 @@ function layout(lang: Language, title: string, body: string): string {
   .signin { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 28px 24px; }
   .signin h1 { margin: 0 0 8px; }
   .signin p { color: var(--muted); margin: 0 0 20px; }
+  .signin p strong { color: var(--fg); }
   .signin label { display: block; font-size: 15px; font-weight: 600; color: var(--fg); margin: 16px 0 6px; }
   .signin input, .signin select { padding: 12px; background: var(--bg); }
   .signin input.code { letter-spacing: 0.3em; font-size: 22px; text-align: center; }
@@ -85,7 +86,8 @@ ${clientName ? cancel(lang, uid) : ''}${humanCheckScript(siteKey)}`)
 export function codePage(lang: Language, uid: string, email: string, error?: string): string {
   return layout(lang, tr(lang, 'Enter your code'), `
 <h1>${tr(lang, 'Check your email')}</h1>
-<p>${escape(tr(lang, 'We sent a 6-digit code to {email}. It works for 10 minutes.', { email: email === 'your email' ? tr(lang, 'your email') : email }))}</p>
+<p>${escape(tr(lang, 'We sent a 6-digit code to {email}. It works for 10 minutes.')).replace('{email}', email === 'your email' ? escape(tr(lang, 'your email')) : `<strong>${escape(email)}</strong>`)}
+<a href="/oauth/interaction/${escape(uid)}">${tr(lang, 'Use a different email')}</a></p>
 ${problem(lang, error)}
 <form method="post" action="/oauth/interaction/${escape(uid)}/code">
   <label for="code">${tr(lang, 'Code')}</label>

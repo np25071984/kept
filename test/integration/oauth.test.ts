@@ -416,7 +416,12 @@ describe('sign-in protection', () => {
     expect(h.codes.length).toBe(sent)
     const person = await browser.form(`/oauth/interaction/${uid}/email`, { email: 'checked@example.com', 'cf-turnstile-response': 'human' })
     expect(person.status).toBe(200)
-    expect(await person.text()).not.toContain('data-sitekey')
+    const codePage = await person.text()
+    expect(codePage).not.toContain('data-sitekey')
+    expect(codePage).toContain('<strong>checked@example.com</strong>')
+    // The email page of the same sign-in, for a mistyped address.
+    expect(codePage).toContain(`<a href="/oauth/interaction/${uid}">Use a different email</a>`)
+    expect(await (await browser.fetch(`/oauth/interaction/${uid}`)).text()).toContain('Sign in to Kept')
     expect(h.codes.at(-1)!.to).toBe('checked@example.com')
     expect(checked.at(-1)).toEqual({ token: 'human', ip: '127.0.0.1' })
   })
