@@ -149,7 +149,7 @@ ${siteHeader(lang, {
     <li><strong>${t('Your purchases are yours.')}</strong><div class="small muted">${t('Others in your household see shared totals, never your list. Private purchases stay out of totals too.')}</div></li>
   </ul>
 </section>
-<section class="card" id="assistants">
+<section id="assistants">
   <h2>${t('Track expenses in ChatGPT, Claude, Gemini and others')}</h2>
   <p class="muted" style="margin:0">${t('Kept works with any assistant that lets you add a custom connector (a remote MCP server). Add Kept once in its settings on the web and keep chatting as usual; ChatGPT needs Developer Mode, mostly on paid plans. Use more than one, or switch any time: your history and notes stay in Kept. Once you sign in, Kept shows how to connect your assistant.')}</p>
 </section>
