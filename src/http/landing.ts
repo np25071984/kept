@@ -17,7 +17,7 @@ const FAQ: [string, string][] = [
   ["Can ChatGPT track my expenses?", "On its own, it forgets last week's purchases and files the same store differently each time. With Kept connected, it logs each purchase to your household's ledger once you confirm it, and answers questions like “How much on groceries this month?”"],
   ["Does Kept connect to my bank?", "No. Show your assistant a receipt, an order email or a statement you downloaded: it reads it, and Kept keeps the purchases, not the file."],
   ["Can my partner and I track spending together?", "Yes. Each of you signs in with your own email and uses your own assistant. You share categories and household totals; each person's purchases stay theirs, and private ones stay out of the totals."],
-  ["Which assistants work with Kept?", "Claude on any plan, Gemini on personal accounts in the US, and ChatGPT in Developer Mode, mostly on paid plans. You add Kept once in the assistant's settings on the web."],
+  ["Which assistants work with Kept?", "Claude, ChatGPT, Gemini, and any other assistant that lets you add a custom connector (a remote MCP server). You add Kept once in the assistant's settings on the web; ChatGPT needs Developer Mode, mostly on paid plans. Once you sign in, Kept shows how to connect your assistant."],
 ]
 
 const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>'
