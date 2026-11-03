@@ -29,12 +29,14 @@ function layout(lang: Language, title: string, body: string): string {
   .signin { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 28px 24px; }
   .signin h1 { margin: 0 0 8px; }
   .signin p { color: var(--muted); margin: 0 0 20px; }
+  .signin p strong { color: var(--fg); }
   .signin label { display: block; font-size: 15px; font-weight: 600; color: var(--fg); margin: 16px 0 6px; }
   .signin input, .signin select { padding: 12px; background: var(--bg); }
   .signin input.code { letter-spacing: 0.3em; font-size: 22px; text-align: center; }
   .signin button:not(.picker-trigger) { width: 100%; margin-top: 20px; padding: 12px; font-weight: 600; border: 0; background: var(--accent); color: var(--accent-fg); }
   .signin button.secondary { background: transparent; color: var(--muted); border: 1px solid var(--line); margin-top: 10px; }
   .signin .error { color: var(--danger); }
+  .signin .cf-turnstile.shown { margin-top: 16px; }
   .hint { font-size: 13px; color: var(--muted); margin: 4px 0 12px; }
   @media (max-width: 480px) { main { padding: 16px 8px 40px; } .signin { padding: 22px 16px; } }
 ${SELECT_PICKER_STYLE}
@@ -54,11 +56,15 @@ const cancel = (lang: Language, uid: string) =>
 // Error messages arrive in English and are shown in the page's language.
 const problem = (lang: Language, error?: string) => (error ? `<p class="error">${escape(tr(lang, error))}</p>` : '')
 
-// The Turnstile widget for a form that sends a code; it shows itself only when Cloudflare wants a click (turnstile.ts).
+// The Turnstile widget for the email form; it shows itself only when Cloudflare wants a click (turnstile.ts).
 const humanCheck = (lang: Language, siteKey: string | null) => (siteKey
-  ? `<div class="cf-turnstile" data-sitekey="${escape(siteKey)}" data-language="${lang}" data-appearance="interaction-only"></div>`
+  ? `<div class="cf-turnstile" data-sitekey="${escape(siteKey)}" data-language="${lang}" data-appearance="interaction-only" data-size="flexible" data-before-interactive-callback="turnstileShown"></div>`
   : '')
-const humanCheckScript = (siteKey: string | null) => (siteKey ? '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>' : '')
+// The widget gets its spacing only once Cloudflare decides to show it; hidden, it takes no room.
+const humanCheckScript = (siteKey: string | null) => (siteKey
+  ? `<script>function turnstileShown() { document.querySelectorAll('.cf-turnstile').forEach((e) => e.classList.add('shown')) }</script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>`
+  : '')
 
 export function emailPage(lang: Language, uid: string, clientName: string | null, error?: string, siteKey: string | null = null): string {
   const intro = clientName
@@ -77,10 +83,11 @@ ${problem(lang, error)}
 ${clientName ? cancel(lang, uid) : ''}${humanCheckScript(siteKey)}`)
 }
 
-export function codePage(lang: Language, uid: string, email: string, error?: string, siteKey: string | null = null): string {
+export function codePage(lang: Language, uid: string, email: string, error?: string): string {
   return layout(lang, tr(lang, 'Enter your code'), `
 <h1>${tr(lang, 'Check your email')}</h1>
-<p>${escape(tr(lang, 'We sent a 6-digit code to {email}. It works for 10 minutes.', { email: email === 'your email' ? tr(lang, 'your email') : email }))}</p>
+<p>${escape(tr(lang, 'We sent a 6-digit code to {email}. It works for 10 minutes.')).replace('{email}', email === 'your email' ? escape(tr(lang, 'your email')) : `<strong>${escape(email)}</strong>`)}
+<a href="/oauth/interaction/${escape(uid)}">${tr(lang, 'Use a different email')}</a></p>
 ${problem(lang, error)}
 <form method="post" action="/oauth/interaction/${escape(uid)}/code">
   <label for="code">${tr(lang, 'Code')}</label>
@@ -89,9 +96,8 @@ ${problem(lang, error)}
 </form>
 <form method="post" action="/oauth/interaction/${escape(uid)}/email">
   <input type="hidden" name="email" value="${escape(email)}">
-  ${humanCheck(lang, siteKey)}
   <button class="secondary" type="submit">${tr(lang, 'Send a new code')}</button>
-</form>${humanCheckScript(siteKey)}`)
+</form>`)
 }
 
 export function joinPage(lang: Language, uid: string, household: string, inviter: string, error?: string): string {

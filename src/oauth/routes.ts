@@ -1,13 +1,13 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import type { Db } from '../db/db.js'
 import { redirectHost } from '../domain/connections.js'
-import { validEmail } from '../domain/email.js'
+import { humanCheckNeeded, validEmail } from '../domain/email.js'
 import type { App } from '../http/app.js'
 import type { Mailer } from '../ledger/households.js'
 import { codePage, consentPage, createPage, emailPage, errorPage, joinPage } from './pages.js'
 import { languageRoutes, requestLanguage } from './language.js'
 import { SCOPE, WEB_CLIENT_ID, type OAuth } from './provider.js'
-import { createWithVerifiedEmail, invitedHousehold, joinWithVerifiedEmail, sendCode, verifiedNewEmail, verifyCode } from './signin.js'
+import { codeSentTo, createWithVerifiedEmail, invitedHousehold, joinWithVerifiedEmail, sendCode, verifiedNewEmail, verifyCode } from './signin.js'
 import { TURNSTILE_FIELD, type HumanCheck } from './turnstile.js'
 
 // OAuth2 endpoints for MCP clients (IMPLEMENTATION.md §5, §6): protected resource metadata, oidc-provider's endpoints, and
@@ -135,9 +135,11 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
       if (!interaction || interaction.uid !== request.params.uid) return expired(reply)
       const email = (request.body?.email ?? '').trim()
       const refuse = async (error: string, status: number) => html(reply, emailPage(langOf(request), interaction.uid, await emailClient(interaction.params.client_id), error, siteKey), status)
-      // Cheapest check first: the address's shape, then Cloudflare, and only then the database.
+      // The address's shape first, then the human check, which a resend to the same address skips, then the code limits.
       if (!validEmail(email)) return refuse('Enter a valid email.', 400)
-      if (deps.humanCheck && !(await deps.humanCheck.verify(request.body?.[TURNSTILE_FIELD] ?? '', request.ip))) return refuse("We couldn't confirm you're a person. Try again.", 400)
+      if (deps.humanCheck && humanCheckNeeded(await codeSentTo(deps.db, interaction.uid), email) && !(await deps.humanCheck.verify(request.body?.[TURNSTILE_FIELD] ?? '', request.ip))) {
+        return refuse("We couldn't confirm you're a person. Try again.", 400)
+      }
       const link = (code: string) => `${deps.oauth.issuer}/oauth/interaction/${interaction.uid}/code?code=${code}`
       try {
         if ((await sendCode(deps.db, deps.mailer, interaction.uid, email, request.ip, link, langOf(request))) === 'limited') return refuse('Too many codes were requested. Try again in an hour.', 429)
@@ -145,7 +147,7 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
         request.log.error(error, 'sign-in code not sent')
         return refuse("We couldn't send the code just now. Try again in a minute.", 503)
       }
-      return html(reply, codePage(langOf(request), interaction.uid, email, undefined, siteKey))
+      return html(reply, codePage(langOf(request), interaction.uid, email))
     })
 
     const verify = async (request: FastifyRequest<{ Params: { uid: string } }>, reply: FastifyReply, code: string) => {
@@ -155,7 +157,7 @@ export function oauthRoutes(app: App, deps: { db: Db; mailer: Mailer; oauth: OAu
       if (verified.kind === 'user') return finish(request, reply, { login: { accountId: verified.user_id } })
       if (verified.kind === 'invite') return html(reply, joinPage(langOf(request), interaction.uid, verified.invite.household_name, verified.invite.inviter_name))
       if (verified.kind === 'new') return html(reply, createPage(langOf(request), interaction.uid, verified.email))
-      return html(reply, codePage(langOf(request), interaction.uid, 'your email', 'That code is wrong or expired. Check it, or send a new one.', siteKey), 400)
+      return html(reply, codePage(langOf(request), interaction.uid, 'your email', 'That code is wrong or expired. Check it, or send a new one.'), 400)
     }
     scope.post<{ Params: { uid: string }; Body: Form }>('/oauth/interaction/:uid/code', options, async (request, reply) => verify(request, reply, request.body?.code ?? ''))
     // The emailed link: works when opened in the browser that started sign-in.

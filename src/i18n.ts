@@ -21,6 +21,7 @@ const RU: Record<string, string> = {
   'Send a new code': 'Отправить новый код',
   'That code is wrong or expired. Check it, or send a new one.': 'Код неверный или устарел. Проверьте его или запросите новый.',
   'your email': 'вашу почту',
+  'Use a different email': 'Указать другой email',
   'Join your household': 'Присоединиться к семье',
   'Join {household}': 'Присоединиться к «{household}»',
   '{inviter} invited you. Your purchases stay yours; the household shares categories, people & things, and totals.': '{inviter} приглашает вас. Ваши покупки остаются вашими; семья делит категории, людей и вещи и общие суммы.',

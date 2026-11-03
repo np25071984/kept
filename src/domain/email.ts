@@ -4,6 +4,12 @@ const LOCAL = /^[^\s@"(),:;<>[\\\]]{1,64}$/u
 const LABEL = /^[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?$/u
 const TOP = /^\p{L}{2,63}$/u
 
+// Whether sending a code to `email` needs the human check: always, unless this sign-in already sent a code to the same
+// address. The code page's "Send a new code" then works without one, and reaches no address the check didn't pass.
+export function humanCheckNeeded(sentTo: string | null, email: string): boolean {
+  return sentTo === null || sentTo !== email.trim().toLowerCase()
+}
+
 export function validEmail(value: string): boolean {
   if (value.length > 254) return false
   const at = value.lastIndexOf('@')

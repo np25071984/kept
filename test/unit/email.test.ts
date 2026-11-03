@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { validEmail } from '../../src/domain/email.js'
+import { humanCheckNeeded, validEmail } from '../../src/domain/email.js'
 
 describe('validEmail', () => {
   it('accepts ordinary addresses', () => {
@@ -16,5 +16,14 @@ describe('validEmail', () => {
     expect(validEmail(`sam@${'a'.repeat(63)}.com`)).toBe(true)
     expect(validEmail(`sam@${'a'.repeat(64)}.com`)).toBe(false)
     expect(validEmail(`sam@${Array.from({ length: 5 }, () => 'a'.repeat(60)).join('.')}.com`)).toBe(false)
+  })
+})
+
+describe('humanCheckNeeded', () => {
+  it('skips the check only to resend to the address that passed it', () => {
+    expect(humanCheckNeeded(null, 'sam@example.com')).toBe(true)
+    expect(humanCheckNeeded('sam@example.com', 'sam@example.com')).toBe(false)
+    expect(humanCheckNeeded('sam@example.com', ' Sam@Example.com ')).toBe(false)
+    expect(humanCheckNeeded('sam@example.com', 'zoe@example.com')).toBe(true)
   })
 })
