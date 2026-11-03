@@ -29,13 +29,14 @@ async function findInvite(db: Db, email: string): Promise<OpenInvite | null> {
 }
 
 // Every email gets a code, so the pages never reveal who has an account (VISION.md §3.6, "One way in"), up to the hourly
-// limits per email and per IP address.
+// limits per email, per IP address and in all.
 export async function sendCode(db: Db, mailer: Mailer, uid: string, email: string, ip: string, link: (code: string) => string, language: Language = 'en'): Promise<'sent' | 'limited'> {
   const address = email.trim().toLowerCase()
   const since = new Date(Date.now() - CODE_WINDOW_MS)
-  const earlier = await db.selectFrom('sign_in_requests').select(['email', 'ip', 'created_at']).where('created_at', '>', since).where((eb) => eb.or([eb('email', '=', address), eb('ip', '=', ip)])).execute()
+  // Only sent codes are recorded, so the hour's rows stay under CODES_PER_HOUR.
+  const earlier = await db.selectFrom('sign_in_requests').select(['email', 'ip', 'created_at']).where('created_at', '>', since).execute()
   const at = (key: 'email' | 'ip', value: string) => earlier.filter((r) => r[key] === value).map((r) => new Date(r.created_at))
-  if (!codeAllowed(at('email', address), at('ip', ip), new Date())) return 'limited'
+  if (!codeAllowed(at('email', address), at('ip', ip), earlier.map((r) => new Date(r.created_at)), new Date())) return 'limited'
   await db.insertInto('sign_in_requests').values({ email: address, ip }).execute()
   const code = String(randomInt(0, 1_000_000)).padStart(6, '0')
   await db.deleteFrom('sign_in_codes').where('interaction_uid', '=', uid).execute()

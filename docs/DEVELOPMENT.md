@@ -58,6 +58,8 @@ The server applies migrations each time it starts. Gemini needs a client created
 docker compose exec kept node dist/cli/create-client.js --id gemini --name Gemini --redirect-uri https://oauth-redirect.googleusercontent.com/r/…
 ```
 
+Before opening sign-up to others, create a Turnstile widget for `KEPT_HOST` in the Cloudflare dashboard and set `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` in `.env` (`IMPLEMENTATION.md` §5.4).
+
 Connect an assistant to `https://KEPT_HOST/mcp`. With `RESEND_API_KEY` set in `.env` (the domain verified in Resend), sign-in codes and invites are emailed; without it, read them from the log:
 
 ```sh

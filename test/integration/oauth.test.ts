@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { mkdtempSync, writeFileSync } from 'node:fs'
+import { createServer, type AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
@@ -28,7 +29,7 @@ beforeAll(async () => {
   base = `http://127.0.0.1:${port}`
   const webRoot = mkdtempSync(join(tmpdir(), 'kept-web-'))
   writeFileSync(join(webRoot, 'index.html'), '<div id="root"></div>')
-  app = await buildApp({ db: h.db, mailer: { sendInvite: async (i) => { h.invites.push(i) }, sendInviteToMember: async (i) => { h.invites.push({ ...i, link: '' }) }, sendSignInCode: async (c) => { h.codes.push(c) } }, publicUrl: base, webRoot })
+  app = await buildApp({ db: h.db, mailer: { sendInvite: async (i) => { h.invites.push(i) }, sendInviteToMember: async (i) => { h.invites.push({ ...i, link: '' }) }, sendSignInCode: async (c) => { h.codes.push(c) } }, publicUrl: base, webRoot, limitRequests: false })
   await app.listen({ port: Number(port), host: '127.0.0.1' })
   ownerEmail = `owner-${Date.now()}@example.com`
   ownerKey = (await newHousehold(h, 'The Smiths', ownerEmail)).api_key
@@ -40,10 +41,11 @@ afterAll(async () => {
 
 class Browser {
   private cookies = new Map<string, string>()
+  constructor(private readonly origin = base) {}
   async fetch(url: string, init: RequestInit = {}): Promise<Response> {
     const headers = new Headers(init.headers)
     if (this.cookies.size) headers.set('cookie', [...this.cookies].map(([k, v]) => `${k}=${v}`).join('; '))
-    const response = await fetch(new URL(url, base), { ...init, headers, redirect: 'manual' })
+    const response = await fetch(new URL(url, this.origin), { ...init, headers, redirect: 'manual' })
     for (const cookie of response.headers.getSetCookie()) {
       const [pair] = cookie.split(';')
       const [name, ...value] = pair!.split('=')
@@ -56,8 +58,8 @@ class Browser {
   }
 }
 
-async function register() {
-  const metadata = await (await fetch(`${base}/.well-known/oauth-authorization-server`)).json()
+async function register(origin = base) {
+  const metadata = await (await fetch(`${origin}/.well-known/oauth-authorization-server`)).json()
   const response = await fetch(metadata.registration_endpoint, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -375,5 +377,68 @@ describe('OAuth2 for MCP clients', () => {
     const app = await fetch(`${base}/app/purchases/123`)
     expect(app.headers.get('content-security-policy')).toContain("script-src 'self'")
     expect(await app.text()).toContain('<div id="root">')
+  })
+})
+
+// An app as deployed: per-IP request limits on, and a human check on the email page that passes the token "human".
+describe('sign-in protection', () => {
+  let guarded: App
+  let origin: string
+  const checked: { token: string; ip: string }[] = []
+
+  beforeAll(async () => {
+    const probe = createServer()
+    await new Promise<void>((resolve) => probe.listen(0, '127.0.0.1', resolve))
+    origin = `http://127.0.0.1:${(probe.address() as AddressInfo).port}`
+    await new Promise((resolve) => probe.close(resolve))
+    const humanCheck = { siteKey: 'site-key', verify: async (token: string, ip: string) => { checked.push({ token, ip }); return token === 'human' } }
+    guarded = await buildApp({ db: h.db, mailer: { sendInvite: async () => {}, sendInviteToMember: async () => {}, sendSignInCode: async (c) => { h.codes.push(c) } }, publicUrl: origin, humanCheck })
+    await guarded.listen({ port: Number(new URL(origin).port), host: '127.0.0.1' })
+  })
+  afterAll(() => guarded.close())
+
+  async function emailPage(browser: Browser) {
+    const { metadata, clientId } = await register(origin)
+    const params = new URLSearchParams({ response_type: 'code', client_id: clientId, redirect_uri: REDIRECT, code_challenge: 'x'.repeat(43), code_challenge_method: 'S256', scope: 'kept' })
+    let page = await browser.fetch(`${metadata.authorization_endpoint}?${params}`)
+    while (page.status >= 300 && page.status < 400) page = await browser.fetch(page.headers.get('location')!)
+    return { page, uid: new URL(page.url).pathname.split('/')[3]! }
+  }
+
+  it('sends a code only once the human check passes', async () => {
+    const browser = new Browser(origin)
+    const { page, uid } = await emailPage(browser)
+    expect(await page.text()).toContain('data-sitekey="site-key"')
+    const sent = h.codes.length
+    const bot = await browser.form(`/oauth/interaction/${uid}/email`, { email: 'checked@example.com' })
+    expect(bot.status).toBe(400)
+    expect(await bot.text()).toContain('confirm you&#39;re a person')
+    expect(h.codes.length).toBe(sent)
+    const person = await browser.form(`/oauth/interaction/${uid}/email`, { email: 'checked@example.com', 'cf-turnstile-response': 'human' })
+    expect(person.status).toBe(200)
+    expect(await person.text()).toContain('data-sitekey="site-key"')
+    expect(h.codes.at(-1)!.to).toBe('checked@example.com')
+    expect(checked.at(-1)).toEqual({ token: 'human', ip: '127.0.0.1' })
+  })
+
+  it('refuses an address of the wrong shape before the human check', async () => {
+    const browser = new Browser(origin)
+    const { uid } = await emailPage(browser)
+    const calls = checked.length
+    const response = await browser.form(`/oauth/interaction/${uid}/email`, { email: 'someone@localhost', 'cf-turnstile-response': 'human' })
+    expect(response.status).toBe(400)
+    expect(await response.text()).toContain('Enter a valid email.')
+    expect(checked.length).toBe(calls)
+  })
+
+  it('refuses an address that opens sign-in too often', async () => {
+    let refused: Response | undefined
+    for (let i = 0; i < 40 && !refused; i++) {
+      const response = await fetch(`${origin}/oauth/authorize?client_id=kept-web`, { redirect: 'manual' })
+      if (response.status === 429) refused = response
+    }
+    expect(refused).toBeDefined()
+    expect(Number(refused!.headers.get('retry-after'))).toBeGreaterThan(0)
+    expect((await refused!.json()).error.code).toBe('rate_limited')
   })
 })

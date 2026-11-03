@@ -54,7 +54,13 @@ const cancel = (lang: Language, uid: string) =>
 // Error messages arrive in English and are shown in the page's language.
 const problem = (lang: Language, error?: string) => (error ? `<p class="error">${escape(tr(lang, error))}</p>` : '')
 
-export function emailPage(lang: Language, uid: string, clientName: string | null, error?: string): string {
+// The Turnstile widget for a form that sends a code; it shows itself only when Cloudflare wants a click (turnstile.ts).
+const humanCheck = (lang: Language, siteKey: string | null) => (siteKey
+  ? `<div class="cf-turnstile" data-sitekey="${escape(siteKey)}" data-language="${lang}" data-appearance="interaction-only"></div>`
+  : '')
+const humanCheckScript = (siteKey: string | null) => (siteKey ? '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>' : '')
+
+export function emailPage(lang: Language, uid: string, clientName: string | null, error?: string, siteKey: string | null = null): string {
   const intro = clientName
     ? escape(tr(lang, '{client} wants to use Kept as you. Enter the email you use with Kept, or the one you were invited with.', { client: clientName }))
     : escape(tr(lang, "Review and fix what your assistant logged. Enter your email, or the one you were invited with, and we'll send you a code."))
@@ -65,12 +71,13 @@ ${problem(lang, error)}
 <form method="post" action="/oauth/interaction/${escape(uid)}/email">
   <label for="email">${tr(lang, 'Email')}</label>
   <input id="email" name="email" type="email" autocomplete="email" required autofocus>
+  ${humanCheck(lang, siteKey)}
   <button type="submit">${tr(lang, 'Email me a code')}</button>
 </form>
-${clientName ? cancel(lang, uid) : ''}`)
+${clientName ? cancel(lang, uid) : ''}${humanCheckScript(siteKey)}`)
 }
 
-export function codePage(lang: Language, uid: string, email: string, error?: string): string {
+export function codePage(lang: Language, uid: string, email: string, error?: string, siteKey: string | null = null): string {
   return layout(lang, tr(lang, 'Enter your code'), `
 <h1>${tr(lang, 'Check your email')}</h1>
 <p>${escape(tr(lang, 'We sent a 6-digit code to {email}. It works for 10 minutes.', { email: email === 'your email' ? tr(lang, 'your email') : email }))}</p>
@@ -82,8 +89,9 @@ ${problem(lang, error)}
 </form>
 <form method="post" action="/oauth/interaction/${escape(uid)}/email">
   <input type="hidden" name="email" value="${escape(email)}">
+  ${humanCheck(lang, siteKey)}
   <button class="secondary" type="submit">${tr(lang, 'Send a new code')}</button>
-</form>`)
+</form>${humanCheckScript(siteKey)}`)
 }
 
 export function joinPage(lang: Language, uid: string, household: string, inviter: string, error?: string): string {
