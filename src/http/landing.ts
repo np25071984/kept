@@ -57,9 +57,6 @@ section { margin-bottom: 28px; }
 .list li { padding: 10px 14px; }
 .list li + li { border-top: 1px solid var(--line); }
 .list h3 { font-size: inherit; margin: 0 0 2px; }
-.assistants { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-.assistants span { padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-weight: 600; font-size: 14px; }
-.assistants .more { border-style: dashed; background: transparent; color: var(--muted); font-weight: 500; }
 .chart-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .chart-totals { text-align: right; }
 .num { font-variant-numeric: tabular-nums; }
@@ -152,10 +149,9 @@ ${siteHeader(lang, {
     <li><strong>${t('Your purchases are yours.')}</strong><div class="small muted">${t('Others in your household see shared totals, never your list. Private purchases stay out of totals too.')}</div></li>
   </ul>
 </section>
-<section class="card" id="assistants">
+<section id="assistants">
   <h2>${t('Track expenses in ChatGPT, Claude, Gemini and others')}</h2>
-  <div class="assistants"><span>Claude</span><span>ChatGPT</span><span>Gemini</span><span class="more">${t('+ others')}</span></div>
-  <p class="muted" style="margin:0">${t('Claude, ChatGPT, Gemini, or any other assistant that lets you add a custom connector (a remote MCP server). Add Kept once in its settings on the web and keep chatting as usual; ChatGPT needs Developer Mode, mostly on paid plans. Use more than one, or switch any time: your history and notes stay in Kept. Once you sign in, Kept shows how to connect your assistant.')}</p>
+  <p class="muted" style="margin:0">${t('Kept works with any assistant that lets you add a custom connector (a remote MCP server). Add Kept once in its settings on the web and keep chatting as usual; ChatGPT needs Developer Mode, mostly on paid plans. Use more than one, or switch any time: your history and notes stay in Kept. Once you sign in, Kept shows how to connect your assistant.')}</p>
 </section>
 <section id="faq">
   <h2>${t('Questions')}</h2>
