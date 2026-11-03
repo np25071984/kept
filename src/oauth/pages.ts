@@ -35,6 +35,7 @@ function layout(lang: Language, title: string, body: string): string {
   .signin button:not(.picker-trigger) { width: 100%; margin-top: 20px; padding: 12px; font-weight: 600; border: 0; background: var(--accent); color: var(--accent-fg); }
   .signin button.secondary { background: transparent; color: var(--muted); border: 1px solid var(--line); margin-top: 10px; }
   .signin .error { color: var(--danger); }
+  .signin .cf-turnstile.shown { margin-top: 16px; }
   .hint { font-size: 13px; color: var(--muted); margin: 4px 0 12px; }
   @media (max-width: 480px) { main { padding: 16px 8px 40px; } .signin { padding: 22px 16px; } }
 ${SELECT_PICKER_STYLE}
@@ -56,9 +57,13 @@ const problem = (lang: Language, error?: string) => (error ? `<p class="error">$
 
 // The Turnstile widget for a form that sends a code; it shows itself only when Cloudflare wants a click (turnstile.ts).
 const humanCheck = (lang: Language, siteKey: string | null) => (siteKey
-  ? `<div class="cf-turnstile" data-sitekey="${escape(siteKey)}" data-language="${lang}" data-appearance="interaction-only"></div>`
+  ? `<div class="cf-turnstile" data-sitekey="${escape(siteKey)}" data-language="${lang}" data-appearance="interaction-only" data-size="flexible" data-before-interactive-callback="turnstileShown"></div>`
   : '')
-const humanCheckScript = (siteKey: string | null) => (siteKey ? '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>' : '')
+// The widget gets its spacing only once Cloudflare decides to show it; hidden, it takes no room.
+const humanCheckScript = (siteKey: string | null) => (siteKey
+  ? `<script>function turnstileShown() { document.querySelectorAll('.cf-turnstile').forEach((e) => e.classList.add('shown')) }</script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>`
+  : '')
 
 export function emailPage(lang: Language, uid: string, clientName: string | null, error?: string, siteKey: string | null = null): string {
   const intro = clientName
