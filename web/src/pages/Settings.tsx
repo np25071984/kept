@@ -59,6 +59,7 @@ export function ProfilePage() {
     refreshVocabulary()
   }
   return (
+    <>
     <form className="section form" onSubmit={save}>
       <p className="muted small">{t('{email} · {role} of {household}', { email: setup.you.email, role: t(setup.you.role === 'owner' ? 'Owner' : 'Member'), household: setup.household.name })}</p>
       <label>{t('Name')}<input value={name} onChange={(e) => { setName(e.target.value); setSaved(false) }} required /></label>
@@ -74,6 +75,28 @@ export function ProfilePage() {
         {saved && <span className="muted small">{t('Saved.')}</span>}
       </div>
     </form>
+    <YourDataSection />
+    </>
+  )
+}
+
+// Settings → Profile → Your data: the member's own data as files (VISION.md §4.C).
+function YourDataSection() {
+  const { busy, error, act } = useAction()
+  return (
+    <section className="section">
+      <h2>{t('Your data')}</h2>
+      <p className="muted small">{t('Each household member downloads their own: other members\' purchases aren\'t included.')}</p>
+      {error && <p className="error">{error}</p>}
+      <div className="row">
+        <button type="button" disabled={busy} onClick={() => act(() => api.downloadPurchasesCsv())}>{t('Purchases for a spreadsheet')}</button>
+        <span className="muted small">{t('CSV, opens in Excel or Numbers')}</span>
+      </div>
+      <div className="row">
+        <button type="button" disabled={busy} onClick={() => act(() => api.downloadExport())}>{t('Everything')}</button>
+        <span className="muted small">{t('JSON, a complete copy of your data')}</span>
+      </div>
+    </section>
   )
 }
 

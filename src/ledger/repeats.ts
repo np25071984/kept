@@ -53,6 +53,12 @@ function view(row: { id: string; frequency: Frequency; interval: number; anchor:
   }
 }
 
+// The whole template, for the member's export; the list above shows only what the Recurring page needs.
+export async function repeatsForExport(tx: Tx, caller: Caller) {
+  const rows = await tx.selectFrom('repeats').selectAll().where('user_id', '=', caller.user_id).orderBy('paused').orderBy('next_date').execute()
+  return rows.map((row) => ({ ...view(row), notes: row.template.notes, private: row.template.private, line_items: row.template.line_items }))
+}
+
 export type RepeatBody = z.infer<typeof api.RepeatBody>
 
 // The transaction is the first occurrence; the next one follows on the schedule.

@@ -7157,6 +7157,511 @@
         }
       }
     },
+    "/api/v1/export": {
+      "get": {
+        "summary": "Everything the caller owns, as a JSON file: purchases, notes, watched groups, caps and repeats.",
+        "tags": [
+          "export"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "exported_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO 8601, UTC."
+                    },
+                    "member": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "email"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "Of every amount in this file."
+                    },
+                    "purchases": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "date": {
+                            "type": "string"
+                          },
+                          "occurred_at": {
+                            "nullable": true,
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601, UTC."
+                          },
+                          "timezone": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "merchant": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "notes": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "private": {
+                            "type": "boolean"
+                          },
+                          "category": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "repeat_id": {
+                            "nullable": true,
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "checked_groups": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "line_items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "number"
+                                },
+                                "category": {
+                                  "type": "string"
+                                },
+                                "item": {
+                                  "nullable": true,
+                                  "type": "string"
+                                },
+                                "notes": {
+                                  "nullable": true,
+                                  "type": "string"
+                                },
+                                "rest": {
+                                  "type": "boolean",
+                                  "description": "The rest line: what the explicit line items leave of the total."
+                                },
+                                "spent_for": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "cost_center": {
+                                        "type": "string"
+                                      },
+                                      "share": {
+                                        "nullable": true,
+                                        "type": "number"
+                                      }
+                                    },
+                                    "required": [
+                                      "cost_center",
+                                      "share"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "category",
+                                "item",
+                                "notes",
+                                "rest",
+                                "spent_for"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "sources": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "kind": {
+                                  "type": "string"
+                                },
+                                "received_at": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "description": "ISO 8601, UTC."
+                                },
+                                "extracted": {
+                                  "nullable": true,
+                                  "type": "object",
+                                  "additionalProperties": {}
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "kind",
+                                "received_at",
+                                "extracted"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "date",
+                          "occurred_at",
+                          "timezone",
+                          "amount",
+                          "merchant",
+                          "notes",
+                          "private",
+                          "category",
+                          "repeat_id",
+                          "checked_groups",
+                          "line_items",
+                          "sources"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Newest first, private ones included."
+                    },
+                    "notes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "text": {
+                            "type": "string"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "ISO 8601, UTC."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "text",
+                          "created_at"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "watches": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "category": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "item": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "group": {
+                            "type": "string",
+                            "description": "The category or item, as the agent names it."
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "category",
+                          "item",
+                          "group"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "caps": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "category": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "cost_center": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "period": {
+                            "type": "string",
+                            "enum": [
+                              "month",
+                              "year"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "category",
+                          "cost_center",
+                          "amount",
+                          "period"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "repeats": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "frequency": {
+                            "type": "string",
+                            "enum": [
+                              "weekly",
+                              "monthly",
+                              "yearly"
+                            ]
+                          },
+                          "interval": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "anchor": {
+                            "type": "string"
+                          },
+                          "next_date": {
+                            "type": "string"
+                          },
+                          "ends_on": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "remaining": {
+                            "nullable": true,
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "paused": {
+                            "type": "boolean"
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "merchant": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "category": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "spent_for": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "notes": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "private": {
+                            "type": "boolean"
+                          },
+                          "line_items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "amount": {
+                                  "type": "number"
+                                },
+                                "category": {
+                                  "type": "string"
+                                },
+                                "item": {
+                                  "nullable": true,
+                                  "type": "string"
+                                },
+                                "notes": {
+                                  "nullable": true,
+                                  "type": "string"
+                                },
+                                "spent_for": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "cost_center": {
+                                        "type": "string"
+                                      },
+                                      "share": {
+                                        "nullable": true,
+                                        "type": "number"
+                                      }
+                                    },
+                                    "required": [
+                                      "cost_center"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "is_rest": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "amount",
+                                "category"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "frequency",
+                          "interval",
+                          "anchor",
+                          "next_date",
+                          "ends_on",
+                          "remaining",
+                          "paused",
+                          "amount",
+                          "merchant",
+                          "category",
+                          "spent_for",
+                          "notes",
+                          "private",
+                          "line_items"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "exported_at",
+                    "member",
+                    "currency",
+                    "purchases",
+                    "notes",
+                    "watches",
+                    "caps",
+                    "repeats"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/export/purchases.csv": {
+      "get": {
+        "summary": "The caller's purchases as a CSV file for a spreadsheet, one row each.",
+        "tags": [
+          "export"
+        ],
+        "responses": {
+          "200": {
+            "description": "One row per purchase.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/connections": {
       "get": {
         "summary": "Assistants and browsers the caller has signed in, newest use first.",
