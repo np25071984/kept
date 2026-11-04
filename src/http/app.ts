@@ -15,6 +15,7 @@ import { householdRoutes } from './routes/household.js'
 import { ledgerRoutes } from './routes/ledger.js'
 import { transactionRoutes } from './routes/transactions.js'
 import { connectionRoutes } from './routes/connections.js'
+import { exportRoutes } from './routes/export.js'
 import { webRoutes } from './web.js'
 import { mcpRoutes } from '../mcp/server.js'
 import { VERSION } from '../version.js'
@@ -126,6 +127,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   transactionRoutes(app, routeDeps)
   ledgerRoutes(app, routeDeps)
   householdRoutes(app, routeDeps)
+  exportRoutes(app, routeDeps)
   connectionRoutes(app, { db: deps.db, oauth })
   mcpRoutes(app)
   oauthRoutes(app, { db: deps.db, mailer: deps.mailer, oauth, humanCheck: deps.humanCheck ?? null })

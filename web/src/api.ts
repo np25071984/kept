@@ -1,3 +1,4 @@
+import { attachmentName } from '../../src/domain/export.js'
 import { accessToken } from './auth.js'
 import type { ApiKey, Cap, Connection, CostCenter, Invite, Member, Note, Question, Recurring, Setup, Transaction, Watch } from './lib/types.js'
 
@@ -15,7 +16,8 @@ export class ApiError extends Error {
 
 export class SignedOut extends Error {}
 
-async function call<T>(method: string, url: string, body?: unknown): Promise<T> {
+// Retries once with a fresh token.
+async function send(method: string, url: string, body?: unknown): Promise<Response> {
   for (const force of [false, true]) {
     const token = await accessToken(force)
     if (!token) throw new SignedOut()
@@ -26,12 +28,34 @@ async function call<T>(method: string, url: string, body?: unknown): Promise<T> 
     })
     if (res.status === 401 && !force) continue
     if (res.status === 401) throw new SignedOut()
-    if (res.status === 204) return undefined as T
-    const data = await res.json()
-    if (!res.ok) throw new ApiError(res.status, data.error?.code ?? 'error', data.error?.message ?? 'Something went wrong.')
-    return data as T
+    return res
   }
   throw new SignedOut()
+}
+
+async function failure(res: Response): Promise<ApiError> {
+  const data = await res.json()
+  return new ApiError(res.status, data.error?.code ?? 'error', data.error?.message ?? 'Something went wrong.')
+}
+
+async function call<T>(method: string, url: string, body?: unknown): Promise<T> {
+  const res = await send(method, url, body)
+  if (res.status === 204) return undefined as T
+  if (!res.ok) throw await failure(res)
+  return await res.json() as T
+}
+
+// A plain link can't carry the bearer token, so the file is fetched and then saved from memory.
+async function download(url: string, fallbackName: string): Promise<void> {
+  const res = await send('GET', url)
+  if (!res.ok) throw await failure(res)
+  const href = URL.createObjectURL(await res.blob())
+  const link = document.createElement('a')
+  link.href = href
+  link.download = attachmentName(res.headers.get('content-disposition'), fallbackName)
+  link.click()
+  // Safari can lose the download if the address is revoked right after the click.
+  setTimeout(() => URL.revokeObjectURL(href), 60_000)
 }
 
 export interface TransactionFilters {
@@ -52,6 +76,8 @@ export const api = {
   setup: () => call<Setup>('GET', '/api/v1/setup'),
   updateSetup: (patch: { name?: string; currency?: string; timezone?: string }) => call<Setup>('PATCH', '/api/v1/setup', patch),
   updateMe: (patch: { name?: string; language?: 'en' | 'ru' | null }) => call<Setup>('PATCH', '/api/v1/me', patch),
+  downloadExport: () => download('/api/v1/export', 'kept-export.json'),
+  downloadPurchasesCsv: () => download('/api/v1/export/purchases.csv', 'kept-purchases.csv'),
   recurring: () => call<{ repeats: Recurring[]; month: { month: string; total: number; to_come: number } }>('GET', '/api/v1/repeats'),
   makeRecurring: (body: { transaction_id: string; frequency: string; interval?: number; anchor?: string }) => call<Recurring>('POST', '/api/v1/repeats', body),
   updateRecurring: (id: string, patch: { amount?: number; frequency?: string; interval?: number; anchor?: string; ends_on?: string | null; paused?: boolean }) => call<Recurring>('PATCH', `/api/v1/repeats/${id}`, patch),

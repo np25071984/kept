@@ -23,7 +23,6 @@ Real use, across assistants.
 
 - [ ] A privacy policy, linked from the landing page and the sign-in pages. Before sign-up opens to other households.
 - [ ] Terms of service, linked beside the privacy policy.
-- [ ] Export, before sign-up opens to other households: a member downloads their own data from Settings and over the REST API, served in one ordinary request with no job queue. JSON holds their purchases with line items and sources, notes, watches, caps and repeats; CSV has one row per purchase and escapes values a spreadsheet would run as formulas. Records carry the names of their categories and cost centers, and the file states the household's currency; nothing else about the household or its other members is included.
 - [ ] Tips on getting more from an assistant (`VISION.md` §3.4, "Showing members what their assistant can do"): `get_playbook` returns how the member logged in the last 30 days by source; playbook lines for one contextual tip a conversation, remembered once given or declined; the Tips page in the user menu with steps per assistant, kept in step with what Phase 3 records about each; a tips email picked by how the member has logged.
 - [ ] Siri through App Intents in a native iOS app (`VISION.md` §4.B, "Other clients"). Not before Phase 3's gate.
 

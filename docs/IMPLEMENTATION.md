@@ -343,6 +343,8 @@ Every endpoint, with its parameters and its request and response bodies, is in `
 
 Errors have one shape, `{"error": {"code", "message", "details"?}}`: 400 for a malformed request, 401 without a valid key, 403 for an owner-only action, 404 for anything outside the caller's own data, 409 for a conflict, 410 for a used or expired invite, 429 past the invite limit (`invite_limited`), and 422 when the ledger's rules reject it. A category or cost center the household doesn't have is rejected (`unknown_category`, `unknown_cost_center`, with the known ones in `details`), so the agent asks before adding one. The spec gives every route this error body for 4xx and 5xx, and the server serves it at `/api/v1/openapi.json`.
 
+A member's export (`/api/v1/export` for JSON, `/api/v1/export/purchases.csv` for CSV; [`VISION.md` §4.C](VISION.md#c-web-ui)) is built and returned within one request. CSV cells that a spreadsheet would run as formulas get a `'` prefix, since merchants and notes come from receipts and emails, so a CSV value can differ from the JSON one.
+
 ### 3.1 Request Examples
 
 **One line item.** A transaction with a single line item can use the top-level `category` and `spent_for` as a shorthand:
