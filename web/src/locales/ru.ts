@@ -29,7 +29,7 @@ export const ru: Record<string, string> = {
   Save: 'Сохранить',
   'Saved.': 'Сохранено.',
   'Your data': 'Ваши данные',
-  'Each member downloads their own: other members\' purchases aren\'t included.': 'Каждый участник скачивает своё: покупки других участников не включаются.',
+  'Each household member downloads their own: other members\' purchases aren\'t included.': 'Каждый член семьи скачивает своё: покупки других не включаются.',
   'Purchases for a spreadsheet': 'Покупки для таблицы',
   'CSV, opens in Excel or Numbers': 'CSV, открывается в Excel или Numbers',
   'Everything': 'Все данные',
