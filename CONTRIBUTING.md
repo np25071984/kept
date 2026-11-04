@@ -10,7 +10,7 @@ Issues and pull requests are welcome. For anything bigger than a fix, open an is
 
 ## Contributor license agreement
 
-Kept is AGPL-3.0, and its author also runs it as a paid hosted service (`docs/VISION.md` §5). To keep both possible, every contribution comes with this agreement. By opening a pull request, you agree that:
+Kept is AGPL-3.0, and its author also runs it as a hosted service (`docs/VISION.md` §5). To keep both possible, every contribution comes with this agreement. By opening a pull request, you agree that:
 
 1. You wrote the contribution, or otherwise have the right to submit it under these terms.
 2. You keep the copyright, and you grant Nikolai Poriadin a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to use, copy, modify, distribute and sublicense it under any license, including licenses other than the AGPL.

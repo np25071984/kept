@@ -513,14 +513,4 @@ Every page uses the same palette in light and dark, and stays usable at phone wi
 
 ## 5. Open Source and Hosting
 
-Kept is open source under the AGPL-3.0. Anyone may run it on their own server for free, with every feature; `DEVELOPMENT.md` has the steps. Households that would rather not run a server use the hosted Kept at kept-ledger.com.
-
-| Plan          | Price                          | What it includes                                                  |
-| ------------- | ------------------------------ | ----------------------------------------------------------------- |
-| Self-hosted   | Free                           | Everything. The household runs the server, backups and upgrades.  |
-| Hosted        | $2 a month per household       | Everything, for every member. Kept runs the server, backups and upgrades. |
-
-- **Trial.** A new household gets 30 days free. Charging switches on once for the whole service, when the hosted Kept has about 100 active households; until then hosting is free for everyone, and every existing household starts its 30 days on the day it switches on.
-- **Active household.** One that logged a purchase in at least 3 of the last 4 weeks, with its first purchase more than 4 weeks ago. Weeks, not days, so a household whose assistant logs a week of statement charges in one sitting counts.
-- **Lapsed.** When a trial or subscription ends unpaid, the household turns read-only: every member can still read and export its data, and assistants cannot log new purchases until it pays. Nothing is deleted.
-- **No paid features.** Hosted and self-hosted run the same code; the price pays for running it.
+Kept is open source under the AGPL-3.0 and free to use, with every feature. A household uses the hosted Kept at kept-ledger.com, or runs the same code on its own server and looks after backups and upgrades; `DEVELOPMENT.md` has the steps.

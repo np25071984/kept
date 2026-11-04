@@ -1,6 +1,6 @@
 # Kept: Roadmap
 
-Last updated: 2026-10-30.
+Last updated: 2026-11-04.
 
 ## How to read this document
 
@@ -19,23 +19,11 @@ Real use, across assistants.
 
 **Gate:** one household logs a full month of spending through its assistants alone, and the month's summary matches its bank statements.
 
-## Phase 4 — Paid Hosting
-
-Charging for the hosted Kept (`VISION.md` §5).
-
-- [ ] Export: a member downloads their own purchases and the household's vocabulary as CSV and JSON, from Settings and over the REST API.
-- [ ] An operator report of active households by the `VISION.md` §5 definition, leaving out the operator's own and test households.
-- [ ] Billing state per household: trial start and paid-until, and a pure function that decides from them, the launch date and today whether the household may write.
-- [ ] Read-only households: the REST API refuses writes with an error that says how to pay, MCP tools pass it to the assistant, and the web UI shows a banner with the pay link.
-- [ ] Stripe: Checkout for $2 a month, a webhook that extends paid-until, and the customer portal linked from Settings.
-- [ ] A launch command that records the launch date and emails every existing household that its 30-day trial has started.
-- [ ] Terms of service, linked beside the privacy policy.
-
-**Gate:** about 100 active households, then the operator runs the launch command.
-
 ## Later
 
 - [ ] A privacy policy, linked from the landing page and the sign-in pages. Before sign-up opens to other households.
+- [ ] Terms of service, linked beside the privacy policy.
+- [ ] Export, before sign-up opens to other households: a member downloads their own data from Settings and over the REST API, served in one ordinary request with no job queue. JSON holds their purchases with line items and sources, notes, watches, caps and repeats; CSV has one row per purchase and escapes values a spreadsheet would run as formulas. Records carry the names of their categories and cost centers, and the file states the household's currency; nothing else about the household or its other members is included.
 - [ ] Tips on getting more from an assistant (`VISION.md` §3.4, "Showing members what their assistant can do"): `get_playbook` returns how the member logged in the last 30 days by source; playbook lines for one contextual tip a conversation, remembered once given or declined; the Tips page in the user menu with steps per assistant, kept in step with what Phase 3 records about each; a tips email picked by how the member has logged.
 - [ ] Siri through App Intents in a native iOS app (`VISION.md` §4.B, "Other clients"). Not before Phase 3's gate.
 
