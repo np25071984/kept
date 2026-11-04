@@ -26,4 +26,4 @@ Node 22.12 or later and Docker. `docs/DEVELOPMENT.md` has the steps, starting wi
 
 ## License
 
-[AGPL-3.0](LICENSE). Self-hosting is free with every feature; the hosted Kept at kept-ledger.com is a paid service (`docs/VISION.md` §5). Contributions are welcome under the agreement in [`CONTRIBUTING.md`](CONTRIBUTING.md), and vulnerabilities go to the address in [`SECURITY.md`](SECURITY.md).
+[AGPL-3.0](LICENSE). Kept is free with every feature, hosted at kept-ledger.com or on your own server (`docs/VISION.md` §5). Contributions are welcome under the agreement in [`CONTRIBUTING.md`](CONTRIBUTING.md), and vulnerabilities go to the address in [`SECURITY.md`](SECURITY.md).
