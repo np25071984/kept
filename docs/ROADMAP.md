@@ -1,6 +1,6 @@
 # Kept: Roadmap
 
-Last updated: 2026-11-04.
+Last updated: 2026-11-05.
 
 ## How to read this document
 
@@ -25,7 +25,3 @@ Real use, across assistants.
 - [ ] Terms of service, linked beside the privacy policy.
 - [ ] Tips on getting more from an assistant (`VISION.md` §3.4, "Showing members what their assistant can do"): `get_playbook` returns how the member logged in the last 30 days by source; playbook lines for one contextual tip a conversation, remembered once given or declined; the Tips page in the user menu with steps per assistant, kept in step with what Phase 3 records about each; a tips email picked by how the member has logged.
 - [ ] Siri through App Intents in a native iOS app (`VISION.md` §4.B, "Other clients"). Not before Phase 3's gate.
-
-## Nice to have
-
-- [ ] Charts in chat: a `get_chart` tool that draws a report chart as an image on the server, in the web UI's style, language and theme, from the summary endpoint. Where an assistant doesn't show the image, a short-lived view-only link to it, totals only; the assistant always says the key numbers too. First, a test tool returning a fixed PNG, to see which of Claude, ChatGPT and Gemini show images from tool results.
