@@ -4,7 +4,7 @@ import { api } from '../api.js'
 import { todayIn } from '../lib/dates.js'
 import { periodRange, type Period } from '../lib/filters.js'
 import { formatMoney } from '../lib/money.js'
-import { categoryBars, merchantBars, monthlyAverage, NOBODY, drawnBars, onTrack, OTHER, peopleBars, previousRange, topLevelTotal, trend, type Bar, type Row } from '../lib/reports.js'
+import { categoryBars, merchantBars, monthlyAverage, NOBODY, drawnBars, OTHER, peopleBars, previousRange, topLevelTotal, trend, type Bar, type Row } from '../lib/reports.js'
 import { useLoad, useSession } from '../session.js'
 import { CHART_HEIGHT, LABEL_Y, monthChartLayout, NARROW_CHART_WIDTH } from '../../../src/domain/monthChart.js'
 import { t } from '../i18n.js'
@@ -84,7 +84,7 @@ export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
             <h3>{t('Per month')}</h3>
             <div style={{ textAlign: 'right' }}>
               <div><span className="small muted">{t('{month} so far', { month: monthName(today.slice(0, 7), 'long') })}</span> <strong className="num big">{money(soFar)}</strong></div>
-              <div className="small muted">{t(soFar <= before ? '{amount} less than {range}' : '{amount} more than {range}', { amount: money(Math.abs(soFar - before)), range: dayRange(previousRange(`${today.slice(0, 7)}-01`, today).from, previousRange(`${today.slice(0, 7)}-01`, today).to) })}{average != null && <> · {t('average {amount}', { amount: money(average) })}</>} · {t('on track for {amount}', { amount: money(onTrack(soFar, today)) })}</div>
+              <div className="small muted">{t(soFar <= before ? '{amount} less than {range}' : '{amount} more than {range}', { amount: money(Math.abs(soFar - before)), range: dayRange(previousRange(`${today.slice(0, 7)}-01`, today).from, previousRange(`${today.slice(0, 7)}-01`, today).to) })}{average != null && <> · {t('average {amount}', { amount: money(average) })}</>}</div>
             </div>
           </div>
           <MonthChart currency={currency} months={months} average={average} money={money} />

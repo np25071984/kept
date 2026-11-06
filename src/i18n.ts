@@ -69,7 +69,6 @@ const RU: Record<string, string> = {
   '{amount} less than {range}': 'на {amount} меньше, чем {range}',
   '{amount} more than {range}': 'на {amount} больше, чем {range}',
   'average {amount}': 'в среднем {amount}',
-  'on track for {amount}': 'к концу месяца ≈ {amount}',
   Spent: 'Потрачено',
   'This month so far': 'Этот месяц на сегодня',
   '12-month average': 'Среднее за 12 месяцев',

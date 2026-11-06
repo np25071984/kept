@@ -1,6 +1,6 @@
 import type { Language } from '../domain/language.js'
 import { CHART_HEIGHT, LABEL_Y, monthChartLayout, NARROW_CHART_WIDTH } from '../domain/monthChart.js'
-import { onTrack, previousRange, shiftMonths } from '../domain/months.js'
+import { previousRange, shiftMonths } from '../domain/months.js'
 import { tr } from '../i18n.js'
 import { escape } from '../oauth/pages.js'
 
@@ -60,7 +60,7 @@ ${chart.averageY == null ? '' : `<line class="avg" x1="${chart.left}" x2="${char
     <h3>${t('Per month')}</h3>
     <div class="chart-totals">
       <div><span class="small muted">${t('{month} so far', { month: monthName(today.slice(0, 7), 'long') })}</span> <strong class="num big">${escape(money(soFar))}</strong></div>
-      <div class="small muted">${change} · ${t('average {amount}', { amount: money(average) })} · ${t('on track for {amount}', { amount: money(onTrack(soFar, today)) })}</div>
+      <div class="small muted">${change} · ${t('average {amount}', { amount: money(average) })}</div>
     </div>
   </div>
   <div class="months-12">${svg(months)}</div>
