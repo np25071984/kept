@@ -80,7 +80,7 @@ ${problem(lang, error)}
   ${humanCheck(lang, siteKey)}
   <button type="submit">${tr(lang, 'Email me a code')}</button>
 </form>
-${clientName ? cancel(lang, uid) : ''}${humanCheckScript(siteKey)}`)
+${clientName ? cancel(lang, uid) : ''}<p class="hint"><a href="/privacy">${tr(lang, 'Privacy')}</a></p>${humanCheckScript(siteKey)}`)
 }
 
 export function codePage(lang: Language, uid: string, email: string, error?: string): string {

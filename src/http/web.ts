@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import fastifyStatic from '@fastify/static'
 import { requestLanguage } from '../oauth/language.js'
+import { PRIVACY_CSP, privacyPage } from './privacy.js'
 import { robotsTxt, sitemapXml } from '../domain/crawlers.js'
 import type { App } from './app.js'
 import { LANDING_CSP, landingPage } from './landing.js'
@@ -44,6 +45,16 @@ export async function webRoutes(app: App, publicUrl: string, webRoot?: string) {
       .header('vary', 'cookie, accept-language')
       .header('cache-control', 'no-cache')
       .send(landingPage(requestLanguage(request.headers.cookie, request.headers['accept-language']), origin)),
+  )
+  app.get('/privacy', { config: { public: true }, schema: { hide: true } }, async (request, reply) =>
+    reply
+      .type('text/html; charset=utf-8')
+      .header('content-security-policy', PRIVACY_CSP)
+      .header('x-content-type-options', 'nosniff')
+      .header('referrer-policy', 'same-origin')
+      .header('vary', 'cookie, accept-language')
+      .header('cache-control', 'no-cache')
+      .send(privacyPage(requestLanguage(request.headers.cookie, request.headers['accept-language']), origin)),
   )
   const root = (webRoot ? [webRoot] : ROOTS).find((dir) => existsSync(join(dir, 'index.html')))
   if (!root) {
