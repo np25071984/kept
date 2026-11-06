@@ -4,7 +4,7 @@ import { api } from '../api.js'
 import { todayIn } from '../lib/dates.js'
 import { periodRange, type Period } from '../lib/filters.js'
 import { formatMoney } from '../lib/money.js'
-import { biggestChange, categoryBars, merchantBars, monthlyAverage, NOBODY, drawnBars, onTrack, OTHER, peopleBars, previousRange, topLevelTotal, trend, type Bar, type Row } from '../lib/reports.js'
+import { categoryBars, merchantBars, monthlyAverage, NOBODY, drawnBars, onTrack, OTHER, peopleBars, previousRange, topLevelTotal, trend, type Bar, type Row } from '../lib/reports.js'
 import { useLoad, useSession } from '../session.js'
 import { CHART_HEIGHT, LABEL_Y, monthChartLayout, NARROW_CHART_WIDTH } from '../../../src/domain/monthChart.js'
 import { t } from '../i18n.js'
@@ -59,7 +59,6 @@ export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
     prevTotal = topLevelTotal(catOld.totals)
     bars = tab === 'category' ? categoryBars(cur.totals, old.totals) : tab === 'people' ? peopleBars(cur.totals, old.totals, total, prevTotal) : merchantBars(cur.totals, old.totals)
   }
-  const change = biggestChange(bars)
   const diff = total - prevTotal
   const setPeriod = (value: string) => {
     const next = new URLSearchParams(params)
@@ -113,7 +112,6 @@ export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
         </nav>
         <div className="card-section folder-body">
           {breakdown.error && <p className="error">{breakdown.error}</p>}
-          {change && <p className="small"><span className="muted">{t('Biggest change:')}</span> <strong>{change.label} {change.amount >= change.prev ? '+' : '−'}{money(Math.abs(change.amount - change.prev))}</strong></p>}
           {breakdown.data && bars.every((b) => b.amount === 0) && <p className="muted">{t('Nothing logged in this period.')}</p>}
           <Bars bars={drawnBars(bars)} money={money} />
           <div className="totalline">

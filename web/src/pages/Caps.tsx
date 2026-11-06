@@ -31,16 +31,17 @@ export function CapsSection() {
 }
 
 function CapRow({ cap, onEdit, onChanged }: { cap: Cap; onEdit: () => void; onChanged: () => void }) {
-  const { setup } = useSession()
+  const { setup, costCenters } = useSession()
   const { busy, error, act } = useAction()
   const currency = setup.household.currency
+  const kind = costCenters.find((cc) => cc.name === cap.cost_center)?.kind
   const share = cap.spent / cap.amount
   const left = (toCents(cap.amount) - toCents(cap.spent)) / 100
   return (
     <li className="list-row">
       <div className="grow">
         <div className="row tight" style={{ justifyContent: 'space-between' }}>
-          <span>{cap.category ?? cap.cost_center} <span className="muted small">· {t(cap.period === 'month' ? 'per month' : 'per year')}</span></span>
+          <span>{cap.category ?? cap.cost_center} <span className="muted small">· {kind && `${kind} · `}{t(cap.period === 'month' ? 'per month' : 'per year')}</span></span>
           <span className="num small">{t('{spent} of {amount}', { spent: formatMoney(cap.spent, currency), amount: formatMoney(cap.amount, currency) })}</span>
         </div>
         <div className={`meter ${cap.state}`}><span style={{ width: `${Math.min(100, share * 100)}%` }} /></div>

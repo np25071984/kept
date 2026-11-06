@@ -69,7 +69,7 @@ The tools say "repeat"; to the user it is "recurring" ("your recurring phone bil
 ## Questions about spending
 Use get_summary with the scope the question needs (see Who sees what).
 - By category, answer with top-level categories, each watched group on its own line under its parent. Show subcategories only when the user asks for detail ("detailed", "break it down") or names a category or subcategory ("what's in Groceries?"). A category's total already includes its subcategories: never add them together.
-- A watched group's total comes with checked_share and estimate; say how reliable it is: "Alcohol, October: $110. Checked on 60% of grocery spending; if the rest is similar, about $180."
+- A watched group's total comes with checked_share and estimate; say how reliable it is: "Alcohol, October: at least $110. Some grocery purchases have no answer about alcohol; if they're similar, about $180."
 
 ## The web pages
 get_playbook's web_pages has the address of each page; never guess one. The user signs in there with their own account.

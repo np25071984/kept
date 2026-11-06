@@ -5,6 +5,7 @@ import { api } from '../api.js'
 import { formatMoney } from '../lib/money.js'
 import { IconButton } from '../IconButton.js'
 import type { Note, Watch } from '../lib/types.js'
+import { coverageNote } from '../lib/reports.js'
 import { noteBody, watchBody, type WatchForm } from '../lib/vocabulary.js'
 import { useAction, useLoad, useSession } from '../session.js'
 import { t } from '../i18n.js'
@@ -37,21 +38,18 @@ function WatchRow({ watch, found, onChanged }: { watch: Watch; found?: { total: 
   const { setup } = useSession()
   const { busy, error, act } = useAction()
   const money = (n: number) => formatMoney(n, setup.household.currency)
-  const share = found?.checked_share
+  const name = watch.category ? watch.category.split('/').at(-1)! : watch.item ?? ''
+  const note = coverageNote(found?.checked_share)
   return (
     <li className="list-row">
       <div className="grow">
         <div className="row tight" style={{ justifyContent: 'space-between' }}>
-          <span>{watch.category ? watch.category.split('/').at(-1) : watch.item}</span>
-          {found && <span className="num"><strong>{share != null && share < 0.9 && found.estimate != null ? t('about ') : ''}{money(found.total)}</strong> <span className="small muted">{t('this month')}</span></span>}
+          <span>{name}</span>
+          {found && (note !== 'unanswered' || found.total > 0) && <span className="num"><strong>{note === 'complete' ? '' : t('at least ')}{money(found.total)}</strong> <span className="small muted">{t('this month')}</span></span>}
         </div>
         <div className="muted small">{watch.category ? t('Category {path}', { path: watch.category }) : t('Item')}</div>
-        {found && share != null && (
-          <>
-            <div className="meter"><span style={{ width: `${Math.round(share * 100)}%` }} /></div>
-            <div className="small muted">{t("Checked in {pct}% of the spending where it's bought", { pct: Math.round(share * 100) })}{found.estimate != null && share < 1 ? t(' · about {amount} with the rest', { amount: money(found.estimate) }) : ''}</div>
-          </>
-        )}
+        {found && note === 'partial' && <div className="small muted">{t('Some purchases have no answer about {name}, so it could be more.', { name })}</div>}
+        {found && note === 'unanswered' && <div className="small muted">{t('No purchases have an answer about {name} yet.', { name })}</div>}
         {error && <p className="error">{error}</p>}
       </div>
       <IconButton icon={X} label={t('Stop watching')} danger disabled={busy} onClick={() => act(async () => { await api.stopWatching(watch.id); onChanged() })} />

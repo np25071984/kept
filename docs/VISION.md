@@ -232,9 +232,9 @@ sequenceDiagram
 
 Watched-group totals are only as complete as the purchases where the user answered. Reports show this, because a number used for decisions has to say how reliable it is:
 
-> **Alcohol, October: $110.** Checked on 60% of grocery spending. If the rest is similar, about $180.
+> **Alcohol, October: at least $110.** Some grocery purchases have no answer about alcohol. If they're similar, about $180.
 
-A purchase counts as checked for a group when the user answered the question (including "no") or a receipt was scanned. Each watched group's total comes with the checked share and the estimate.
+A purchase counts as checked for a group when the user answered the question (including "no") or a receipt was scanned. Each watched group's total comes with the checked share and the estimate. The agent states the estimate's assumption; the web UI shows only the known minimum.
 
 ### 3.4 Sources: Anything the User's AI Can Read
 
@@ -501,11 +501,11 @@ Every member signs in with their own account. The header holds the pages for loo
 
 | Page                   | What it shows                                                                                       |
 | ---------------------- | --------------------------------------------------------------------------------------------------- |
-| **My purchases**       | The member's own purchase history, private ones included and marked. Search by merchant or item, and filter by period, privacy, categories and cost centers. Open a purchase to see its line items, shares and sources (what was read from a receipt, email or bank charge), edit it, mark it private or delete it. |
+| **My purchases**       | The member's own purchase history, private ones included and marked. Search by merchant or item, and filter by period, privacy, categories and cost centers. A search or filter shows how many purchases it found and their total. Open a purchase to see its line items with their notes, shares and sources (what was read from a receipt, email or bank charge), edit it, mark it private or delete it. |
 | **Recurring**          | The member's recurring bills and subscriptions (repeats) with next date and amount. Pause, edit or delete them; deleting one keeps the purchases it logged. Any purchase can be made recurring from its detail view. |
 | **Reports**            | Two reports, picked from the header. Mine: the member's own spending, private purchases included, with the caps past 80%. Household: every member's non-private purchases, never by member. Each starts with this month and the per-month trend, then breaks a chosen period down by category, by people & things and by merchant, in tabs. |
 | **Notifications**      | Behind the bell: Kept's open questions, with their answers as buttons (see [The AI Integration Layer](#b-the-ai-integration-layer)). The bell's count is the number unanswered. A member with no assistant connected is asked to connect one, here and in place of an empty My purchases, until they do. |
-| **Preferences**        | In the user menu: the member's watched groups, with this month's amount and coverage, and caps, with their progress. |
+| **Preferences**        | In the user menu: the member's watched groups, with this month's amount, marked as a minimum when some purchases have no answer, and caps, with their progress. |
 | **Settings**           | In the user menu, in tabs. Profile: name, language and a download of the member's own data: purchases, notes, watched groups, caps and recurring bills, as JSON, or purchases alone as CSV for a spreadsheet. It holds nothing about other members, and the household appears only as the categories and people & things on the member's own records and its currency. Household, one page: its name, currency and time zone, then members (owners invite and remove them), people & things, and categories. Assistants & keys: connect an assistant over MCP and manage API keys. Assistant notes: the member's notes. |
 
 The web UI, the sign-in pages and Kept's emails are in English or Russian. Language is personal: it starts from the browser's, a member picks theirs in Settings → Profile, and signed out a menu in the page header switches it, so partners can each read Kept in their own. Dates and amounts follow the language. What the household typed (categories, people & things, notes) stays as typed, and the starting categories are created in the owner's language. The agent answers in whatever language the user writes in.

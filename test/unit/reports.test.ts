@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { biggestChange, categoryBars, drawnBars, merchantBars, monthlyAverage, onTrack, peopleBars, previousRange, trend } from '../../web/src/lib/reports.js'
+import { categoryBars, coverageNote, drawnBars, merchantBars, monthlyAverage, onTrack, peopleBars, previousRange, trend } from '../../web/src/lib/reports.js'
 
 describe('reports', () => {
   it('compares with the same days of the previous period', () => {
@@ -19,7 +19,6 @@ describe('reports', () => {
   it('lists categories with subcategories under them, people with nobody, and the top merchants', () => {
     const cats = categoryBars([{ key: 'Car', amount: 60 }, { key: 'Car/Fuel', amount: 40 }, { key: 'Groceries', amount: 80 }], [{ key: 'Car', amount: 20 }])
     expect(cats.map((b) => [b.label, b.sub, b.prev])).toEqual([['Groceries', false, 0], ['Car', false, 20], ['Fuel', true, 0]])
-    expect(biggestChange(cats)?.key).toBe('Groceries')
     const people = peopleBars([{ key: 'Kia', amount: 30 }], [], 140, 20)
     expect(people.map((b) => [b.label, b.amount, b.prev])).toEqual([['Kia', 30, 0], ['Nobody in particular', 110, 20]])
     const merchants = merchantBars([{ key: 'A', amount: 5 }, { key: 'B', amount: 4 }, { key: 'C', amount: 3 }], [{ key: 'C', amount: 1 }], 2)
@@ -30,13 +29,16 @@ describe('reports', () => {
     expect(onTrack(2900, '2026-10-29')).toBe(3100)
   })
 
-  it('keeps a drop to nothing as a row, so the biggest change is always one of the rows drawn', () => {
+  it('keeps a drop to nothing as a row', () => {
     const bars = categoryBars([{ key: 'Groceries', amount: 600 }], [{ key: 'Groceries', amount: 550 }, { key: 'Clothing', amount: 233 }])
     expect(drawnBars(bars).map((b) => [b.key, b.amount, b.prev])).toEqual([['Groceries', 600, 550], ['Clothing', 0, 233]])
-    expect(biggestChange(bars)?.key).toBe('Clothing')
-    const people = peopleBars([{ key: 'Kia', amount: 30 }], [{ key: 'Sonya', amount: 159.33 }], 30, 159.33)
-    const change = biggestChange(people)
-    expect(drawnBars(people).map((b) => b.key)).toContain(change?.key)
+  })
+
+  it('says a watched total is complete only when every purchase has an answer', () => {
+    expect(coverageNote(1)).toBe('complete')
+    expect(coverageNote(null)).toBe('complete')
+    expect(coverageNote(0.85)).toBe('partial')
+    expect(coverageNote(0)).toBe('unanswered')
   })
 
   it('draws nothing that had no spending in either period', () => {
