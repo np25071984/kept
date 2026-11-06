@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { categoryBars, coverageNote, drawnBars, merchantBars, monthlyAverage, onTrack, peopleBars, previousRange, trend } from '../../web/src/lib/reports.js'
+import { categoryBars, coverageNote, drawnBars, merchantBars, monthlyAverage, peopleBars, previousRange, trend } from '../../web/src/lib/reports.js'
 
 describe('reports', () => {
   it('compares with the same days of the previous period', () => {
@@ -23,10 +23,6 @@ describe('reports', () => {
     expect(people.map((b) => [b.label, b.amount, b.prev])).toEqual([['Kia', 30, 0], ['Nobody in particular', 110, 20]])
     const merchants = merchantBars([{ key: 'A', amount: 5 }, { key: 'B', amount: 4 }, { key: 'C', amount: 3 }], [{ key: 'C', amount: 1 }], 2)
     expect(merchants.map((b) => [b.label, b.amount, b.prev])).toEqual([['A', 5, 0], ['B', 4, 0], ['Other merchants', 3, 1]])
-  })
-
-  it('projects the running month', () => {
-    expect(onTrack(2900, '2026-10-29')).toBe(3100)
   })
 
   it('keeps a drop to nothing as a row', () => {
@@ -59,6 +55,5 @@ describe('previousRange', () => {
   it('moves a range from the 1st by whole months and any other by its length', () => {
     expect(previousRange('2026-10-01', '2026-10-29')).toEqual({ from: '2026-09-01', to: '2026-09-29' })
     expect(previousRange('2026-10-10', '2026-10-16')).toEqual({ from: '2026-10-03', to: '2026-10-09' })
-    expect(onTrack(300, '2026-10-10')).toBe(930)
   })
 })

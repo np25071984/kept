@@ -6,7 +6,7 @@ import { shiftMonths } from '../../../src/domain/months.js'
 export interface Row { key: string; amount: number; period?: string | null }
 
 // Shared with the landing page's chart (src/domain/months.ts).
-export { onTrack, previousRange } from '../../../src/domain/months.js'
+export { previousRange } from '../../../src/domain/months.js'
 
 // The last 12 months, oldest first, from per-month category totals; only top-level categories add up, subcategories are inside them.
 export function trend(rows: Row[], today: string): { month: string; amount: number }[] {

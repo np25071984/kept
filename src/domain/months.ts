@@ -21,9 +21,3 @@ export function previousRange(from: string, to: string): { from: string; to: str
   const days = daysBetween(from, to) + 1
   return { from: addDays(from, -days), to: addDays(to, -days) }
 }
-
-// What the running month is on track for, at its pace so far.
-export function onTrack(soFar: number, today: string): number {
-  const { year, month, day } = parts(today)
-  return Math.round((soFar / day) * daysInMonth(year, month) * 100) / 100
-}

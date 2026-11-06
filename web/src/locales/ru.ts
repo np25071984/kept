@@ -171,7 +171,6 @@ export const ru: Record<string, string> = {
   '{amount} less than {range}': 'на {amount} меньше, чем {range}',
   '{amount} more than {range}': 'на {amount} больше, чем {range}',
   'average {amount}': 'в среднем {amount}',
-  'on track for {amount}': 'к концу месяца ≈ {amount}',
   '{name}: {spent} of your {amount} cap this month ({pct}%).': '{name}: {spent} из лимита {amount} в этом месяце ({pct}%).',
   '{name}: {spent} of your {amount} cap this year ({pct}%).': '{name}: {spent} из лимита {amount} в этом году ({pct}%).',
   Breakdown: 'Разбивка',
