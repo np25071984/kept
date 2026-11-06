@@ -58,6 +58,7 @@ describe('MCP server', () => {
     const first = await call(client, 'get_playbook')
     expect(first.body.start_with).toContain('First conversation: setting up a new household')
     expect(first.body.playbook).toContain('## Logging an expense')
+    expect(first.body.web_pages.home).toBe('https://kept.test/app/')
 
     await call(client, 'update_setup', { introduced: true, steps: { basics: 'done', cost_centers: 'done' } })
     expect((await call(client, 'get_playbook')).body.start_with).toContain('offer to continue setup at "categories"')
