@@ -6444,6 +6444,53 @@
             }
           }
         }
+      },
+      "delete": {
+        "summary": "Delete the caller's account and everything they logged, for good. Its only owner must make someone else an owner first; the only member deletes the household too.",
+        "tags": [
+          "setup"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "confirm_email": {
+                    "type": "string",
+                    "description": "The account's email, typed by the member to confirm."
+                  }
+                },
+                "required": [
+                  "confirm_email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "4XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "An error, with a code to act on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/members": {

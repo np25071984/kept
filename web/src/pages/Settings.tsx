@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Outlet, useLocation } from 'react-router'
 import { api } from '../api.js'
+import { signOut } from '../auth.js'
 import { CategoriesSection, PeopleSection } from './Household.js'
 import { MembersSection } from './Members.js'
 import { CurrencyField, TimeZoneField } from '../PickerFields.js'
@@ -76,6 +77,7 @@ export function ProfilePage() {
       </div>
     </form>
     <YourDataSection />
+    <DeleteAccountSection />
     </>
   )
 }
@@ -97,6 +99,30 @@ function YourDataSection() {
         <span className="muted small">{t('JSON, a complete copy of your data')}</span>
       </div>
     </section>
+  )
+}
+
+// Settings → Profile → Delete my account: typing the email is the confirmation, and the server checks it too.
+function DeleteAccountSection() {
+  const { setup } = useSession()
+  const [email, setEmail] = useState('')
+  const { busy, error, act } = useAction()
+  const confirm = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!(await act(() => api.deleteAccount(email)))) return
+    await signOut().catch(() => undefined)
+    location.assign('/')
+  }
+  return (
+    <form className="section form" onSubmit={confirm}>
+      <h2>{t('Delete my account')}</h2>
+      <p className="muted small">{t('This deletes your purchases, notes, watched items, caps and recurring bills for good, and takes them out of household totals, past months included. If you\'re the only member, the household goes too. Deleted data can stay in a backup for up to 30 days. Download your data first if you want a copy.')}</p>
+      <label>{t('Type {email} to confirm', { email: setup.you.email })}<input type="email" autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} required /></label>
+      {error && <p className="error">{error}</p>}
+      <div className="row tight">
+        <button type="submit" className="danger" disabled={busy || email.trim().toLowerCase() !== setup.you.email.toLowerCase()}>{t('Delete my account')}</button>
+      </div>
+    </form>
   )
 }
 

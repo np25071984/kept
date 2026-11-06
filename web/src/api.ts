@@ -76,6 +76,7 @@ export const api = {
   setup: () => call<Setup>('GET', '/api/v1/setup'),
   updateSetup: (patch: { name?: string; currency?: string; timezone?: string }) => call<Setup>('PATCH', '/api/v1/setup', patch),
   updateMe: (patch: { name?: string; language?: 'en' | 'ru' | null }) => call<Setup>('PATCH', '/api/v1/me', patch),
+  deleteAccount: (confirmEmail: string) => call<void>('DELETE', '/api/v1/me', { confirm_email: confirmEmail }),
   downloadExport: () => download('/api/v1/export', 'kept-export.json'),
   downloadPurchasesCsv: () => download('/api/v1/export/purchases.csv', 'kept-purchases.csv'),
   recurring: () => call<{ repeats: Recurring[]; month: { month: string; total: number; to_come: number } }>('GET', '/api/v1/repeats'),

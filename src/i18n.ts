@@ -142,7 +142,7 @@ const RU: Record<string, string> = {
   'Server logs record requests, including IP addresses, and are deleted within 30 days.': 'Журналы сервера записывают запросы, включая IP-адреса, и удаляются в течение 30 дней.',
   Backups: 'Резервные копии',
   'The server is backed up automatically. Deleted data and logs can stay in a backup for up to 30 days.': 'Резервные копии сервера создаются автоматически. Удалённые данные и журналы могут оставаться в копии до 30 дней.',
-  "Download your data any time in Settings → Profile. To delete your account and data, email support@kept-ledger.com: it's done within 30 days. Owners can also remove a member and everything they logged.": 'Скачать данные можно в любое время в разделе «Настройки» → «Профиль». Чтобы удалить аккаунт и данные, напишите на support@kept-ledger.com: мы сделаем это в течение 30 дней. Владельцы также могут удалить участника и всё, что он записал.',
+  "Download your data any time in Settings → Profile. Delete your account and data there too, or email support@kept-ledger.com and it's done within 30 days. Owners can also remove a member and everything they logged.": 'Скачать данные можно в любое время в разделе «Настройки» → «Профиль». Там же можно удалить аккаунт и данные, или напишите на support@kept-ledger.com, и мы сделаем это в течение 30 дней. Владельцы также могут удалить участника и всё, что он записал.',
   Changes: 'Изменения',
   'Updates appear on this page, with the date below.': 'Изменения появляются на этой странице, с датой внизу.',
   "How much does it cost?": 'Сколько это стоит?',

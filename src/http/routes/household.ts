@@ -1,10 +1,10 @@
 import { z } from 'zod'
 import { acceptInvite, createInvite, deleteInvite, getSetup, issueApiKey, listApiKeys, revokeApiKey, updateMe, updateSetup } from '../../ledger/households.js'
-import { listMembers, removeMember, updateMember } from '../../ledger/members.js'
+import { deleteAccount, listMembers, removeMember, updateMember } from '../../ledger/members.js'
 import type { App, RouteDeps } from '../app.js'
 import { IdParams } from '../../api/common.js'
 import {
-  AcceptBody, Accepted, ApiKey, ApiKeyBody, Invite, InviteBody, IssuedKey, MePatch, MemberPatch, Members, Setup, SetupPatch,
+  AcceptBody, Accepted, ApiKey, ApiKeyBody, Invite, InviteBody, IssuedKey, DeleteMe, MePatch, MemberPatch, Members, Setup, SetupPatch,
 } from '../../api/household.js'
 
 export function householdRoutes(app: App, deps: RouteDeps) {
@@ -21,6 +21,13 @@ export function householdRoutes(app: App, deps: RouteDeps) {
   app.patch('/api/v1/me', {
     schema: { tags: ['setup'], summary: 'Change the caller\'s own name or language. Returns the setup.', body: MePatch, response: { 200: Setup } },
   }, async (request) => run(request, (tx, caller) => updateMe(tx, caller, request.body)))
+
+  app.delete('/api/v1/me', {
+    schema: { tags: ['setup'], summary: 'Delete the caller\'s account and everything they logged, for good. Its only owner must make someone else an owner first; the only member deletes the household too.', body: DeleteMe },
+  }, async (request, reply) => {
+    await run(request, (tx, caller) => deleteAccount(tx, caller, request.body.confirm_email))
+    return reply.status(204).send()
+  })
 
   app.get('/api/v1/members', {
     schema: { tags: ['setup'], summary: 'The household\'s members and open invites.', response: { 200: Members } },
