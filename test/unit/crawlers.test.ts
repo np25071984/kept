@@ -10,12 +10,13 @@ describe('robotsTxt', () => {
 
   it('keeps crawlers out of the app, sign-in and API, but lets them render the landing page', () => {
     for (const path of ['/app/', '/oauth/', '/api/', '/mcp']) expect(robots).toContain(`Disallow: ${path}`)
-    for (const path of ['/$', '/app/site.css', '/app/icon.svg']) expect(robots).toContain(`Allow: ${path}`)
+    for (const path of ['/$', '/privacy', '/app/site.css', '/app/icon.svg']) expect(robots).toContain(`Allow: ${path}`)
   })
 })
 
 describe('sitemapXml', () => {
   it('lists the landing page', () => {
     expect(sitemapXml('https://kept-ledger.com')).toContain('<loc>https://kept-ledger.com/</loc>')
+    expect(sitemapXml('https://kept-ledger.com')).toContain('<loc>https://kept-ledger.com/privacy</loc>')
   })
 })

@@ -173,7 +173,7 @@ ${siteHeader(lang, {
     ${FAQ.map(([question, answer]) => `<li><h3>${t(question)}</h3><div class="small muted">${linkToCode(t(answer))}</div></li>`).join('')}
   </ul>
 </section>
-<footer class="small muted"><span>Kept</span><a href="mailto:support@kept-ledger.com">support@kept-ledger.com</a><a href="${REPOSITORY}" class="github" aria-label="${t('Kept on GitHub')}" title="${t('Kept on GitHub')}">${GITHUB_ICON}</a></footer>
+<footer class="small muted"><span>Kept</span><a href="mailto:support@kept-ledger.com">support@kept-ledger.com</a><a href="/privacy">${t('Privacy')}</a><a href="${REPOSITORY}" class="github" aria-label="${t('Kept on GitHub')}" title="${t('Kept on GitHub')}">${GITHUB_ICON}</a></footer>
 </main>
 <script type="application/json" id="chat-data">${chatData(lang)}</script>
 <script>${CHAT_SCRIPT}</script>

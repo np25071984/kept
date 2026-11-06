@@ -35,6 +35,9 @@ git checkout -q --force --detach "$rev"
 git clean -q -fd
 cd deploy
 KEPT_REVISION="$rev" docker compose up -d --build 2>&1 | tail -n 2
+# Keeps logs within what the privacy page promises.
+install -o root -g root -m 644 kept-logs /etc/cron.d/kept-logs
+echo "Log cleanup: cron $(systemctl is-active cron), log driver $(docker inspect --format '{{.HostConfig.LogConfig.Type}}' "$(docker compose ps -q kept)" </dev/null)"
 # Wait for the new build to answer, not just for something to answer: the old container may still be up.
 running=""
 for _ in $(seq 1 30); do

@@ -1,0 +1,2 @@
+# Installed to /etc/cron.d by deploy/deploy.sh. Clears the containers' logs twice a month, so none outlives the 30 days the privacy page promises.
+0 3 1,16 * * root truncate -s 0 /var/lib/docker/containers/*/*-json.log
