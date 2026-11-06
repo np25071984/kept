@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { api } from '../api.js'
 import { formFromTransaction, patchFromForm, restCents, validateForm, type LineForm, type PurchaseForm, type SpentForForm } from '../lib/editor.js'
 import { formatDate, formatMoney } from '../lib/money.js'
+import { sourceDetails, type SourceDetail } from '../lib/sources.js'
 import type { Line, Transaction } from '../lib/types.js'
 import { useAction, useLoad, useSession } from '../session.js'
 import { t as tr } from '../i18n.js'
@@ -64,15 +65,24 @@ function Details({ t }: { t: Transaction }) {
         {t.sources.map((source) => (
           <li key={source.id}>
             <strong>{tr(SOURCE_LABELS[source.kind] ?? source.kind)}</strong>
-            <span className="muted"> · {new Date(source.received_at).toLocaleString()}</span>
-            {source.extracted && Object.keys(source.extracted).length > 0 && (
-              <dl>{Object.entries(source.extracted).map(([key, value]) => <div key={key}><dt>{key.replace(/_/g, ' ')}</dt><dd>{typeof value === 'string' ? value : JSON.stringify(value)}</dd></div>)}</dl>
+            <span className="muted"> · {new Date(source.received_at).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })}</span>
+            {sourceDetails(source.extracted).length > 0 && (
+              <dl>{sourceDetails(source.extracted).map((detail) => <SourceRow key={detail.field === 'other' ? detail.name : detail.field} detail={detail} currency={currency} />)}</dl>
             )}
           </li>
         ))}
       </ul>
     </article>
   )
+}
+
+function SourceRow({ detail, currency }: { detail: SourceDetail; currency: string }) {
+  const { value } = detail
+  const label = detail.field === 'other' ? detail.name : tr({ date: 'Date', total: 'Total', merchant: 'Merchant' }[detail.field])
+  const shown = detail.field === 'total' && typeof value === 'number' ? formatMoney(value, currency)
+    : detail.field === 'date' && typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? formatDate(value)
+    : typeof value === 'string' ? value : JSON.stringify(value)
+  return <div><dt>{label}</dt><dd>{shown}</dd></div>
 }
 
 function LineRow({ line, currency }: { line: Line; currency: string }) {
