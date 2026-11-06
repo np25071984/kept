@@ -44,7 +44,7 @@ export function landingChart(lang: Language, date: string): string {
 
   const svg = (shown: typeof months, narrow = false) => {
     const chart = monthChartLayout(shown, average, axis, narrow ? NARROW_CHART_WIDTH : undefined)
-    return `<svg class="chart${narrow ? ' narrow' : ''}" viewBox="0 0 ${chart.width} ${CHART_HEIGHT}" role="img" aria-label="${t('Kept\'s monthly spending chart for a household: twelve months of bars, a dashed line for the average, and this month so far.')}">
+    return `<svg class="chart${narrow ? ' narrow' : ''}" viewBox="0 0 ${chart.width} ${CHART_HEIGHT}" role="img" aria-label="${t('Kept\'s monthly spending chart: twelve months of bars, a dashed line for the average, and this month so far.')}">
 ${chart.ticks.map((tick) => `<line class="grid" x1="${chart.left}" x2="${chart.width}" y1="${tick.y}" y2="${tick.y}"/><text x="${chart.left - 6}" y="${tick.y + 4}" text-anchor="end">${escape(axis(tick.value))}</text>`).join('')}
 ${chart.bars.map((bar) => `<g><title>${escape(monthName(bar.month, 'short'))}: ${escape(money(bar.amount))}</title><rect class="bar${bar.partial ? ' partial' : ''}" x="${bar.x}" y="${bar.y}" width="${bar.width}" height="${bar.height}" rx="4"/><text x="${bar.x + bar.width / 2}" y="${LABEL_Y}" text-anchor="middle">${escape(monthName(bar.month, 'short'))}</text></g>`).join('')}
 ${chart.averageY == null ? '' : `<line class="avg" x1="${chart.left}" x2="${chart.width}" y1="${chart.averageY}" y2="${chart.averageY}"/>`}

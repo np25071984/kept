@@ -138,8 +138,8 @@ ${siteHeader(lang, {
   </div>
 </section>
 <section id="reports">
-  <h2>${t('Where the money goes: household spending by month')}</h2>
-  <p class="muted">${t('Month by month for the whole household: everyone\'s purchases except private ones, never broken down by member.')}</p>
+  <h2>${t('Where the money goes: yours or the whole household\'s, by month')}</h2>
+  <p class="muted">${t('See your own spending, private purchases included, or the whole household\'s: everyone\'s purchases except private ones, never broken down by member.')}</p>
   ${landingChart(lang, today)}
 </section>
 <section id="privacy">
