@@ -127,7 +127,7 @@ function FiltersMenu({ filters, categories, count, onChange }: { filters: Filter
   const set = (patch: Partial<Filters>) => onChange({ ...filters, ...patch })
   return (
     <details ref={ref} className={`filtermenu${n ? ' on' : ''}`}>
-      <summary><SlidersHorizontal size={16} aria-hidden="true" /> {n ? tr('Filters · {n}', { n }) : tr('Filters')}</summary>
+      <summary><SlidersHorizontal size={16} aria-hidden="true" /> {tr('Filters')}</summary>
       <div className="filterpanel">
         <div className="sheet-head"><h2>{tr('Filters')}</h2><button type="button" className="icon-btn" aria-label={tr('Close filters')} onClick={() => ref.current && (ref.current.open = false)}><X size={16} /></button></div>
         <div className="two">
