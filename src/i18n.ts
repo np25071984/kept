@@ -125,6 +125,7 @@ const RU: Record<string, string> = {
   Questions: 'Вопросы',
   "Can ChatGPT track my expenses?": "Может ли ChatGPT вести мои расходы?",
   "On its own, it forgets last week's purchases and files the same store differently each time. With Kept connected, it logs each purchase to your household's ledger once you confirm it, and answers questions like “How much on groceries this month?”": "Сам по себе он забывает покупки прошлой недели и каждый раз записывает один и тот же магазин по-разному. С подключённым Kept он заносит каждую покупку в учёт семьи, когда вы её подтвердите, и отвечает на вопросы вроде «Сколько ушло на продукты в этом месяце?»",
+  'Kept on GitHub': 'Kept на GitHub',
   "How much does it cost?": 'Сколько это стоит?',
   "Kept is free and [open source]. Some assistants need a paid plan to add it.": 'Kept бесплатен, его [исходный код открыт]. Некоторым ассистентам для подключения нужен платный тариф.',
   "How can I see my spending?": 'Как посмотреть свои расходы?',

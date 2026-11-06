@@ -36,6 +36,8 @@ describe('landing page', () => {
     expect(landingPage('ru', ORIGIN)).toContain('>исходный код открыт</a>')
     expect(landingPage('ru', ORIGIN)).toContain('>Код открыт</a>')
     expect(landingPage('en', ORIGIN)).not.toContain('[open source]')
+    expect(landingPage('en', ORIGIN)).toContain('<a href="https://github.com/np25071984/kept" class="github" aria-label="Kept on GitHub"')
+    expect(landingPage('ru', ORIGIN)).toContain('aria-label="Kept на GitHub"')
   })
 
   it('allows only its own inline scripts', () => {
