@@ -8,7 +8,7 @@ import { MergeBody, SourceBody, TransactionBatch, TransactionPatch, TransactionQ
 import {
   capCall, ManageCaps, ManageNotes, ManageRepeats, ManageVocabulary, ManageWatches, noteCall, query, repeatCall, vocabularyCall, watchCall, type Method, type Planned,
 } from './actions.js'
-import { FIRST_MEMBER, NEW_MEMBER, PLAYBOOK, resumeSetup } from './playbook.js'
+import { FIRST_MEMBER, NEW_MEMBER, PLAYBOOK, resumeSetup, webPages } from './playbook.js'
 
 // Every tool is a thin call to the REST API as the same caller (IMPLEMENTATION.md §5.1).
 
@@ -35,7 +35,7 @@ const START_WITH: Record<Exclude<StartPath, 'resume'>, string> = {
 }
 
 // The playbook, the household's vocabulary and members, the user's notes and watched groups, and what to do first, in one call.
-export async function playbook(rest: Rest) {
+export async function playbook(rest: Rest, publicUrl: string) {
   const [setup, categories, costCenters, members, notes, watches, caps, questions] = await Promise.all([
     rest('GET', '/api/v1/setup'),
     rest('GET', '/api/v1/categories'),
@@ -61,16 +61,17 @@ export async function playbook(rest: Rest) {
     watching: (watches.body as { watches: unknown[] }).watches,
     caps: (caps.body as { caps: unknown[] }).caps,
     questions: (questions.body as { questions: unknown[] }).questions,
+    web_pages: webPages(publicUrl),
     playbook: PLAYBOOK,
   }
 }
 
-export function registerTools(server: McpServer, rest: Rest) {
+export function registerTools(server: McpServer, rest: Rest, publicUrl: string) {
   server.registerTool('get_playbook', {
     title: 'Get the playbook',
-    description: 'Call this first in every conversation, before asking the user anything about money. Returns how to ask about and log expenses (follow it), what to do first (start_with: the first conversation when setup is unfinished), today\'s date, the household\'s categories, cost centers and members, and the user\'s notes and watched groups. Read the notes before asking anything. Then call get_updates and mention each update.',
+    description: 'Call this first in every conversation, before asking the user anything about money or their Kept account. Returns how to ask about and log expenses (follow it), what to do first (start_with: the first conversation when setup is unfinished), today\'s date, the household\'s categories, cost centers and members, the user\'s notes and watched groups, and the addresses of Kept\'s web pages (web_pages). Read the notes before asking anything. Then call get_updates and mention each update.',
     annotations: read,
-  }, async () => ({ content: [{ type: 'text', text: JSON.stringify(await playbook(rest)) }] }))
+  }, async () => ({ content: [{ type: 'text', text: JSON.stringify(await playbook(rest, publicUrl)) }] }))
 
   server.registerTool('get_updates', {
     title: 'Get updates',

@@ -8,16 +8,16 @@ import { playbook, registerTools, type Rest } from './tools.js'
 // The MCP server: stateless Streamable HTTP at /mcp. Each request runs as the caller its bearer token authenticates, and
 // every tool forwards to the REST API with that same token, so validation and access rules live only there (IMPLEMENTATION.md §5).
 
-export function createMcpServer(rest: Rest): McpServer {
+export function createMcpServer(rest: Rest, publicUrl: string): McpServer {
   const server = new McpServer({ name: 'kept', title: 'Kept', version: VERSION }, { instructions: PLAYBOOK })
-  registerTools(server, rest)
+  registerTools(server, rest, publicUrl)
 
   server.registerResource('household', 'kept://household', {
     title: 'The household',
     description: 'Categories, people & things, the user\'s notes and watched groups, and setup state, for context before the first question.',
     mimeType: 'application/json',
   }, async (uri) => {
-    const { playbook: _, ...household } = await playbook(rest)
+    const { playbook: _, ...household } = await playbook(rest, publicUrl)
     return { contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(household) }] }
   })
 
@@ -38,14 +38,14 @@ export function createMcpServer(rest: Rest): McpServer {
   return server
 }
 
-export function mcpRoutes(app: App) {
+export function mcpRoutes(app: App, publicUrl: string) {
   app.post('/mcp', { schema: { hide: true } }, async (request, reply) => {
     const authorization = request.headers.authorization!
     const rest: Rest = async (method, url, body) => {
       const response = await app.inject({ method, url, headers: { authorization }, ...(body !== undefined && { payload: body as object }) })
       return { status: response.statusCode, body: response.body ? response.json() : null }
     }
-    const server = createMcpServer(rest)
+    const server = createMcpServer(rest, publicUrl)
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true })
     reply.hijack()
     reply.raw.on('close', () => {

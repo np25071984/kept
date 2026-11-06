@@ -478,6 +478,7 @@ Kept delivers the playbook with the data, so every assistant behaves the same wa
 | Logging an expense          | The capture → infer → clarify → confirm flow.                                                            |
 | Catching up                 | Announces [updates](#what-happens-on-the-date) in one line each.                                         |
 | Answering about spending    | Top-level categories, each watched group on a line under its parent. Subcategories only when the user asks for detail or names one. A category's total already includes its subcategories. |
+| Pointing to the web UI      | Asked where the account is, the agent gives the address. Asked for a chart or a list of purchases, it answers in the chat and links the [Reports or My purchases page](#c-web-ui). |
 | Open questions              | What Kept needs the user to decide: a possible duplicate, a cap passed, a recurring charge missing from a statement, an API key unused for a year. At most one per conversation, after the user's request is done, and none when the user is in a hurry. A "no" or "later" is an answer, so the question doesn't come back soon. The web UI lists the same questions under Notifications. |
 
 [`IMPLEMENTATION.md` §5.2](IMPLEMENTATION.md#52-teaching-the-agent) says which MCP mechanism carries each one.
