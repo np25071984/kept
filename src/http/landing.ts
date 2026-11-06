@@ -22,7 +22,7 @@ const FAQ: [string, string][] = [
   ["Can ChatGPT track my expenses?", "On its own, it forgets last week's purchases and files the same store differently each time. With Kept connected, it logs each purchase to your household's ledger once you confirm it, and answers questions like “How much on groceries this month?”"],
   ["Can my partner and I track spending together?", "Yes. Each of you signs in with your own email and uses your own assistant. You share categories and household totals; each person's purchases stay theirs, and private ones stay out of the totals."],
   ["How much does it cost?", "Kept is free and [open source]. Some assistants need a paid plan to add it."],
-  ["How can I see my spending?", "Ask your assistant, or sign in to Kept on the web and open Reports."],
+  ["How can I see my spending?", "Ask your assistant, or sign in to Kept on the web and open Reports, where you can see your own spending or the whole household's."],
   ["Why can I trust Kept with my private data?", "Kept has no ads or analytics and doesn't sell your data. [The code is open], so you can check it, or run Kept on your own server and use it the same way. Your assistant is a separate service, so what you tell it is covered by its maker's privacy policy."],
 ]
 
@@ -151,7 +151,6 @@ ${siteHeader(lang, {
 </section>
 <section id="reports">
   <h2>${t('Where the money goes, month by month')}</h2>
-  <p class="muted">${t('See your own spending, private purchases included, or the whole household\'s: everyone\'s purchases except private ones, never broken down by member.')}</p>
   ${landingChart(lang, today)}
 </section>
 <section id="privacy">
