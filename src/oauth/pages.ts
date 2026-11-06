@@ -38,6 +38,7 @@ function layout(lang: Language, title: string, body: string): string {
   .signin .error { color: var(--danger); }
   .signin .cf-turnstile.shown { margin-top: 16px; }
   .hint { font-size: 13px; color: var(--muted); margin: 4px 0 12px; }
+  .signin .code-help { margin: 16px 0 0; }
   @media (max-width: 480px) { main { padding: 16px 8px 40px; } .signin { padding: 22px 16px; } }
 ${SELECT_PICKER_STYLE}
 </style>
@@ -97,7 +98,8 @@ ${problem(lang, error)}
 <form method="post" action="/oauth/interaction/${escape(uid)}/email">
   <input type="hidden" name="email" value="${escape(email)}">
   <button class="secondary" type="submit">${tr(lang, 'Send a new code')}</button>
-</form>`)
+</form>
+<p class="hint code-help">${tr(lang, "Can't find it? Check your spam or junk folder. Work email often blocks sign-in codes, so a personal address may work better.")}</p>`)
 }
 
 export function joinPage(lang: Language, uid: string, household: string, inviter: string, error?: string): string {
