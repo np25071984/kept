@@ -12,5 +12,8 @@ export function logMailer(log: (message: string) => void = console.log): Mailer 
     async sendSignInCode({ to, code, link }) {
       log(`Sign-in code for ${to}: ${code} (or open ${link} in the same browser)`)
     },
+    async sendAccountDeleted({ to, by }) {
+      log(`Account deleted for ${to}, by ${by === 'self' ? 'its member' : 'an owner'}.`)
+    },
   }
 }

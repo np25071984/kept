@@ -61,3 +61,16 @@ export function inviteToMemberEmail(input: { inviter: string; household: string 
 <p>${escape(cannot)}</p>`),
   }
 }
+
+// After a deletion: no link, since the account is gone, and an address to write to if the member didn't expect it.
+export function accountDeletedEmail(by: 'self' | 'owner', lang: Language = 'en'): Email {
+  const what = tr(lang, by === 'self' ? 'Your Kept account and the data you logged were deleted.' : 'An owner of your household removed your Kept account and the data you logged.')
+  const backups = tr(lang, 'Copies can stay in backups for up to 30 days.')
+  const contact = tr(lang, by === 'self' ? "If this wasn't you, write to support@kept-ledger.com right away." : 'Questions? Write to support@kept-ledger.com.')
+  return {
+    subject: tr(lang, 'Your Kept account was deleted'),
+    text: [what, backups, '', contact].join('\n'),
+    html: layout(lang, `<p>${escape(what)} ${escape(backups)}</p>
+<p style="color:#6b6b66">${escape(contact)}</p>`),
+  }
+}
