@@ -19,6 +19,7 @@ const RU: Record<string, string> = {
   'We sent a 6-digit code to {email}. It works for 10 minutes.': 'Мы отправили 6-значный код на {email}. Он действует 10 минут.',
   Code: 'Код',
   'Send a new code': 'Отправить новый код',
+  "Can't find it? Check your spam or junk folder. Work email often blocks sign-in codes, so a personal address may work better.": 'Не можете найти письмо? Проверьте папку «Спам». Рабочая почта часто блокирует коды для входа, поэтому личный адрес может сработать лучше.',
   'That code is wrong or expired. Check it, or send a new one.': 'Код неверный или устарел. Проверьте его или запросите новый.',
   'your email': 'вашу почту',
   'Use a different email': 'Указать другой email',
