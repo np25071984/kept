@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import { LANDING_CSP, landingPage } from '../../src/http/landing.js'
+import { LANDING_CSP, landingPage, linkToCode } from '../../src/http/landing.js'
 import { landingChart, sampleDay, sampleMonths } from '../../src/http/landingChart.js'
 import { chatData, conversations } from '../../src/http/landingChat.js'
 
@@ -22,10 +22,20 @@ describe('landing page', () => {
     expect(en).toContain('<title>Kept: household expense tracker for ChatGPT, Claude and Gemini</title>')
     expect(en).toContain('<link rel="canonical" href="https://kept-ledger.com/">')
     expect(en).toContain('<meta property="og:image" content="https://kept-ledger.com/app/icon-512.png">')
-    expect(en).toContain('<h3>Does Kept connect to my bank?</h3>')
+    expect(en).toContain('<h3>How much does it cost?</h3>')
     const ru = landingPage('ru', ORIGIN)
     expect(ru).toContain('<meta property="og:locale" content="ru_RU">')
-    expect(ru).toContain('<h3>Kept подключается к моему банку?</h3>')
+    expect(ru).toContain('<h3>Сколько это стоит?</h3>')
+  })
+
+  it('links open source claims to the code, in every language', () => {
+    expect(linkToCode('free and [open source].')).toBe('free and <a href="https://github.com/np25071984/kept">open source</a>.')
+    expect(linkToCode('no brackets')).toBe('no brackets')
+    expect(landingPage('en', ORIGIN)).toContain('>open source</a>')
+    expect(landingPage('en', ORIGIN)).toContain('>The code is open</a>')
+    expect(landingPage('ru', ORIGIN)).toContain('>исходный код открыт</a>')
+    expect(landingPage('ru', ORIGIN)).toContain('>Код открыт</a>')
+    expect(landingPage('en', ORIGIN)).not.toContain('[open source]')
   })
 
   it('allows only its own inline scripts', () => {

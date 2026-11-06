@@ -12,11 +12,18 @@ import { CHAT_SCRIPT, CHAT_STYLE, chatData, conversations } from './landingChat.
 // A visitor already signed in on this browser goes straight to the app.
 const SCRIPT = "try { if (localStorage.getItem('kept.refresh_token')) location.replace('/app/') } catch {}"
 
-// Questions people search for, answered in a line or two.
+const REPOSITORY = 'https://github.com/np25071984/kept'
+
+// Turns [words] in already escaped text into a link to the code.
+export const linkToCode = (escaped: string) => escaped.replace(/\[([^\]]+)\]/g, `<a href="${REPOSITORY}">$1</a>`)
+
+// Questions people search for, answered in a line or two. [Words] link to the code.
 const FAQ: [string, string][] = [
   ["Can ChatGPT track my expenses?", "On its own, it forgets last week's purchases and files the same store differently each time. With Kept connected, it logs each purchase to your household's ledger once you confirm it, and answers questions like “How much on groceries this month?”"],
-  ["Does Kept connect to my bank?", "No. Show your assistant a receipt, an order email or a statement you downloaded: it reads it, and Kept keeps the purchases, not the file."],
   ["Can my partner and I track spending together?", "Yes. Each of you signs in with your own email and uses your own assistant. You share categories and household totals; each person's purchases stay theirs, and private ones stay out of the totals."],
+  ["How much does it cost?", "Kept is free and [open source]. Some assistants need a paid plan to add it."],
+  ["How can I see my spending?", "Ask your assistant, or sign in to Kept on the web and open Reports."],
+  ["Why can I trust Kept with my private data?", "Kept has no ads or analytics and doesn't sell your data. [The code is open], so you can check it, or run Kept on your own server and use it the same way. Your assistant is a separate service, so what you tell it is covered by its maker's privacy policy."],
 ]
 
 const CHECK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>'
@@ -113,6 +120,7 @@ ${siteHeader(lang, {
         ['No new AI to learn.', 'Kept works inside the assistant you already use: Claude, ChatGPT or Gemini.'],
         ['No new app on your phone.', 'Your assistant\'s app is all you need.'],
         ['Track spending on the go.', 'A quick chat at the checkout, like telling a friend.'],
+        ['No bookkeeping chores.', 'Your assistant handles the routine, so you can get on with your day.'],
       ].map(([head, line]) => `<li>${CHECK}<span><strong>${t(head!)}</strong> ${t(line!)}</span></li>`).join('')}
     </ul>
   </div>
@@ -137,8 +145,12 @@ ${siteHeader(lang, {
     <div class="card"><h3>${t('See where it goes')}</h3><p class="small muted">${t('Per car, per kid, per month. Ask in the chat, or review and fix everything on the web.')}</p></div>
   </div>
 </section>
+<section id="watch">
+  <h2>${t('Know what you spent on, without logging every item')}</h2>
+  <p class="muted" style="margin:0">${t('Most trackers make you choose: enter every item, or log only categories and never find out what the green peas cost. With Kept, your assistant does the logging. Decide what to watch, and Kept tracks only those details, keeping the rest by category.')}</p>
+</section>
 <section id="reports">
-  <h2>${t('Where the money goes: yours or the whole household\'s, by month')}</h2>
+  <h2>${t('Where the money goes, month by month')}</h2>
   <p class="muted">${t('See your own spending, private purchases included, or the whole household\'s: everyone\'s purchases except private ones, never broken down by member.')}</p>
   ${landingChart(lang, today)}
 </section>
@@ -147,6 +159,7 @@ ${siteHeader(lang, {
   <ul class="list">
     <li><strong>${t('Kept never connects to your bank or inbox.')}</strong><div class="small muted">${t('Your assistant reads what you show it; Kept keeps what was logged, not the files.')}</div></li>
     <li><strong>${t('Your purchases are yours.')}</strong><div class="small muted">${t('Others in your household see shared totals, never your list. Private purchases stay out of totals too.')}</div></li>
+    <li><strong>${t('Your data isn\'t locked in.')}</strong><div class="small muted">${t('Download your purchases, notes and the rest at any time, as JSON or as a CSV for spreadsheets.')}</div></li>
   </ul>
 </section>
 <section id="assistants">
@@ -156,7 +169,7 @@ ${siteHeader(lang, {
 <section id="faq">
   <h2>${t('Questions')}</h2>
   <ul class="list">
-    ${FAQ.map(([question, answer]) => `<li><h3>${t(question)}</h3><div class="small muted">${t(answer)}</div></li>`).join('')}
+    ${FAQ.map(([question, answer]) => `<li><h3>${t(question)}</h3><div class="small muted">${linkToCode(t(answer))}</div></li>`).join('')}
   </ul>
 </section>
 <footer class="small muted"><span>Kept</span><a href="mailto:support@kept-ledger.com">support@kept-ledger.com</a></footer>
