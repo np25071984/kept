@@ -71,8 +71,9 @@ export function drawnBars(bars: Bar[]): Bar[] {
   return bars.filter((b) => b.amount > 0 || b.prev > 0)
 }
 
-// The drawn top-level bar that moved most, leaving out the catch-alls.
-export function biggestChange(bars: Bar[]): Bar | null {
-  const candidates = drawnBars(bars).filter((b) => !b.sub && b.key !== NOBODY && b.key !== OTHER && b.amount !== b.prev)
-  return candidates.sort((a, b) => Math.abs(b.amount - b.prev) - Math.abs(a.amount - a.prev))[0] ?? null
+// What to say about a watched group's total, given how much of its spending has an answer. A share of null means nothing to compare.
+export type CoverageNote = 'complete' | 'partial' | 'unanswered'
+export function coverageNote(share: number | null | undefined): CoverageNote {
+  if (share == null || share >= 1) return 'complete'
+  return share === 0 ? 'unanswered' : 'partial'
 }

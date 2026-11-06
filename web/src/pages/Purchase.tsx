@@ -80,7 +80,7 @@ function LineRow({ line, currency }: { line: Line; currency: string }) {
   return (
     <tr>
       <td>{line.category}{line.rest && line.item == null && <span className="muted small"> {tr('(rest)')}</span>}</td>
-      <td>{line.item ?? ''}</td>
+      <td>{line.item ?? ''}{line.notes && <div className="muted small">{line.notes}</div>}</td>
       <td>{shares.join(', ')}</td>
       <td className="num">{formatMoney(line.amount, currency)}</td>
     </tr>

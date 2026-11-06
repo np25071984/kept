@@ -59,7 +59,7 @@ export function PurchasesPage() {
     <>
       <div className="page-head">
         <h1>{tr('My purchases')}</h1>
-        {page && !starting && <p className="muted">{plural(page.count, ['{n} purchase', '{n} purchases'], ['{n} покупка', '{n} покупки', '{n} покупок'])} · {formatMoney(page.total, currency)}</p>}
+        {page && key && <p className="muted">{plural(page.count, ['{n} purchase', '{n} purchases'], ['{n} покупка', '{n} покупки', '{n} покупок'])} · {formatMoney(page.total, currency)}</p>}
       </div>
       {!starting && <div className="filterbar">
         <span className="search-field grow">
