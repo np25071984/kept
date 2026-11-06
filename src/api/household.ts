@@ -12,6 +12,7 @@ export const SetupPatch = z.object({
 })
 
 export const MePatch = z.object({ name: Name.optional(), language: z.enum(['en', 'ru']).nullish() })
+export const DeleteMe = z.object({ confirm_email: z.string().describe('The account\'s email, typed by the member to confirm.') })
 export const MemberPatch = z.object({ role: z.enum(['owner', 'member']) })
 export const InviteBody = z.object({ email: z.email() })
 export const AcceptBody = z.object({ token: z.string().min(10), name: Name })

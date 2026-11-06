@@ -1,14 +1,24 @@
+import type { FastifyRequest } from 'fastify'
 import { z } from 'zod'
 import { acceptInvite, createInvite, deleteInvite, getSetup, issueApiKey, listApiKeys, revokeApiKey, updateMe, updateSetup } from '../../ledger/households.js'
-import { listMembers, removeMember, updateMember } from '../../ledger/members.js'
+import { deleteAccount, listMembers, removeMember, updateMember, type Deleted } from '../../ledger/members.js'
 import type { App, RouteDeps } from '../app.js'
 import { IdParams } from '../../api/common.js'
 import {
-  AcceptBody, Accepted, ApiKey, ApiKeyBody, Invite, InviteBody, IssuedKey, MePatch, MemberPatch, Members, Setup, SetupPatch,
+  AcceptBody, Accepted, ApiKey, ApiKeyBody, Invite, InviteBody, IssuedKey, DeleteMe, MePatch, MemberPatch, Members, Setup, SetupPatch,
 } from '../../api/household.js'
 
 export function householdRoutes(app: App, deps: RouteDeps) {
   const { run } = deps
+
+  // A failed email can't undo a deletion that has committed, so it is only logged.
+  const tellDeleted = async (request: FastifyRequest, person: Deleted, by: 'self' | 'owner') => {
+    try {
+      await deps.mailer.sendAccountDeleted({ ...person, by })
+    } catch (error) {
+      request.log.error(error, 'account deletion email not sent')
+    }
+  }
 
   app.get('/api/v1/setup', {
     schema: { tags: ['setup'], summary: 'The household\'s setup steps and whether the caller has been introduced.', response: { 200: Setup } },
@@ -22,6 +32,13 @@ export function householdRoutes(app: App, deps: RouteDeps) {
     schema: { tags: ['setup'], summary: 'Change the caller\'s own name or language. Returns the setup.', body: MePatch, response: { 200: Setup } },
   }, async (request) => run(request, (tx, caller) => updateMe(tx, caller, request.body)))
 
+  app.delete('/api/v1/me', {
+    schema: { tags: ['setup'], summary: 'Delete the caller\'s account and everything they logged, for good. Its only owner must make someone else an owner first; the only member deletes the household too.', body: DeleteMe },
+  }, async (request, reply) => {
+    await tellDeleted(request, await run(request, (tx, caller) => deleteAccount(tx, caller, request.body.confirm_email)), 'self')
+    return reply.status(204).send()
+  })
+
   app.get('/api/v1/members', {
     schema: { tags: ['setup'], summary: 'The household\'s members and open invites.', response: { 200: Members } },
   }, async (request) => run(request, (tx, caller) => listMembers(tx, caller)))
@@ -33,7 +50,7 @@ export function householdRoutes(app: App, deps: RouteDeps) {
   app.delete('/api/v1/members/:id', {
     schema: { tags: ['setup'], summary: 'Owners only. Remove a member and everything they logged; not the last owner.', params: IdParams },
   }, async (request, reply) => {
-    await run(request, (tx, caller) => removeMember(tx, caller, request.params.id))
+    await tellDeleted(request, await run(request, (tx, caller) => removeMember(tx, caller, request.params.id)), 'owner')
     return reply.status(204).send()
   })
 

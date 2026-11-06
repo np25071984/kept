@@ -13,6 +13,8 @@ export interface Harness {
   owner: Db
   invites: { to: string; link: string }[]
   codes: { to: string; code: string; link: string; language?: string }[]
+  deletions: { to: string; by: 'self' | 'owner'; language?: string }[]
+  mailer: Mailer
   close(): Promise<void>
 }
 
@@ -24,15 +26,17 @@ export async function startHarness(): Promise<Harness> {
   const db = createDb(APP_URL)
   const invites: { to: string; link: string }[] = []
   const codes: { to: string; code: string; link: string; language?: string }[] = []
+  const deletions: Harness['deletions'] = []
   const mailer: Mailer = {
     async sendInvite({ to, link }) { invites.push({ to, link }) },
     async sendInviteToMember({ to }) { invites.push({ to, link: '' }) },
     async sendSignInCode(input) { codes.push(input) },
+    async sendAccountDeleted(input) { deletions.push(input) },
   }
   // Tests make more requests from one address than a person would; oauth.test.ts checks the limits.
   const app = await buildApp({ db, mailer, publicUrl: 'https://kept.test', limitRequests: false })
   return {
-    app, db, owner, invites, codes,
+    app, db, owner, invites, codes, deletions, mailer,
     async close() {
       await app.close()
       await db.destroy()

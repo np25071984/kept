@@ -167,6 +167,8 @@ export interface Mailer {
   // An invite to an email that already has an account: it can't join, so the email carries no link.
   sendInviteToMember(input: { to: string; inviter: string; household: string; language?: Language }): Promise<void>
   sendSignInCode(input: { to: string; code: string; link: string; language?: Language }): Promise<void>
+  // Sent after a deletion commits: the proof of it, and the alarm if the member didn't do it.
+  sendAccountDeleted(input: { to: string; by: 'self' | 'owner'; language?: Language }): Promise<void>
 }
 
 // An email that already has an account gets an invite too, so the answer never reveals who has one (VISION.md §3.6).

@@ -17,3 +17,18 @@ export function memberChangeProblem(members: Member[], callerId: string, targetI
   if (losesOwner && owners === 1) return { code: 'last_owner', message: 'A household needs an owner: make someone else an owner first.' }
   return null
 }
+
+// What deleting the caller's own account does (VISION.md §4.C). A household needs an owner, so its only owner
+// hands over first, unless nobody else is left, when the household goes too.
+export function accountDeletion(members: Member[], callerId: string): { deletes: 'account' | 'household' } | Problem {
+  const caller = members.find((m) => m.id === callerId)
+  if (!caller) return { code: 'not_found', message: 'Member not found.' }
+  if (members.length === 1) return { deletes: 'household' }
+  const owners = members.filter((m) => m.role === 'owner').length
+  if (caller.role === 'owner' && owners === 1) return { code: 'last_owner', message: 'A household needs an owner: make someone else an owner first.' }
+  return { deletes: 'account' }
+}
+
+export function confirmsEmail(typed: string, email: string): boolean {
+  return typed.trim().toLowerCase() === email.trim().toLowerCase()
+}

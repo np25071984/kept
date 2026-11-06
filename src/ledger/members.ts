@@ -1,7 +1,9 @@
+import { sql } from 'kysely'
 import type { Tx } from '../db/db.js'
-import { memberChangeProblem } from '../domain/members.js'
+import { isLanguage, type Language } from '../domain/language.js'
+import { accountDeletion, confirmsEmail, memberChangeProblem } from '../domain/members.js'
 import type { Caller } from './caller.js'
-import { conflict, forbidden, notFound } from './errors.js'
+import { conflict, forbidden, invalid, notFound } from './errors.js'
 
 // Settings → Household → Members (VISION.md §4.C): who is in the household and who is invited. Owners change them.
 
@@ -30,7 +32,37 @@ export async function updateMember(tx: Tx, caller: Caller, id: string, role: 'ow
 }
 
 // Removing a member deletes their account and everything they logged; their sign-ins and keys stop working at once.
-export async function removeMember(tx: Tx, caller: Caller, id: string) {
+export async function removeMember(tx: Tx, caller: Caller, id: string): Promise<Deleted> {
   await check(tx, caller, id, 'remove')
+  const removed = await tx.selectFrom('users').select(['email', 'language']).where('id', '=', id).executeTakeFirstOrThrow()
+  await forgetSignIns(tx, id)
   await tx.deleteFrom('users').where('id', '=', id).execute()
+  return deleted(removed)
+}
+
+// Whom to tell once the deletion has committed.
+export interface Deleted {
+  to: string
+  language: Language
+}
+
+const deleted = (user: { email: string; language: string | null }): Deleted => ({ to: user.email, language: isLanguage(user.language) ? user.language : 'en' })
+
+// Deleting a user leaves their sign-in records, which aren't tied to the household by a foreign key.
+async function forgetSignIns(tx: Tx, userId: string) {
+  await tx.deleteFrom('oauth_models').where(sql<boolean>`payload->>'accountId' = ${userId}`).execute()
+}
+
+// The caller deletes their own account, and the household with it when nobody else is left. Cascades remove everything they logged.
+export async function deleteAccount(tx: Tx, caller: Caller, confirmEmail: string): Promise<Deleted> {
+  const members = await tx.selectFrom('users').select(['id', 'role', 'email', 'language']).execute()
+  const me = members.find((m) => m.id === caller.user_id)
+  if (!me) throw notFound('Member')
+  if (!confirmsEmail(confirmEmail, me.email)) throw invalid('email_mismatch', "That isn't the email on this account.")
+  const outcome = accountDeletion(members, caller.user_id)
+  if ('code' in outcome) throw conflict(outcome.code, outcome.message)
+  await forgetSignIns(tx, caller.user_id)
+  if (outcome.deletes === 'household') await tx.deleteFrom('households').where('id', '=', caller.household_id).execute()
+  else await tx.deleteFrom('users').where('id', '=', caller.user_id).execute()
+  return deleted(me)
 }

@@ -15,11 +15,11 @@ export const PRIVACY_SECTIONS: [string, string][] = [
   ['Who runs Kept', `Kept at kept-ledger.com is run by Nikolai Poriadin in the United States. Questions: ${SUPPORT}. This policy doesn't cover a copy of Kept that someone runs on their own server.`],
   ['What Kept stores', 'Your name and email, your household\'s name, categories and people & things, and what you log: purchases, notes, watched items, caps, recurring bills and what your assistant read from a source. Kept doesn\'t store the files themselves or connect to your bank or inbox.'],
   ['Who sees it', 'Other household members see shared totals, never your purchases. Private purchases stay out of those totals.'],
-  ['Who else handles it', 'DigitalOcean hosts Kept in the United States. Resend delivers sign-in and invite emails. Cloudflare checks for bots on the sign-in page. Your assistant is a separate service, so what you tell it is covered by its maker\'s privacy policy.'],
+  ['Who else handles it', 'DigitalOcean hosts Kept in the United States. Resend delivers Kept\'s emails. Cloudflare checks for bots on the sign-in page. Your assistant is a separate service, so what you tell it is covered by its maker\'s privacy policy.'],
   ['What Kept doesn\'t do', 'Kept has no ads or analytics and doesn\'t sell your data. It uses only the cookies and browser storage needed for sign-in and your language.'],
   ['Logs', 'Server logs record requests, including IP addresses, and are deleted within 30 days.'],
   ['Backups', 'The server is backed up automatically. Deleted data and logs can stay in a backup for up to 30 days.'],
-  ['Your data', `Download your data any time in Settings → Profile. To delete your account and data, email ${SUPPORT}: it's done within 30 days. Owners can also remove a member and everything they logged.`],
+  ['Your data', `Download your data any time in Settings → Profile. Delete your account and data there too, or email ${SUPPORT} and it's done within 30 days. Owners can also remove a member and everything they logged.`],
   ['Changes', 'Updates appear on this page, with the date below.'],
 ]
 

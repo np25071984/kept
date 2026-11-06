@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { resendMailer } from '../../src/mail/resend.js'
-import { inviteEmail, inviteToMemberEmail, signInCodeEmail } from '../../src/mail/templates.js'
+import { accountDeletedEmail, inviteEmail, inviteToMemberEmail, signInCodeEmail } from '../../src/mail/templates.js'
 
 describe('emails', () => {
   it('puts the code as one run of digits beside "code", where phones offer to copy it', () => {
@@ -53,5 +53,22 @@ describe('resendMailer', () => {
 
     const refused = (async () => new Response('domain not verified', { status: 403 })) as typeof fetch
     await expect(resendMailer({ apiKey: 're_test', from: 'x', fetch: refused }).sendSignInCode({ to: 'a@b.c', code: '1', link: '' })).rejects.toThrow('Resend refused the email (403)')
+  })
+})
+
+describe('account deleted', () => {
+  it('says who deleted it, mentions backups and carries no link', () => {
+    const own = accountDeletedEmail('self')
+    expect(own.subject).toBe('Your Kept account was deleted')
+    expect(own.text).toContain('Your Kept account and the data you logged were deleted.')
+    expect(own.text).toContain("If this wasn't you")
+    expect(own.text).toContain('up to 30 days')
+    expect(own.html).not.toContain('<a ')
+    expect(accountDeletedEmail('owner').text).toContain('An owner of your household removed')
+  })
+
+  it('is translated', () => {
+    expect(accountDeletedEmail('self', 'ru').subject).toBe('Ваш аккаунт Kept удалён')
+    expect(accountDeletedEmail('owner', 'ru').text).toContain('Владелец вашей семьи')
   })
 })
