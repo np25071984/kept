@@ -58,6 +58,7 @@ describe('MCP server', () => {
     const first = await call(client, 'get_playbook')
     expect(first.body.start_with).toContain('First conversation: setting up a new household')
     expect(first.body.playbook).toContain('## Logging an expense')
+    expect(first.body.version).toEqual(expect.any(String))
     expect(first.body.web_pages.home).toBe('https://kept.test/app/')
 
     await call(client, 'update_setup', { introduced: true, steps: { basics: 'done', cost_centers: 'done' } })
@@ -99,6 +100,27 @@ describe('MCP server', () => {
     expect(both.body.transactions.map((t: { merchant: string }) => t.merchant).sort()).toEqual(['Bodega', 'Shell'])
     const tiny = await client.callTool({ name: 'log_transaction', arguments: { transactions: [{ amount: 0.001, category: 'Other' }] } })
     expect(tiny.isError).toBe(true)
+    await client.close()
+  })
+
+  it('names a watched group nobody asked about, until the answer is recorded', async () => {
+    const client = await connect(key)
+    await call(client, 'manage_vocabulary', { action: 'add', what: 'category', name: 'Groceries/Alcohol' })
+    const watch = await call(client, 'manage_watches', { action: 'start', category: 'Groceries/Alcohol' })
+    const one = (reply: { body: { results: { result: string; unchecked_groups?: string[]; transaction: { id: string } }[] } }) => reply.body.results[0]!
+
+    const missed = one(await call(client, 'log_transaction', { transactions: [{ amount: 85, date: '2026-09-01', merchant: 'Corner Market', category: 'Groceries' }] }))
+    expect(missed.unchecked_groups).toContain('Groceries/Alcohol')
+    const edited = await call(client, 'edit_transaction', { id: missed.transaction.id, checked_groups: ['Groceries/Alcohol'] })
+    expect(edited.body.checked_groups).toContain('Groceries/Alcohol')
+
+    const asked = one(await call(client, 'log_transaction', { transactions: [{ amount: 240, date: '2026-09-10', merchant: 'Hill Market', category: 'Groceries', checked_groups: ['Groceries/Alcohol'] }] }))
+    expect(asked.unchecked_groups ?? []).not.toContain('Groceries/Alcohol')
+    const statement = one(await call(client, 'log_transaction', { transactions: [{ amount: 510, date: '2026-09-20', merchant: 'Lake Market', category: 'Groceries', source: { kind: 'statement' } }] }))
+    expect(statement.result).toBe('created')
+    expect(statement.unchecked_groups).toBeUndefined()
+
+    await call(client, 'manage_watches', { action: 'stop', id: watch.body.id })
     await client.close()
   })
 

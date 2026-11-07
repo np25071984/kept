@@ -27,6 +27,20 @@ export async function watchedGroups(tx: Tx, caller: Caller): Promise<WatchedGrou
   return uniqueGroups(watches.map((w): WatchedGroup => (w.category ? { kind: 'category', path: w.category } : { kind: 'item', item: w.item! })))
 }
 
+// Where the caller has bought each named item, which is where a watched item can turn up.
+export async function itemHistory(tx: Tx, caller: Caller): Promise<{ item: string; category: string }[]> {
+  const rows = await tx
+    .selectFrom('line_items')
+    .innerJoin('transactions', 'transactions.id', 'line_items.transaction_id')
+    .innerJoin('categories', 'categories.id', 'line_items.category_id')
+    .select(['line_items.item', 'categories.path'])
+    .distinct()
+    .where('transactions.spent_by', '=', caller.user_id)
+    .where('line_items.item', 'is not', null)
+    .execute()
+  return rows.map((row) => ({ item: row.item!, category: row.path }))
+}
+
 // Watching a group already watched returns the existing one.
 export async function addWatch(tx: Tx, caller: Caller, body: z.infer<typeof api.WatchBody>): Promise<WatchView> {
   const input = watchInput(body)

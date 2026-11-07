@@ -109,6 +109,7 @@ export const WriteResult = z.object({
   kept: z.array(FieldChange.extend({ reason: z.enum(['user_edit', 'line_items_exceed_amount']) })).optional().describe('Changes not applied, and why.'),
   warnings: z.array(z.string()).optional().describe('A date the user may not have meant.'),
   caps: z.array(z.string()).optional().describe('Caps this write took past 80% or over, as lines to say in the confirmation.'),
+  unchecked_groups: z.array(z.string()).optional().describe('Watched groups this purchase could hold that nobody asked about.'),
 })
 
 export const WriteResults = z.union([z.object({ results: z.array(WriteResult) }), WriteResult])

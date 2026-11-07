@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkedGroups, computeCoverage, groupsWithLines, isUnder, uniqueGroups } from '../../src/domain/coverage.js'
+import { checkedGroups, computeCoverage, groupsWithLines, isUnder, uncheckedGroups, uniqueGroups, type WatchedGroup } from '../../src/domain/coverage.js'
 import { watchInput } from '../../src/domain/memory.js'
 
 describe('watched groups', () => {
@@ -51,5 +51,39 @@ describe('checked groups', () => {
     const lines = [{ amount: 900, category: 'Groceries/Alcohol/Wine' }, { amount: 300, category: 'Groceries', item: 'Snacks' }]
     expect(groupsWithLines(watched, lines)).toEqual(['Groceries/Alcohol', 'snacks'])
     expect(checkedGroups([' Groceries/Alcohol ', 'Car'], watched, [{ amount: 100, category: 'Groceries' }])).toEqual(['Groceries/Alcohol', 'Car'])
+  })
+})
+
+describe('uncheckedGroups', () => {
+  const alcohol: WatchedGroup = { kind: 'category', path: 'Groceries/Alcohol' }
+  const snacks: WatchedGroup = { kind: 'item', item: 'snacks' }
+  const groceries = { result: 'created' as const, kind: 'talk', checked_groups: [], lines: [{ category: 'Groceries' }] }
+
+  it('names a watched category under the same top-level category as the purchase', () => {
+    expect(uncheckedGroups([alcohol], groceries, [])).toEqual(['Groceries/Alcohol'])
+    expect(uncheckedGroups([alcohol], { ...groceries, lines: [{ category: 'Groceries/coffee' }] }, [])).toEqual(['Groceries/Alcohol'])
+  })
+
+  it('leaves out a purchase the group is not bought in', () => {
+    expect(uncheckedGroups([alcohol], { ...groceries, lines: [{ category: 'Car/Fuel' }] }, [])).toEqual([])
+  })
+
+  it('leaves out a group already answered about, whatever its case', () => {
+    expect(uncheckedGroups([alcohol], { ...groceries, checked_groups: ['groceries/alcohol'] }, [])).toEqual([])
+  })
+
+  it('names a watched item only where the member bought it before', () => {
+    expect(uncheckedGroups([snacks], groceries, [])).toEqual([])
+    expect(uncheckedGroups([snacks], groceries, [{ item: 'Snacks', category: 'Groceries' }])).toEqual(['snacks'])
+    expect(uncheckedGroups([snacks], groceries, [{ item: 'snacks', category: 'Eating out' }])).toEqual([])
+  })
+
+  it('waits on statement charges and possible duplicates', () => {
+    expect(uncheckedGroups([alcohol], { ...groceries, kind: 'statement' }, [])).toEqual([])
+    expect(uncheckedGroups([alcohol], { ...groceries, result: 'possible_duplicate' }, [])).toEqual([])
+  })
+
+  it('checks a purchase attached to one already logged', () => {
+    expect(uncheckedGroups([alcohol], { ...groceries, result: 'attached', kind: 'email' }, [])).toEqual(['Groceries/Alcohol'])
   })
 })

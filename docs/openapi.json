@@ -673,6 +673,13 @@
                                 "items": {
                                   "type": "string"
                                 }
+                              },
+                              "unchecked_groups": {
+                                "description": "Watched groups this purchase could hold that nobody asked about.",
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
                               }
                             },
                             "required": [
@@ -929,6 +936,13 @@
                         },
                         "caps": {
                           "description": "Caps this write took past 80% or over, as lines to say in the confirmation.",
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "unchecked_groups": {
+                          "description": "Watched groups this purchase could hold that nobody asked about.",
                           "type": "array",
                           "items": {
                             "type": "string"
@@ -2304,6 +2318,13 @@
                       "items": {
                         "type": "string"
                       }
+                    },
+                    "unchecked_groups": {
+                      "description": "Watched groups this purchase could hold that nobody asked about.",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     }
                   },
                   "required": [
@@ -2623,6 +2644,13 @@
                     },
                     "caps": {
                       "description": "Caps this write took past 80% or over, as lines to say in the confirmation.",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "unchecked_groups": {
+                      "description": "Watched groups this purchase could hold that nobody asked about.",
                       "type": "array",
                       "items": {
                         "type": "string"
