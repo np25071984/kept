@@ -83,9 +83,15 @@ export function groupsWithLines(groups: WatchedGroup[], lines: CoverageLine[]): 
   return groups.filter((group) => lines.some((line) => inGroup(line, group))).map(groupKey)
 }
 
+// What an assistant sent as answered, as the names of groups: watched now, or already on the purchase, whose watch may have stopped.
+export function answeredGroups(answered: string[], watched: WatchedGroup[], alreadyChecked: string[] = []): string[] {
+  const known = new Map([...alreadyChecked, ...watched.map(groupKey)].map((group) => [group.toLowerCase(), group]))
+  return [...new Set(answered.flatMap((group) => known.get(group.trim().toLowerCase()) ?? []))]
+}
+
 // The groups a purchase records as checked: those the user answered about, once each, and those its lines cover.
 export function checkedGroups(answered: string[], watched: WatchedGroup[], lines: CoverageLine[]): string[] {
-  return [...new Set([...answered.map((group) => group.trim()), ...groupsWithLines(watched, lines)])]
+  return [...new Set([...answeredGroups(answered, watched), ...groupsWithLines(watched, lines)])]
 }
 
 export interface WrittenPurchase {

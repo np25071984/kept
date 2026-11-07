@@ -192,7 +192,7 @@ Any answer works:
 | "Skip"                           | Groceries $95                                    | None               |
 
 - **One question for all watched groups,** never one per group.
-- **Rough amounts are fine.** "About $20" is logged as $20. For decisions, a close number is far better than none.
+- **Rough amounts are fine, invented ones are not.** "About $20" is logged as $20. For decisions, a close number is far better than none. An amount comes from the user or a receipt: "four beers" gets "Roughly how much?", and an unknown amount with no receipt counts as a skip, since a checked group with no line is a known $0.
 - **"No" and "skip" are different.** "No" means the watched groups are known to be $0 in this purchase; "skip" means unknown. The ledger records which groups were checked, so reports can tell the difference (see [Coverage](#coverage)).
 - **Only where it makes sense.** The AI asks at stores and in categories where the groups have been bought before, not at the gas station. If the user keeps skipping at one store, the AI asks less often there and says so.
 - **The ledger catches a missed question.** When a purchase the user told about or a receipt is written in a category where a watched group is bought and nobody answered about that group, the ledger says so in its reply, and the AI asks then. Statement charges wait, since they are confirmed as a batch.

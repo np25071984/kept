@@ -2,7 +2,7 @@ import type { z } from 'zod'
 import type * as api from '../api/transactions.js'
 import type { Tx } from '../db/db.js'
 import { capNotes } from '../domain/caps.js'
-import { checkedGroups, uncheckedGroups } from '../domain/coverage.js'
+import { answeredGroups, checkedGroups, uncheckedGroups } from '../domain/coverage.js'
 import { addDays, checkWhen, dateWarning, isLocalDate, todayIn } from '../domain/dates.js'
 import { planEdit } from '../domain/edits.js'
 import { buildLines, validateShares, type Line, type SpentFor } from '../domain/lines.js'
@@ -373,6 +373,7 @@ export async function patchTransaction(tx: Tx, caller: Caller, id: string, patch
     line.category = vocabulary.categoryPath(vocabulary.categoryId(line.category))
     for (const entry of line.spent_for ?? []) entry.cost_center = vocabulary.costCenterName(vocabulary.costCenterId(entry.cost_center))
   }
+  const checked = patch.checked_groups && answeredGroups(patch.checked_groups, await watchedGroups(tx, caller), existing.checked_groups)
 
   await tx
     .updateTable('transactions')
@@ -387,7 +388,7 @@ export async function patchTransaction(tx: Tx, caller: Caller, id: string, patch
       ...(patch.merchant !== undefined && { merchant: patch.merchant?.trim() || null }),
       ...(patch.notes !== undefined && { notes: patch.notes }),
       ...(patch.private !== undefined && { private: patch.private }),
-      ...(patch.checked_groups !== undefined && { checked_groups: patch.checked_groups }),
+      ...(checked && { checked_groups: checked }),
     })
     .where('id', '=', id)
     .execute()
