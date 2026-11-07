@@ -2,7 +2,7 @@ import type { z } from 'zod'
 import type * as api from '../api/transactions.js'
 import type { Tx } from '../db/db.js'
 import { capNotes } from '../domain/caps.js'
-import { checkedGroups } from '../domain/coverage.js'
+import { checkedGroups, uncheckedGroups } from '../domain/coverage.js'
 import { addDays, checkWhen, dateWarning, isLocalDate, todayIn } from '../domain/dates.js'
 import { planEdit } from '../domain/edits.js'
 import { buildLines, validateShares, type Line, type SpentFor } from '../domain/lines.js'
@@ -14,7 +14,7 @@ import type { Caller } from './caller.js'
 import { checkAmounts, invalid, notFound, unwrap } from './errors.js'
 import { memberLanguage } from './households.js'
 import { loadVocabulary, type Vocabulary } from './vocabulary.js'
-import { watchedGroups } from './watches.js'
+import { itemHistory, watchedGroups } from './watches.js'
 
 // Request bodies, as the REST API validated them.
 export type SpentForBody = z.infer<typeof api.SpentFor>
@@ -32,10 +32,14 @@ export type WriteResult = z.infer<typeof api.WriteResult>
 export async function createTransactions(tx: Tx, caller: Caller, bodies: TransactionBody[], now = new Date()): Promise<WriteResult[]> {
   const results: WriteResult[] = []
   const capsBefore = await listCaps(tx, caller, now)
+  const watched = await watchedGroups(tx, caller)
+  const history = watched.some((group) => group.kind === 'item') ? await itemHistory(tx, caller) : []
   for (const body of bodies) {
     const result = await createOne(tx, caller, body, now)
-    const warning = body.date ? dateWarning(body.date, todayIn(caller.timezone, now), (body.source?.kind ?? 'talk') === 'talk') : null
-    results.push(warning ? { ...result, warnings: [warning] } : result)
+    const kind = body.source?.kind ?? 'talk'
+    const warning = body.date ? dateWarning(body.date, todayIn(caller.timezone, now), kind === 'talk') : null
+    const unchecked = uncheckedGroups(watched, { result: result.result, kind, checked_groups: result.transaction.checked_groups, lines: result.transaction.line_items }, history)
+    results.push({ ...result, ...(warning && { warnings: [warning] }), ...(unchecked.length > 0 && { unchecked_groups: unchecked }) })
   }
   if (capsBefore.length && results.length) {
     const notes = capNotes(capsBefore, await listCaps(tx, caller, now), caller.currency)

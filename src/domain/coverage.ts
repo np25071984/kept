@@ -87,3 +87,25 @@ export function groupsWithLines(groups: WatchedGroup[], lines: CoverageLine[]): 
 export function checkedGroups(answered: string[], watched: WatchedGroup[], lines: CoverageLine[]): string[] {
   return [...new Set([...answered.map((group) => group.trim()), ...groupsWithLines(watched, lines)])]
 }
+
+export interface WrittenPurchase {
+  result: 'created' | 'attached' | 'possible_duplicate'
+  kind: string
+  checked_groups: string[]
+  lines: { category: string }[]
+}
+
+// Watched groups a purchase just written could hold and nobody asked about. An item is bought where the member bought it before.
+// A statement charge is confirmed in a batch, and a possible duplicate has its own question first.
+export function uncheckedGroups(watched: WatchedGroup[], purchase: WrittenPurchase, itemHistory: { item: string; category: string }[]): string[] {
+  if (purchase.kind === 'statement' || purchase.result === 'possible_duplicate') return []
+  const checked = new Set(purchase.checked_groups.map((group) => group.toLowerCase()))
+  const tops = new Set(purchase.lines.map((line) => topLevel(line.category)))
+  return watched
+    .filter((group) => {
+      if (checked.has(groupKey(group).toLowerCase())) return false
+      if (group.kind === 'category') return tops.has(topLevel(group.path))
+      return itemHistory.some((past) => past.item.toLowerCase() === group.item.toLowerCase() && tops.has(topLevel(past.category)))
+    })
+    .map(groupKey)
+}

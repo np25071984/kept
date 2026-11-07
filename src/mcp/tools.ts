@@ -8,6 +8,7 @@ import { MergeBody, SourceBody, TransactionBatch, TransactionPatch, TransactionQ
 import {
   capCall, ManageCaps, ManageNotes, ManageRepeats, ManageVocabulary, ManageWatches, noteCall, query, repeatCall, vocabularyCall, watchCall, type Method, type Planned,
 } from './actions.js'
+import { VERSION } from '../version.js'
 import { FIRST_MEMBER, NEW_MEMBER, PLAYBOOK, resumeSetup, webPages } from './playbook.js'
 
 // Every tool is a thin call to the REST API as the same caller (IMPLEMENTATION.md §5.1).
@@ -50,6 +51,7 @@ export async function playbook(rest: Rest, publicUrl: string) {
   return {
     start_with: s.start === 'resume' ? resumeSetup(s.household.next_step!) : START_WITH[s.start],
     today: s.today,
+    version: VERSION,
     timezone: s.household.timezone,
     currency: s.household.currency,
     setup: setup.body,
@@ -69,7 +71,7 @@ export async function playbook(rest: Rest, publicUrl: string) {
 export function registerTools(server: McpServer, rest: Rest, publicUrl: string) {
   server.registerTool('get_playbook', {
     title: 'Get the playbook',
-    description: 'Call this first in every conversation, before asking the user anything about money or their Kept account. Returns how to ask about and log expenses (follow it), what to do first (start_with: the first conversation when setup is unfinished), today\'s date, the household\'s categories, cost centers and members, the user\'s notes and watched groups, and the addresses of Kept\'s web pages (web_pages). Read the notes before asking anything. Then call get_updates and mention each update.',
+    description: 'Call this first in every conversation, before asking the user anything about money or their Kept account. Returns how to ask about and log expenses (follow it), what to do first (start_with: the first conversation when setup is unfinished), today\'s date, Kept\'s version, the household\'s categories, cost centers and members, the user\'s notes and watched groups, and the addresses of Kept\'s web pages (web_pages). Read the notes before asking anything. Then call get_updates and mention each update.',
     annotations: read,
   }, async () => ({ content: [{ type: 'text', text: JSON.stringify(await playbook(rest, publicUrl)) }] }))
 
@@ -81,7 +83,7 @@ export function registerTools(server: McpServer, rest: Rest, publicUrl: string) 
 
   server.registerTool('log_transaction', {
     title: 'Log transactions',
-    description: 'Write one or more purchases. Only after you showed the user the final record ("Log $60.00 to Car/Fuel for the Kia, today?") and they said yes in reply. A request to log, an answer to your question or allowing this tool is not a yes. Each is matched against purchases already logged: "created", "attached" (tell the user what changed, and what was kept because they edited it) or "possible_duplicate" (ask if it\'s the same purchase; merge_transactions if yes). "warnings" flags a date the user may not have meant; ask them.',
+    description: 'Write one or more purchases. Only after you showed the user the final record and they said yes in reply. Ask about watched groups (get_playbook\'s watching) in that same message: "Log $85.00 at Walmart to Groceries, today? You\'re watching alcohol: any in there?" A request to log or allowing this tool is not a yes. Send the groups they answered about in checked_groups. "unchecked_groups" names groups this purchase could hold that nobody asked about: ask now and record the answer with edit_transaction, unless the user already skipped them. Each is matched against purchases already logged: "created", "attached" (tell the user what changed, and what was kept because they edited it) or "possible_duplicate" (ask if it\'s the same purchase; merge_transactions if yes). "warnings" flags a date the user may not have meant; ask them.',
     inputSchema: TransactionBatch,
     annotations: write,
   }, async ({ transactions }) => result(await rest('POST', '/api/v1/transactions', { transactions })))

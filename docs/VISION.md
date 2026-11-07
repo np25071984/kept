@@ -48,7 +48,7 @@ sequenceDiagram
     K-->>AI: Categories, cost centers (Hyundai, Kia: both Car), notes
     AI->>K: list_transactions (recent)
     K-->>AI: Recent history (merchants, categories, cost centers, amounts)
-    AI->>User: "Was that groceries at Trader Joe's, like last Saturday?"
+    AI->>User: "Log $60.00 at Trader Joe's to Groceries, like last Saturday, today?"
     User->>AI: "No, it was gas"
     AI->>User: "For the Hyundai, like your last fill-up, or the Kia?"
     User->>AI: "Kia"
@@ -83,9 +83,9 @@ The AI fetches recent transactions from the ledger and looks for patterns (simil
 
 #### Step 3: Clarify the category
 
-The AI proposes its best guess as a yes/no question, so the user only has to confirm or correct:
+The AI puts its best guess in the record it proposes, so the user only has to confirm or correct. A yes to a guess alone would read as a yes to logging, so the guess is never a separate question unless the AI has none:
 
-> **AI:** "Was that groceries at Trader Joe's, like last Saturday?"
+> **AI:** "Log $60.00 at Trader Joe's to Groceries, like last Saturday, today?"
 >
 > **User:** "No, it was gas."
 
@@ -111,13 +111,13 @@ An expense can be spent for more than one cost center. For example, a single car
 
 #### Step 5: Confirm
 
-Before writing anything, the AI shows the final record:
+Before writing anything, the AI shows the final record, with anything it still has to ask about the purchase in the same message:
 
 > **AI:** "Log $60.00 to Car/Fuel for the Kia, today?"
 >
 > **User:** "Yes."
 
-A request to log, an answer to an earlier question or allowing the tool in the assistant isn't confirmation: only a yes to the final record is. The AI says the date as "today", "yesterday" or a weekday and day, and reads a date without a year as the most recent one that isn't in the future.
+A request to log or allowing the tool in the assistant isn't confirmation. An answer that changes the record gets the new record asked again. The AI says the date as "today", "yesterday" or a weekday and day, and reads a date without a year as the most recent one that isn't in the future.
 
 #### Step 6: Submit
 
@@ -172,11 +172,11 @@ The user sets one up in conversation ("I want to keep an eye on alcohol", "track
 
 #### Asking
 
-When a purchase is in a category or at a store where watched groups are bought, the AI names them in **one** question:
+When a purchase is in a category or at a store where watched groups are bought, the AI names them in **one** question, in the same message as the record:
 
 > **User:** "$95 at Whole Foods."
 >
-> **AI:** "You're watching alcohol and snacks. Any of that in there, and roughly how much?"
+> **AI:** "Log $95 at Whole Foods to Groceries, today? You're watching alcohol and snacks: any of that in there, and roughly how much?"
 >
 > **User:** "About $20 of wine, no snacks."
 >
@@ -195,6 +195,7 @@ Any answer works:
 - **Rough amounts are fine.** "About $20" is logged as $20. For decisions, a close number is far better than none.
 - **"No" and "skip" are different.** "No" means the watched groups are known to be $0 in this purchase; "skip" means unknown. The ledger records which groups were checked, so reports can tell the difference (see [Coverage](#coverage)).
 - **Only where it makes sense.** The AI asks at stores and in categories where the groups have been bought before, not at the gas station. If the user keeps skipping at one store, the AI asks less often there and says so.
+- **The ledger catches a missed question.** When a purchase the user told about or a receipt is written in a category where a watched group is bought and nobody answered about that group, the ledger says so in its reply, and the AI asks then. Statement charges wait, since they are confirmed as a batch.
 
 #### Receipt scan
 
