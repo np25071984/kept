@@ -305,6 +305,7 @@ export const ru: Record<string, string> = {
   'Costco is always groceries': 'В «Пятёрочке» всегда продукты',
   snacks: 'снеки',
   'Enter these in Gemini\'s "Connect to an MCP server" dialog, under Additional settings. The secret is shown only now.': 'Введите их в окне Gemini «Connect to an MCP server», в Additional settings. Секрет показывается только сейчас.',
+  'When you log, say "in Kept", like "log $50 at Target in Kept". Otherwise Gemini may use its own ledger, and nothing reaches Kept.': 'Когда записываете покупку, говорите «в Kept», например «запиши $50 в Target в Kept». Иначе Gemini может использовать собственный учёт, и в Kept ничего не попадёт.',
   'In Gemini on the web, open the connected apps settings, click "+ Custom", and enter the address above.': 'В Gemini в браузере откройте настройки подключённых приложений, нажмите «+ Custom» и введите адрес выше.',
   'Open Additional settings and click "Copy redirect URI".': 'Откройте Additional settings и нажмите «Copy redirect URI».',
   'Paste it here.': 'Вставьте его сюда.',

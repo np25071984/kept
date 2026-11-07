@@ -21,6 +21,7 @@ export const linkToCode = (escaped: string) => escaped.replace(/\[([^\]]+)\]/g, 
 // Questions people search for, answered in a line or two. [Words] link to the code.
 const FAQ: [string, string][] = [
   ["Can ChatGPT track my expenses?", "On its own, it forgets last week's purchases and files the same store differently each time. With Kept connected, it logs each purchase to your household's ledger once you confirm it, and answers questions like “How much on groceries this month?”"],
+  ["Will my assistant always get it right?", "Not always. Kept tells every assistant to confirm a purchase before saving it, but how closely it follows those rules depends on the assistant, its model and its effort level, so choose a stronger model or a higher effort level if you can. Say “in Kept” when you log (“log $50 at Target in Kept”)."],
   ["Can my partner and I track spending together?", "Yes. Each of you signs in with your own email and uses your own assistant. You share categories and household totals; each person's purchases stay theirs, and private ones stay out of the totals."],
   ["How much does it cost?", "Kept is free and [open source]. Some assistants need a paid plan to add it."],
   ["How can I see my spending?", "Ask your assistant, or sign in to Kept on the web and open Reports, where you can see your own spending or the whole household's."],

@@ -57,6 +57,7 @@ function GeminiClient() {
         <p>{t('Enter these in Gemini\'s "Connect to an MCP server" dialog, under Additional settings. The secret is shown only now.')}</p>
         <label>{t('Client ID')}<Copyable value={created.client_id} label={t('Client ID')} /></label>
         <label>{t('Client secret')}<Copyable value={created.client_secret} label={t('Client secret')} /></label>
+        <p className="muted small">{t('When you log, say "in Kept", like "log $50 at Target in Kept". Otherwise Gemini may use its own ledger, and nothing reaches Kept.')}</p>
         <button onClick={() => { setOpen(false); setCreated(null); setRedirect('') }}>{t('Done')}</button>
       </div>
     )

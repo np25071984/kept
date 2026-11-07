@@ -152,6 +152,8 @@ const RU: Record<string, string> = {
   'Copies can stay in backups for up to 30 days.': 'Копии могут оставаться в резервных копиях до 30 дней.',
   "If this wasn't you, write to support@kept-ledger.com right away.": 'Если это были не вы, сразу напишите на support@kept-ledger.com.',
   'Questions? Write to support@kept-ledger.com.': 'Есть вопросы? Напишите на support@kept-ledger.com.',
+  "Will my assistant always get it right?": 'Ассистент всегда всё делает правильно?',
+  "Not always. Kept tells every assistant to confirm a purchase before saving it, but how closely it follows those rules depends on the assistant, its model and its effort level, so choose a stronger model or a higher effort level if you can. Say “in Kept” when you log (“log $50 at Target in Kept”).":'Не всегда. Kept просит каждого ассистента подтверждать покупку перед сохранением, но насколько точно он следует этим правилам, зависит от ассистента, его модели и уровня усилий, поэтому по возможности выбирайте более сильную модель или более высокий уровень усилий. Говорите «в Kept», когда записываете покупку («запиши $50 в Target в Kept»).',
   "How much does it cost?": 'Сколько это стоит?',
   "Kept is free and [open source]. Some assistants need a paid plan to add it.": 'Kept бесплатен, его [исходный код открыт]. Некоторым ассистентам для подключения нужен платный тариф.',
   "How can I see my spending?": 'Как посмотреть свои расходы?',

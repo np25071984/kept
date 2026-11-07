@@ -23,9 +23,11 @@ describe('landing page', () => {
     expect(en).toContain('<link rel="canonical" href="https://kept-ledger.com/">')
     expect(en).toContain('<meta property="og:image" content="https://kept-ledger.com/app/icon-512.png">')
     expect(en).toContain('<h3>How much does it cost?</h3>')
+    expect(en).toContain('<h3>Will my assistant always get it right?</h3>')
     const ru = landingPage('ru', ORIGIN)
     expect(ru).toContain('<meta property="og:locale" content="ru_RU">')
     expect(ru).toContain('<h3>Сколько это стоит?</h3>')
+    expect(ru).toContain('<h3>Ассистент всегда всё делает правильно?</h3>')
   })
 
   it('links open source claims to the code, in every language', () => {
