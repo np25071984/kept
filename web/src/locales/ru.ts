@@ -57,7 +57,6 @@ export const ru: Record<string, string> = {
   // My purchases
   'Search merchant or item': 'Поиск по магазину или товару',
   Filters: 'Фильтры',
-  'Filters · {n}': 'Фильтры · {n}',
   'Close filters': 'Закрыть фильтры',
   Period: 'Период',
   'All time': 'За всё время',
