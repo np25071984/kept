@@ -28,7 +28,7 @@ const TransactionFields = z.object({
   category: z.string().nullish().describe('Main category: the whole purchase, or the rest beside line_items.'),
   spent_for: z.array(SpentFor).optional().describe('Who or what the main category was for.'),
   line_items: z.array(LineItem).optional().describe('Only the parts priced separately; the rest goes to category.'),
-  checked_groups: z.array(z.string()).optional().describe('Watched groups the user answered about, "no" included.'),
+  checked_groups: z.array(z.string()).optional().describe('Watched groups the user answered about, "no" included, named as in the member\'s watches. Any other name is ignored.'),
 })
 
 export const TransactionBody = TransactionFields.extend({

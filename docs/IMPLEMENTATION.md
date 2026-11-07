@@ -229,7 +229,7 @@ Renaming a category or cost center keeps every link. Repeat templates and `check
 | `merchant` | String    | No       |                                                                    |
 | `notes`    | Text      | No       |                                                                    |
 | `repeat_id` | UUID     | No       | Set when the transaction was created by a [repeat](VISION.md#35-repeating-spending-phone-rent-subscriptions). |
-| `checked_groups` | List of strings | No | Watched groups the user answered about or a receipt covered, e.g. `["Groceries/Alcohol", "snacks"]`. A checked group with no line item is a known $0. Groups with a line item are added on every write. Used for [coverage](VISION.md#coverage). |
+| `checked_groups` | List of strings | No | Watched groups the user answered about or a receipt covered, e.g. `["Groceries/Alcohol", "snacks"]`. A name the member doesn't watch is ignored. A checked group with no line item is a known $0. Groups with a line item are added on every write. Used for [coverage](VISION.md#coverage). |
 | `main_category` | Category link | No | The category sent as the top-level `category`: the single line's, or the rest line's beside explicit line items. |
 | `user_edited` | List of strings | No | Fields the user changed with `PATCH`: `amount`, `date`, `merchant`, `line_items`. A later source never changes them ([§3.2](#32-matching)). |
 

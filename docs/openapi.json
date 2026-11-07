@@ -211,7 +211,7 @@
                               }
                             },
                             "checked_groups": {
-                              "description": "Watched groups the user answered about, \"no\" included.",
+                              "description": "Watched groups the user answered about, \"no\" included, named as in the member's watches. Any other name is ignored.",
                               "type": "array",
                               "items": {
                                 "type": "string"
@@ -372,7 +372,7 @@
                         }
                       },
                       "checked_groups": {
-                        "description": "Watched groups the user answered about, \"no\" included.",
+                        "description": "Watched groups the user answered about, \"no\" included, named as in the member's watches. Any other name is ignored.",
                         "type": "array",
                         "items": {
                           "type": "string"
@@ -1642,7 +1642,7 @@
                     }
                   },
                   "checked_groups": {
-                    "description": "Watched groups the user answered about, \"no\" included.",
+                    "description": "Watched groups the user answered about, \"no\" included, named as in the member's watches. Any other name is ignored.",
                     "type": "array",
                     "items": {
                       "type": "string"
@@ -2020,7 +2020,7 @@
                     }
                   },
                   "checked_groups": {
-                    "description": "Watched groups the user answered about, \"no\" included.",
+                    "description": "Watched groups the user answered about, \"no\" included, named as in the member's watches. Any other name is ignored.",
                     "type": "array",
                     "items": {
                       "type": "string"

@@ -107,15 +107,18 @@ describe('MCP server', () => {
     const client = await connect(key)
     await call(client, 'manage_vocabulary', { action: 'add', what: 'category', name: 'Groceries/Alcohol' })
     const watch = await call(client, 'manage_watches', { action: 'start', category: 'Groceries/Alcohol' })
-    const one = (reply: { body: { results: { result: string; unchecked_groups?: string[]; transaction: { id: string } }[] } }) => reply.body.results[0]!
+    const one = (reply: { body: { results: { result: string; unchecked_groups?: string[]; transaction: { id: string; checked_groups: string[] } }[] } }) => reply.body.results[0]!
 
     const missed = one(await call(client, 'log_transaction', { transactions: [{ amount: 85, date: '2026-09-01', merchant: 'Corner Market', category: 'Groceries' }] }))
     expect(missed.unchecked_groups).toContain('Groceries/Alcohol')
     const edited = await call(client, 'edit_transaction', { id: missed.transaction.id, checked_groups: ['Groceries/Alcohol'] })
-    expect(edited.body.checked_groups).toContain('Groceries/Alcohol')
+    expect(edited.body.checked_groups).toEqual(['Groceries/Alcohol'])
+    const junkEdit = await call(client, 'edit_transaction', { id: missed.transaction.id, checked_groups: ['yes', 'Groceries/Alcohol'] })
+    expect(junkEdit.body.checked_groups).toEqual(['Groceries/Alcohol'])
 
-    const asked = one(await call(client, 'log_transaction', { transactions: [{ amount: 240, date: '2026-09-10', merchant: 'Hill Market', category: 'Groceries', checked_groups: ['Groceries/Alcohol'] }] }))
+    const asked = one(await call(client, 'log_transaction', { transactions: [{ amount: 240, date: '2026-09-10', merchant: 'Hill Market', category: 'Groceries', checked_groups: ['yes', 'Groceries/Alcohol'] }] }))
     expect(asked.unchecked_groups ?? []).not.toContain('Groceries/Alcohol')
+    expect(asked.transaction.checked_groups).toEqual(['Groceries/Alcohol'])
     const statement = one(await call(client, 'log_transaction', { transactions: [{ amount: 510, date: '2026-09-20', merchant: 'Lake Market', category: 'Groceries', source: { kind: 'statement' } }] }))
     expect(statement.result).toBe('created')
     expect(statement.unchecked_groups).toBeUndefined()

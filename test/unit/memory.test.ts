@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkedGroups, computeCoverage, groupsWithLines, isUnder, uncheckedGroups, uniqueGroups, type WatchedGroup } from '../../src/domain/coverage.js'
+import { answeredGroups, checkedGroups, computeCoverage, groupsWithLines, isUnder, uncheckedGroups, uniqueGroups, type WatchedGroup } from '../../src/domain/coverage.js'
 import { watchInput } from '../../src/domain/memory.js'
 
 describe('watched groups', () => {
@@ -50,7 +50,17 @@ describe('checked groups', () => {
   it('counts a group a line falls in as checked, beside the ones the user answered about', () => {
     const lines = [{ amount: 900, category: 'Groceries/Alcohol/Wine' }, { amount: 300, category: 'Groceries', item: 'Snacks' }]
     expect(groupsWithLines(watched, lines)).toEqual(['Groceries/Alcohol', 'snacks'])
-    expect(checkedGroups([' Groceries/Alcohol ', 'Car'], watched, [{ amount: 100, category: 'Groceries' }])).toEqual(['Groceries/Alcohol', 'Car'])
+    expect(checkedGroups([' Groceries/Alcohol ', 'Car'], watched, [{ amount: 100, category: 'Groceries' }])).toEqual(['Groceries/Alcohol'])
+  })
+
+  it('keeps only answers that name a watched group', () => {
+    expect(answeredGroups(['yes', ' groceries/alcohol ', 'SNACKS', 'snacks'], watched)).toEqual(['Groceries/Alcohol', 'snacks'])
+    expect(answeredGroups(['yes', 'no'], [])).toEqual([])
+  })
+
+  it('keeps a group already on the purchase, whose watch may have stopped', () => {
+    expect(answeredGroups(['nuts', 'yes'], [], ['nuts'])).toEqual(['nuts'])
+    expect(answeredGroups(['Groceries/Alcohol'], watched, ['nuts'])).toEqual(['Groceries/Alcohol'])
   })
 })
 
