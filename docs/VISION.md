@@ -468,7 +468,7 @@ Users without a supported assistant (Copilot, Meta AI, Siri) use the [messaging 
 
 #### How Kept Teaches the Agent
 
-Kept delivers the playbook with the data, so every assistant gets the same rules without the user writing a prompt. How closely each one follows them varies, so the ledger enforces what it can. What the agent learns, and from where:
+Kept delivers the playbook with the data, so every assistant gets the same rules without the user writing a prompt. How closely they are followed varies with the assistant and its model, so the ledger enforces what it can. What the agent learns, and from where:
 
 | What the agent learns       | Content                                                                                                  |
 | --------------------------- | -------------------------------------------------------------------------------------------------------- |
