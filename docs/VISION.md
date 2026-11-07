@@ -117,7 +117,7 @@ Before writing anything, the AI shows the final record:
 >
 > **User:** "Yes."
 
-The AI says the date as "today", "yesterday" or a weekday and day, and reads a date without a year as the most recent one that isn't in the future.
+A request to log, an answer to an earlier question or allowing the tool in the assistant isn't confirmation: only a yes to the final record is. The AI says the date as "today", "yesterday" or a weekday and day, and reads a date without a year as the most recent one that isn't in the future.
 
 #### Step 6: Submit
 
