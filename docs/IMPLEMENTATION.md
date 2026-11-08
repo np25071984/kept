@@ -232,6 +232,7 @@ Renaming a category or cost center keeps every link. Repeat templates and `check
 | `checked_groups` | List of strings | No | Watched groups the user answered about or a receipt covered, e.g. `["Groceries/Alcohol", "snacks"]`. A name the member doesn't watch is ignored. A checked group with no line item is a known $0. Groups with a line item are added on every write. Used for [coverage](VISION.md#coverage). |
 | `main_category` | Category link | No | The category sent as the top-level `category`: the single line's, or the rest line's beside explicit line items. |
 | `user_edited` | List of strings | No | Fields the user changed with `PATCH`: `amount`, `date`, `merchant`, `line_items`. A later source never changes them ([§3.2](#32-matching)). |
+| `created_via` | String | No | The OAuth client ID of the assistant that wrote it, from the access token: `kept-web` for the web UI, empty for an API key or a repeat. Lets an investigation tell which assistant made a bad record ([§5.4](#54-connecting-an-assistant)); never sent to the agent, and only in the member's export. |
 
 Time zones: every timestamp is stored in UTC, and each transaction also keeps the IANA time zone and the local date where it happened. The zone name (not an offset like `+09:00`) is kept so local time can always be rebuilt, including across daylight saving changes. The agent uses the user's time zone unless the conversation or the source says otherwise: "dinner in Tokyo", a foreign receipt, or a card charge with a foreign merchant location. When a purchase looks like it was made abroad, the agent includes the place and the converted amount in the confirmation: "Log ¥4,800 ($32.40) at Ichiran, Tokyo, yesterday?"
 
@@ -335,6 +336,7 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `id`         | UUID      | Yes      |                                                                  |
 | `user_id`    | UUID      | Yes      | Set from the authenticated identity.                             |
 | `text`       | Text      | Yes      | In the user's words, e.g. "Costco is always groceries."          |
+| `created_via` | String   | No       | As on a transaction.                                             |
 | `created_at` | Timestamp | Yes      |                                                                  |
 
 ## 3. REST API

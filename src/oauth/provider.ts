@@ -106,12 +106,12 @@ export function createOAuth(db: Db, keys: OAuthKeys, publicUrl: string): OAuth {
   return { provider, issuer, resource }
 }
 
-// The member an access token was issued for, if it is valid for the MCP address.
-export async function verifyAccessToken(oauth: OAuth, token: string): Promise<string | null> {
+// The member and client an access token was issued to, if it is valid for the MCP address.
+export async function verifyAccessToken(oauth: OAuth, token: string): Promise<{ accountId: string; clientId: string } | null> {
   const found = await oauth.provider.AccessToken.find(token)
   if (!found || found.isExpired || !found.accountId) return null
   const audiences = Array.isArray(found.aud) ? found.aud : [found.aud]
   if (!audiences.includes(oauth.resource)) return null
   if (!String(found.scope ?? '').split(' ').includes(SCOPE)) return null
-  return found.accountId
+  return { accountId: found.accountId, clientId: String(found.clientId) }
 }

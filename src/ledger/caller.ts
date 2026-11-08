@@ -6,4 +6,6 @@ export interface Caller {
   name: string
   timezone: string
   currency: string
+  // The OAuth client the request came through; null for an API key or the scheduler. Recorded on what it writes.
+  client_id: string | null
 }

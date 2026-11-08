@@ -87,6 +87,7 @@ export interface Database {
     repeat_id: string | null
     checked_groups: Generated<string[]>
     user_edited: Generated<string[]>
+    created_via: string | null
     created_at: Generated<Date>
     updated_at: Generated<Date>
   }
@@ -153,6 +154,7 @@ export interface Database {
     household_id: string
     text: string
     user_id: string
+    created_via: string | null
     created_at: Generated<Date>
     updated_at: Generated<Date>
   }

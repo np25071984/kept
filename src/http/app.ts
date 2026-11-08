@@ -89,8 +89,9 @@ export async function buildApp(deps: AppDeps): Promise<App> {
     let caller = null
     if (token.startsWith(API_KEY_PREFIX)) caller = await authenticate(deps.db, token)
     else if (token) {
-      const userId = await verifyAccessToken(oauth, token)
-      caller = userId ? await callerFor(deps.db, userId) : null
+      const access = await verifyAccessToken(oauth, token)
+      const found = access ? await callerFor(deps.db, access.accountId) : null
+      caller = found && { ...found, client_id: access!.clientId }
     }
     if (!caller) {
       // MCP clients follow resource_metadata to find where to sign in (RFC 9728).

@@ -7407,6 +7407,11 @@
                               ],
                               "additionalProperties": false
                             }
+                          },
+                          "created_via": {
+                            "nullable": true,
+                            "description": "The client ID of the assistant that wrote it: \"kept-web\" for the web UI, null for an API key or a repeat.",
+                            "type": "string"
                           }
                         },
                         "required": [
@@ -7422,7 +7427,8 @@
                           "repeat_id",
                           "checked_groups",
                           "line_items",
-                          "sources"
+                          "sources",
+                          "created_via"
                         ],
                         "additionalProperties": false
                       },
@@ -7444,12 +7450,18 @@
                             "type": "string",
                             "format": "date-time",
                             "description": "ISO 8601, UTC."
+                          },
+                          "created_via": {
+                            "nullable": true,
+                            "description": "The client ID of the assistant that wrote it: \"kept-web\" for the web UI, null for an API key or a repeat.",
+                            "type": "string"
                           }
                         },
                         "required": [
                           "id",
                           "text",
-                          "created_at"
+                          "created_at",
+                          "created_via"
                         ],
                         "additionalProperties": false
                       }
