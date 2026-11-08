@@ -160,7 +160,7 @@ export async function runDueRepeats(db: Db, now = new Date()): Promise<number> {
         .select(['users.id', 'users.name', 'users.role', 'households.timezone', 'households.currency'])
         .where('users.id', '=', row.user_id)
         .executeTakeFirstOrThrow()
-      const caller: Caller = { user_id: user.id, household_id, role: user.role, name: user.name, timezone: user.timezone, currency: user.currency }
+      const caller: Caller = { user_id: user.id, household_id, role: user.role, name: user.name, timezone: user.timezone, currency: user.currency, client_id: null }
       const plan = dueOccurrences(row, todayIn(user.timezone, now))
       const vocabulary = await loadVocabulary(tx)
       const template = row.template

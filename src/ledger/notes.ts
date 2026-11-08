@@ -16,7 +16,7 @@ export async function getNotes(tx: Tx, caller: Caller): Promise<NoteView[]> {
 export async function saveNote(tx: Tx, caller: Caller, text: string): Promise<NoteView> {
   const row = await tx
     .insertInto('notes')
-    .values({ household_id: caller.household_id, user_id: caller.user_id, text: text.trim() })
+    .values({ household_id: caller.household_id, user_id: caller.user_id, text: text.trim(), created_via: caller.client_id })
     .returning(['id', 'text', 'created_at'])
     .executeTakeFirstOrThrow()
   return { ...row, created_at: new Date(row.created_at).toISOString() }

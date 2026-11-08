@@ -58,6 +58,8 @@ describe('a member exports their own data', () => {
     expect(data.purchases.map((p: { merchant: string; private: boolean }) => [p.merchant, p.private])).toEqual([['Sephora', true], ['=Shell', false]])
     expect(data.purchases[1].line_items[0]).toMatchObject({ category: 'Car/Fuel', spent_for: [{ cost_center: 'Kia' }] })
     expect(data.notes.map((n: { text: string }) => n.text)).toEqual(['Costco is always groceries'])
+    // Written with an API key, so no assistant is recorded.
+    expect([data.purchases[0].created_via, data.notes[0].created_via]).toEqual([null, null])
     expect(data.watches.map((w: { group: string }) => w.group)).toEqual(['snacks'])
     expect(data.caps).toEqual([{ id: expect.any(String), category: 'Car/Fuel', cost_center: null, amount: 250, period: 'month' }])
     expect(data.repeats[0]).toMatchObject({ frequency: 'monthly', merchant: '=Shell', notes: 'full tank', private: false, line_items: [{ category: 'Car/Fuel', spent_for: [{ cost_center: 'Kia' }] }] })

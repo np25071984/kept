@@ -54,7 +54,7 @@ export async function createHousehold(ownerDb: Db, input: { name: string; curren
 
 type CallerRow = { user_id: string; household_id: string; name: string; role: string; timezone: string; currency: string }
 const toCaller = (row: CallerRow | undefined): Caller | null =>
-  row ? { user_id: row.user_id, household_id: row.household_id, name: row.name, role: row.role as Caller['role'], timezone: row.timezone, currency: row.currency } : null
+  row ? { user_id: row.user_id, household_id: row.household_id, name: row.name, role: row.role as Caller['role'], timezone: row.timezone, currency: row.currency, client_id: null } : null
 
 // One query per request: the key check returns the caller (IMPLEMENTATION.md §4).
 export async function authenticate(db: Db, key: string): Promise<Caller | null> {

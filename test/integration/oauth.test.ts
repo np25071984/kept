@@ -150,9 +150,15 @@ describe('OAuth2 for MCP clients', () => {
     expect(JSON.parse((playbook.content as { text: string }[])[0]!.text).setup.you.role).toBe('owner')
     await mcp.close()
 
-    // The REST API takes the same token.
-    const rest = await fetch(`${base}/api/v1/categories`, { headers: { authorization: `Bearer ${tokens.access_token}` } })
-    expect(rest.status).toBe(200)
+    // The REST API takes the same token, and records the client on what it writes.
+    const auth = { authorization: `Bearer ${tokens.access_token}`, 'content-type': 'application/json' }
+    const logged = await fetch(`${base}/api/v1/transactions`, { method: 'POST', headers: auth, body: JSON.stringify({ amount: 12, merchant: 'Bodega', category: 'Other' }) })
+    expect(logged.status).toBe(201)
+    const note = await fetch(`${base}/api/v1/notes`, { method: 'POST', headers: auth, body: JSON.stringify({ text: 'Bodega is snacks' }) })
+    expect(note.status).toBe(201)
+    const transactionId = (await logged.json()).transaction.id
+    expect((await h.owner.selectFrom('transactions').select('created_via').where('id', '=', transactionId).executeTakeFirstOrThrow()).created_via).toBe(tokens.clientId)
+    expect((await h.owner.selectFrom('notes').select('created_via').where('id', '=', (await note.json()).id).executeTakeFirstOrThrow()).created_via).toBe(tokens.clientId)
 
     const refreshed = await fetch(tokens.tokenEndpoint, {
       method: 'POST',

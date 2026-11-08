@@ -142,6 +142,7 @@ export async function insertTransaction(tx: Tx, caller: Caller, vocabulary: Voca
       main_category_id: input.main_category ? vocabulary.categoryId(input.main_category) : null,
       repeat_id: repeatId,
       checked_groups: input.checked_groups,
+      created_via: caller.client_id,
     })
     .returning('id')
     .executeTakeFirstOrThrow()

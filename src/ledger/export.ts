@@ -12,13 +12,20 @@ import { listWatches } from './watches.js'
 // A member's own data, to download (VISION.md §4.C). Each read keeps to the caller, as it does for the rest of the API.
 
 // Every purchase, newest first, loaded in pages so a long history stays within one query's limits.
-export async function allPurchases(tx: Tx, caller: Caller): Promise<TransactionView[]> {
-  const rows = await tx.selectFrom('transactions').select('id').where('spent_by', '=', caller.user_id).orderBy('date', 'desc').orderBy('created_at', 'desc').execute()
-  const purchases: TransactionView[] = []
+export async function allPurchases(tx: Tx, caller: Caller): Promise<(TransactionView & { created_via: string | null })[]> {
+  const rows = await tx.selectFrom('transactions').select(['id', 'created_via']).where('spent_by', '=', caller.user_id).orderBy('date', 'desc').orderBy('created_at', 'desc').execute()
+  const via = new Map(rows.map((r) => [r.id, r.created_via]))
+  const purchases: (TransactionView & { created_via: string | null })[] = []
   for (let start = 0; start < rows.length; start += MAX_PAGE) {
-    purchases.push(...await loadViews(tx, caller, rows.slice(start, start + MAX_PAGE).map((r) => r.id)))
+    const views = await loadViews(tx, caller, rows.slice(start, start + MAX_PAGE).map((r) => r.id))
+    purchases.push(...views.map((view) => ({ ...view, created_via: via.get(view.id) ?? null })))
   }
   return purchases
+}
+
+async function exportedNotes(tx: Tx, caller: Caller) {
+  const via = new Map((await tx.selectFrom('notes').select(['id', 'created_via']).where('user_id', '=', caller.user_id).execute()).map((r) => [r.id, r.created_via]))
+  return (await getNotes(tx, caller)).map((note) => ({ ...note, created_via: via.get(note.id) ?? null }))
 }
 
 export async function exportData(tx: Tx, caller: Caller, now = new Date()): Promise<z.input<typeof Export>> {
@@ -28,7 +35,7 @@ export async function exportData(tx: Tx, caller: Caller, now = new Date()): Prom
     member,
     currency: caller.currency,
     purchases: await allPurchases(tx, caller),
-    notes: await getNotes(tx, caller),
+    notes: await exportedNotes(tx, caller),
     watches: await listWatches(tx, caller),
     caps: await listCaps(tx, caller, now),
     repeats: await repeatsForExport(tx, caller),

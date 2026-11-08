@@ -232,6 +232,7 @@ Renaming a category or cost center keeps every link. Repeat templates and `check
 | `checked_groups` | List of strings | No | Watched groups the user answered about or a receipt covered, e.g. `["Groceries/Alcohol", "snacks"]`. A name the member doesn't watch is ignored. A checked group with no line item is a known $0. Groups with a line item are added on every write. Used for [coverage](VISION.md#coverage). |
 | `main_category` | Category link | No | The category sent as the top-level `category`: the single line's, or the rest line's beside explicit line items. |
 | `user_edited` | List of strings | No | Fields the user changed with `PATCH`: `amount`, `date`, `merchant`, `line_items`. A later source never changes them ([§3.2](#32-matching)). |
+| `created_via` | String | No | The OAuth client ID of the assistant that wrote it, from the access token: `kept-web` for the web UI, empty for an API key or a repeat. Lets an investigation tell which assistant made a bad record ([§5.4](#54-connecting-an-assistant)); never sent to the agent, and only in the member's export. |
 
 Time zones: every timestamp is stored in UTC, and each transaction also keeps the IANA time zone and the local date where it happened. The zone name (not an offset like `+09:00`) is kept so local time can always be rebuilt, including across daylight saving changes. The agent uses the user's time zone unless the conversation or the source says otherwise: "dinner in Tokyo", a foreign receipt, or a card charge with a foreign merchant location. When a purchase looks like it was made abroad, the agent includes the place and the converted amount in the confirmation: "Log ¥4,800 ($32.40) at Ichiran, Tokyo, yesterday?"
 
@@ -335,6 +336,7 @@ Time zones: every timestamp is stored in UTC, and each transaction also keeps th
 | `id`         | UUID      | Yes      |                                                                  |
 | `user_id`    | UUID      | Yes      | Set from the authenticated identity.                             |
 | `text`       | Text      | Yes      | In the user's words, e.g. "Costco is always groceries."          |
+| `created_via` | String   | No       | As on a transaction.                                             |
 | `created_at` | Timestamp | Yes      |                                                                  |
 
 ## 3. REST API
@@ -530,6 +532,7 @@ sequenceDiagram
 - **Clients created ahead of time:** Gemini asks for a client ID and secret instead of registering. Its redirect URI, shown under "Copy redirect URI" in its dialog, contains the member's Google account and Kept's host name, so each member creates their own client in the web UI under Settings → Assistants & keys (`POST /api/v1/connections/clients`); `create-client` does the same from the command line.
 - **Language:** the sign-in pages and the code email use the `kept_lang` cookie, else `Accept-Language`. The switch at the top of each page sets the cookie through `POST /language`; the web app sets it too, from the member's saved language. An invite email goes out in the inviter's language. Creating a household saves the page's language to the owner and seeds the starting categories in it.
 - **Connections** are a member's grants grouped by client. Disconnecting deletes the grants and their tokens.
+- **Clients are never deleted.** A purchase's or note's `created_via` names the client that wrote it ([§2](#2-data-model)), so its row stays for investigating that record: disconnecting keeps it, registered clients don't expire, and client registration management (RFC 7592) is off. A cleanup of unused clients would mark them deleted and refuse them at sign-in, keeping the row.
 - **State** (clients, grants, sessions, codes, tokens) lives in `oauth_models`, sign-in codes in `sign_in_codes`, hashed, and code requests in `sign_in_requests`. None belongs to a household, so none has row-level security. The scheduler deletes expired rows, keeping a verified code until its 15 minutes to join are over, and requests older than an hour. `SECURITY DEFINER` functions find a user or an open invite by email and a user's household before the household is known.
 
 ### 5.5 Changing Tools
