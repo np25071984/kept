@@ -1,4 +1,4 @@
-import { sql, type ExpressionBuilder, type SelectQueryBuilder } from 'kysely'
+import { sql, type ExpressionBuilder } from 'kysely'
 import type { z } from 'zod'
 import type { TransactionQuery } from '../api/transactions.js'
 import type { Tx } from '../db/db.js'
@@ -6,6 +6,7 @@ import type { Database } from '../db/schema.js'
 import { matchedAmount, narrowsLines } from '../domain/lineFilters.js'
 import { fromCents, numericToCents } from '../domain/money.js'
 import type { Caller } from './caller.js'
+import { loadLines } from './lines.js'
 import { loadViews, type TransactionView } from './transactions.js'
 
 // The caller's purchases, filtered and paged. Never another member's.
@@ -15,6 +16,8 @@ export type ListFilters = z.infer<typeof TransactionQuery>
 type Eb = ExpressionBuilder<Database, 'transactions'>
 
 const lower = (s: string) => s.toLowerCase()
+// A category path taken literally inside LIKE, so `_` and `%` in a name match only themselves.
+const literal = (s: string) => s.replace(/[\\%_]/g, '\\$&')
 
 function lineFilter(eb: Eb, filters: ListFilters) {
   const cats = (filters.category ?? []).map(lower)
@@ -31,7 +34,7 @@ function lineFilter(eb: Eb, filters: ListFilters) {
       .whereRef('line_items.transaction_id', '=', 'transactions.id')
       .$if(hasCategory, (q) =>
         q.where((e) => e.or([
-          ...cats.flatMap((c) => [e(e.fn('lower', ['categories.path']), '=', c), e(e.fn('lower', ['categories.path']), 'like', `${c}/%`)]),
+          ...cats.flatMap((c) => [e(e.fn('lower', ['categories.path']), '=', c), e(e.fn('lower', ['categories.path']), 'like', `${literal(c)}/%`)]),
           ...only.map((c) => e(e.fn('lower', ['categories.path']), '=', c)),
         ])))
       .$if(filters.item != null, (q) => q.where((e) => e(e.fn('lower', ['line_items.item']), '=', lower(filters.item!))))
@@ -50,7 +53,7 @@ function lineFilter(eb: Eb, filters: ListFilters) {
   )
 }
 
-export async function listPurchases(tx: Tx, caller: Caller, filters: ListFilters): Promise<{ transactions: TransactionView[]; count: number; total: number; lines_total: number }> {
+export async function listPurchases(tx: Tx, caller: Caller, filters: ListFilters): Promise<{ transactions: TransactionView[]; count: number; total: number; lines_total?: number }> {
   let query = tx.selectFrom('transactions').where('transactions.spent_by', '=', caller.user_id)
   if (filters.from) query = query.where('transactions.date', '>=', filters.from)
   if (filters.to) query = query.where('transactions.date', '<=', filters.to)
@@ -74,26 +77,8 @@ export async function listPurchases(tx: Tx, caller: Caller, filters: ListFilters
     .offset(filters.offset ?? 0)
     .execute()
   const total = numericToCents(totals.total ?? '0')
-  const linesTotal = narrowsLines(filters) ? matchedAmount(await matchedLines(tx, query.select('transactions.id')), filters) : total
-  return { transactions: await loadViews(tx, caller, rows.map((r) => r.id)), count: Number(totals.count), total: fromCents(total), lines_total: fromCents(linesTotal) }
+  // Once per list, on its first page: it reads every matching line, and later pages can't change it.
+  const linesTotal = filters.offset ? undefined : narrowsLines(filters) ? matchedAmount(await loadLines(tx, query.select('transactions.id')), filters) : total
+  return { transactions: await loadViews(tx, caller, rows.map((r) => r.id)), count: Number(totals.count), total: fromCents(total), ...(linesTotal !== undefined && { lines_total: fromCents(linesTotal) }) }
 }
 
-// Every line of the purchases `ids` selects, with whom each was for.
-async function matchedLines(tx: Tx, ids: SelectQueryBuilder<Database, 'transactions', { id: string }>) {
-  const rows = await tx
-    .selectFrom('line_items')
-    .innerJoin('categories', 'categories.id', 'line_items.category_id')
-    .select(['line_items.id', 'line_items.amount', 'line_items.item', 'categories.path'])
-    .where('line_items.transaction_id', 'in', ids)
-    .execute()
-  const shares = await tx
-    .selectFrom('line_item_cost_centers')
-    .innerJoin('cost_centers', 'cost_centers.id', 'line_item_cost_centers.cost_center_id')
-    .innerJoin('line_items', 'line_items.id', 'line_item_cost_centers.line_item_id')
-    .select(['line_item_cost_centers.line_item_id', 'cost_centers.name', 'line_item_cost_centers.share'])
-    .where('line_items.transaction_id', 'in', ids)
-    .execute()
-  const spentFor = new Map<string, { cost_center: string; share: number | null }[]>()
-  for (const s of shares) spentFor.set(s.line_item_id, [...(spentFor.get(s.line_item_id) ?? []), { cost_center: s.name, share: s.share == null ? null : Number(s.share) }])
-  return rows.map((row) => ({ amount: numericToCents(row.amount), category: row.path, item: row.item, spent_for: spentFor.get(row.id) ?? [] }))
-}

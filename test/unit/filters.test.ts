@@ -4,6 +4,12 @@ import { apiParams, chips, filteredPart, fromParams, NO_FILTERS, periodRange, ti
 const all = ['Car', 'Car/Fuel', 'Car/Insurance', 'Eating out', 'Groceries', 'Groceries/Alcohol', 'Groceries/Snacks']
 
 describe('purchase filters', () => {
+  it('names the merchant chip and keeps chips with the same name apart', () => {
+    const c = chips({ ...NO_FILTERS, merchant: 'Kia', people: ['Kia'], cats: ['Kia'] }, ['Kia'])
+    expect(c.map((x) => x.label)).toEqual(['Merchant: Kia', 'Kia', 'Kia'])
+    expect(new Set(c.map((x) => x.id)).size).toBe(3)
+  })
+
   it('shows the part of a purchase the category or person filters pick out', () => {
     const line = (amount: number, category: string, item: string | null, spent_for: { cost_center: string; share: number | null }[] = []) => ({ amount, category, item, spent_for })
     const kroger = { line_items: [line(18.99, 'Groceries/Alcohol', 'wine'), line(12.5, 'Household', 'detergent', [{ cost_center: 'Kia', share: 0.5 }, { cost_center: 'Anna', share: 0.5 }]), line(54.91, 'Groceries', null)] } as Parameters<typeof filteredPart>[0]

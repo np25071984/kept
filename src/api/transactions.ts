@@ -119,5 +119,5 @@ export const TransactionList = z.object({
   transactions: z.array(Transaction),
   count: z.number().int().describe('Everything that matches, beyond this page.'),
   total: z.number().describe('The sum of everything that matches.'),
-  lines_total: z.number().describe('What the category, person or thing, and item filters pick out of that sum, a person or thing by its share, as the summary counts it. Equals total without those filters.'),
+  lines_total: z.number().optional().describe('What the category, person or thing, and item filters pick out of that sum, a person or thing by its share, as the summary counts it. Equals total without those filters. On the first page (offset 0) only.'),
 })

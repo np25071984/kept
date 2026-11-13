@@ -4,12 +4,13 @@ import { api } from '../api.js'
 import { todayIn } from '../lib/dates.js'
 import { periodRange, toParams, type Period } from '../lib/filters.js'
 import { formatMoney } from '../lib/money.js'
-import { categoryBars, merchantBars, monthlyAverage, NOBODY, drawnBars, OTHER, peopleBars, previousRange, purchasesFor, topLevelTotal, trend, type Bar, type Row } from '../lib/reports.js'
+import { categoryBars, merchantBars, monthlyAverage, NOBODY, drawnBars, NO_MERCHANT, OTHER, peopleBars, previousRange, purchasesFor, topLevelTotal, trend, type Bar, type Row } from '../lib/reports.js'
 import { useLoad, useSession } from '../session.js'
 import { CHART_HEIGHT, LABEL_Y, monthChartLayout, NARROW_CHART_WIDTH } from '../../../src/domain/monthChart.js'
 import { t } from '../i18n.js'
 
 type Scope = 'me' | 'household'
+const PERIODS = ['this_month', 'last_month', 'this_year', 'last_12', 'custom'] as const
 type Tab = 'category' | 'people' | 'merchants'
 
 const monthName = (ym: string, style: 'short' | 'long' = 'short') => new Intl.DateTimeFormat(locale(), { month: style, timeZone: 'UTC' }).format(new Date(`${ym}-01T00:00:00Z`))
@@ -24,7 +25,9 @@ export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
   const currency = setup.household.currency
   const money = (n: number) => formatMoney(n, currency)
   const [params, setParams] = useSearchParams()
-  const period = (params.get('period') ?? 'this_month') as Exclude<Period, 'all'>
+  const asked = params.get('period')
+  // An unknown period reads as this month, here and in the links to My purchases.
+  const period: Exclude<Period, 'all'> = PERIODS.find((p) => p === asked) ?? 'this_month'
   const range = periodRange({ period, from: params.get('from') ?? today.slice(0, 8) + '01', to: params.get('to') ?? today }, today)
   const from = range.from ?? today
   const to = range.to ?? today
@@ -138,7 +141,7 @@ export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
   )
 }
 
-const barLabel = (b: Bar) => (b.key === NOBODY || b.key === OTHER ? t(b.label) : b.label)
+const barLabel = (b: Bar) => (b.key === NOBODY || b.key === OTHER || b.key === NO_MERCHANT ? t(b.label) : b.label)
 
 function Bars({ bars, money, link }: { bars: Bar[]; money: (n: number) => string; link: (b: Bar) => string | null }) {
   const top = Math.max(1, ...bars.map((b) => Math.max(b.amount, b.prev)))

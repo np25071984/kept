@@ -3,10 +3,11 @@ import type * as api from '../api/ledger.js'
 import type { Tx } from '../db/db.js'
 import { computeCoverage, type CoverageTransaction } from '../domain/coverage.js'
 import { daysInMonth, isLocalDate, parts, todayIn } from '../domain/dates.js'
-import { fromCents, numericToCents } from '../domain/money.js'
+import { fromCents } from '../domain/money.js'
 import { summarize, type SummaryLine } from '../domain/summary.js'
 import type { Caller } from './caller.js'
 import { invalid } from './errors.js'
+import { loadLines } from './lines.js'
 import { watchedGroups } from './watches.js'
 
 export type SummaryQuery = z.infer<typeof api.SummaryQuery>
@@ -21,29 +22,20 @@ export async function getSummary(tx: Tx, caller: Caller, query: SummaryQuery, no
   const groupBy = query.group_by ?? 'category'
   const period = query.period ?? 'total'
 
-  const rows = await tx
+  const rows = await loadLines(tx, tx
     .selectFrom('transactions')
-    .innerJoin('line_items', 'line_items.transaction_id', 'transactions.id')
-    .innerJoin('categories', 'categories.id', 'line_items.category_id')
-    .select(['transactions.id as transaction_id', 'transactions.date', 'transactions.checked_groups', 'transactions.merchant', 'transactions.spent_by', 'line_items.id', 'line_items.amount', 'line_items.item', 'categories.path'])
+    .select('transactions.id')
     .where('transactions.date', '>=', from)
     .where('transactions.date', '<=', to)
     .$if(scope === 'me', (q) => q.where('transactions.spent_by', '=', caller.user_id))
-    .$if(scope === 'household', (q) => q.where('transactions.private', '=', false))
-    .execute()
-  const shares = rows.length === 0 ? [] : await tx
-    .selectFrom('line_item_cost_centers')
-    .innerJoin('cost_centers', 'cost_centers.id', 'line_item_cost_centers.cost_center_id')
-    .select(['line_item_id', 'cost_centers.name', 'share'])
-    .where('line_item_id', 'in', rows.map((r) => r.id))
-    .execute()
+    .$if(scope === 'household', (q) => q.where('transactions.private', '=', false)))
 
   const lines: SummaryLine[] = rows.map((row) => ({
     date: row.date,
-    amount: numericToCents(row.amount),
-    category: row.path,
+    amount: row.amount,
+    category: row.category,
     item: row.item,
-    spent_for: shares.filter((s) => s.line_item_id === row.id).map((s) => ({ cost_center: s.name, share: s.share == null ? null : Number(s.share) })),
+    spent_for: row.spent_for,
     merchant: row.merchant,
     member: row.spent_by,
   }))
@@ -51,7 +43,7 @@ export async function getSummary(tx: Tx, caller: Caller, query: SummaryQuery, no
   const byTransaction = new Map<string, CoverageTransaction>()
   for (const row of rows) {
     const entry = byTransaction.get(row.transaction_id) ?? { checked_groups: row.checked_groups, lines: [] }
-    entry.lines.push({ amount: numericToCents(row.amount), category: row.path, item: row.item })
+    entry.lines.push({ amount: row.amount, category: row.category, item: row.item })
     byTransaction.set(row.transaction_id, entry)
   }
   const groups = await watchedGroups(tx, caller)

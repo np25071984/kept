@@ -161,6 +161,7 @@ function normalize(all: string[], cats: string[], only: string[]): Pick<Filters,
 }
 
 export interface Chip {
+  id: string
   label: string
   remove: (f: Filters) => Filters
 }
@@ -170,21 +171,21 @@ const PERIODS: Record<Exclude<Period, 'all'>, string> = { this_month: 'This mont
 
 export function chips(f: Filters, all: string[]): Chip[] {
   const out: Chip[] = []
-  if (f.period !== 'all') out.push({ label: f.period === 'custom' ? `${f.from || '…'} – ${f.to || '…'}` : t(PERIODS[f.period]), remove: (x) => ({ ...x, period: 'all', from: '', to: '' }) })
-  if (f.merchant) out.push({ label: f.merchant, remove: (x) => ({ ...x, merchant: '' }) })
-  if (f.privacy !== 'all') out.push({ label: t(f.privacy === 'private' ? 'Only private' : 'Shared'), remove: (x) => ({ ...x, privacy: 'all' }) })
+  if (f.period !== 'all') out.push({ id: 'period', label: f.period === 'custom' ? `${f.from || '…'} – ${f.to || '…'}` : t(PERIODS[f.period]), remove: (x) => ({ ...x, period: 'all', from: '', to: '' }) })
+  if (f.merchant) out.push({ id: 'merchant', label: t('Merchant: {name}', { name: f.merchant }), remove: (x) => ({ ...x, merchant: '' }) })
+  if (f.privacy !== 'all') out.push({ id: 'privacy', label: t(f.privacy === 'private' ? 'Only private' : 'Shared'), remove: (x) => ({ ...x, privacy: 'all' }) })
   for (const p of f.only) {
     const left = all.filter((c) => under(c, p) && tick(c, f) === 'off' && tick(parent(c)!, f) !== 'off' && !f.only.includes(c))
       .filter((c) => !leftUnderOff(c, p, f))
     const name = left.length ? t('{name}, not {rest}', { name: p, rest: left.map((c) => c.slice(p.length + 1)).join(', ') }) : p
-    out.push({ label: name, remove: (x) => ({ ...x, only: x.only.filter((o) => o !== p && !under(o, p)), cats: x.cats.filter((c) => !under(c, p)) }) })
+    out.push({ id: `only:${p}`, label: name, remove: (x) => ({ ...x, only: x.only.filter((o) => o !== p && !under(o, p)), cats: x.cats.filter((c) => !under(c, p)) }) })
   }
   for (const c of f.cats) {
     if (f.only.some((o) => under(c, o))) continue
-    out.push({ label: c, remove: (x) => ({ ...x, cats: x.cats.filter((y) => y !== c) }) })
+    out.push({ id: `category:${c}`, label: c, remove: (x) => ({ ...x, cats: x.cats.filter((y) => y !== c) }) })
   }
-  for (const name of f.people) out.push({ label: name, remove: (x) => ({ ...x, people: x.people.filter((p) => p !== name) }) })
-  if (f.nobody) out.push({ label: t('Nobody in particular'), remove: (x) => ({ ...x, nobody: false }) })
+  for (const name of f.people) out.push({ id: `for:${name}`, label: name, remove: (x) => ({ ...x, people: x.people.filter((p) => p !== name) }) })
+  if (f.nobody) out.push({ id: 'nobody', label: t('Nobody in particular'), remove: (x) => ({ ...x, nobody: false }) })
   return out
 }
 
