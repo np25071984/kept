@@ -1021,6 +1021,15 @@
               "type": "string"
             },
             "in": "query",
+            "name": "merchant_exact",
+            "required": false,
+            "description": "The whole merchant name, in any case."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
             "name": "item",
             "required": false
           },
@@ -1281,12 +1290,17 @@
                     "total": {
                       "type": "number",
                       "description": "The sum of everything that matches."
+                    },
+                    "lines_total": {
+                      "type": "number",
+                      "description": "What the category, person or thing, and item filters pick out of that sum, a person or thing by its share, as the summary counts it. Equals total without those filters."
                     }
                   },
                   "required": [
                     "transactions",
                     "count",
-                    "total"
+                    "total",
+                    "lines_total"
                   ],
                   "additionalProperties": false
                 }

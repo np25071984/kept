@@ -1,6 +1,9 @@
 import { t } from '../i18n.js'
 import { daysInMonth } from './dates.js'
 import { parentPath } from '../../../src/domain/setup.js'
+import { countedAmount, narrowsLines, type LineFilters } from '../../../src/domain/lineFilters.js'
+import { toCents } from '../../../src/domain/money.js'
+import type { Transaction } from './types.js'
 
 // My purchases' filters: kept in the URL, turned into API parameters and chips.
 // Categories are a three-state tree: `cats` are whole branches, `only` are parents whose own purchases count while
@@ -19,9 +22,10 @@ export interface Filters {
   only: string[]
   people: string[]
   nobody: boolean
+  merchant: string
 }
 
-export const NO_FILTERS: Filters = { q: '', period: 'all', from: '', to: '', privacy: 'all', cats: [], only: [], people: [], nobody: false }
+export const NO_FILTERS: Filters = { q: '', period: 'all', from: '', to: '', privacy: 'all', cats: [], only: [], people: [], nobody: false, merchant: '' }
 
 export function fromParams(p: URLSearchParams): Filters {
   const period = (p.get('period') ?? 'all') as Period
@@ -36,6 +40,7 @@ export function fromParams(p: URLSearchParams): Filters {
     only: p.getAll('only'),
     people: p.getAll('for'),
     nobody: p.get('nobody') === '1',
+    merchant: p.get('merchant') ?? '',
   }
 }
 
@@ -52,6 +57,7 @@ export function toParams(f: Filters): URLSearchParams {
   for (const c of f.only) p.append('only', c)
   for (const c of f.people) p.append('for', c)
   if (f.nobody) p.set('nobody', '1')
+  if (f.merchant) p.set('merchant', f.merchant)
   return p
 }
 
@@ -88,7 +94,22 @@ export function apiParams(f: Filters, today: string): URLSearchParams {
   for (const c of f.only) p.append('category_only', c)
   for (const c of f.people) p.append('cost_center', c)
   if (f.nobody) p.set('no_cost_center', 'true')
+  if (f.merchant) p.set('merchant_exact', f.merchant)
   return p
+}
+
+function lineFilters(f: Filters): LineFilters {
+  return { category: f.cats, category_only: f.only, cost_center: f.people, no_cost_center: f.nobody }
+}
+
+// With a category or person filter on, a purchase in the list shows the part the filters pick out, as reports count
+// it, and the lines that make it up. Null without such a filter.
+export function filteredPart(t: Pick<Transaction, 'line_items'>, f: Filters): { cents: number; lines: Transaction['line_items'] } | null {
+  const lf = lineFilters(f)
+  if (!narrowsLines(lf)) return null
+  const counted = t.line_items.map((line) => ({ line, cents: countedAmount({ amount: toCents(line.amount), category: line.category, item: line.item ?? null, spent_for: line.spent_for }, lf) }))
+  const lines = counted.filter((c) => c.cents > 0)
+  return { cents: lines.reduce((s, c) => s + c.cents, 0), lines: lines.map((c) => c.line) }
 }
 
 const parent = parentPath
@@ -150,6 +171,7 @@ const PERIODS: Record<Exclude<Period, 'all'>, string> = { this_month: 'This mont
 export function chips(f: Filters, all: string[]): Chip[] {
   const out: Chip[] = []
   if (f.period !== 'all') out.push({ label: f.period === 'custom' ? `${f.from || '…'} – ${f.to || '…'}` : t(PERIODS[f.period]), remove: (x) => ({ ...x, period: 'all', from: '', to: '' }) })
+  if (f.merchant) out.push({ label: f.merchant, remove: (x) => ({ ...x, merchant: '' }) })
   if (f.privacy !== 'all') out.push({ label: t(f.privacy === 'private' ? 'Only private' : 'Shared'), remove: (x) => ({ ...x, privacy: 'all' }) })
   for (const p of f.only) {
     const left = all.filter((c) => under(c, p) && tick(c, f) === 'off' && tick(parent(c)!, f) !== 'off' && !f.only.includes(c))

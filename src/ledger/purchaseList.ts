@@ -1,8 +1,9 @@
-import { sql, type ExpressionBuilder } from 'kysely'
+import { sql, type ExpressionBuilder, type SelectQueryBuilder } from 'kysely'
 import type { z } from 'zod'
 import type { TransactionQuery } from '../api/transactions.js'
 import type { Tx } from '../db/db.js'
 import type { Database } from '../db/schema.js'
+import { matchedAmount, narrowsLines } from '../domain/lineFilters.js'
 import { fromCents, numericToCents } from '../domain/money.js'
 import type { Caller } from './caller.js'
 import { loadViews, type TransactionView } from './transactions.js'
@@ -49,11 +50,12 @@ function lineFilter(eb: Eb, filters: ListFilters) {
   )
 }
 
-export async function listPurchases(tx: Tx, caller: Caller, filters: ListFilters): Promise<{ transactions: TransactionView[]; count: number; total: number }> {
+export async function listPurchases(tx: Tx, caller: Caller, filters: ListFilters): Promise<{ transactions: TransactionView[]; count: number; total: number; lines_total: number }> {
   let query = tx.selectFrom('transactions').where('transactions.spent_by', '=', caller.user_id)
   if (filters.from) query = query.where('transactions.date', '>=', filters.from)
   if (filters.to) query = query.where('transactions.date', '<=', filters.to)
   if (filters.merchant) query = query.where('transactions.merchant', 'ilike', `%${filters.merchant}%`)
+  if (filters.merchant_exact) query = query.where((eb) => eb(eb.fn('lower', ['transactions.merchant']), '=', lower(filters.merchant_exact!)))
   if (filters.private !== undefined) query = query.where('transactions.private', '=', filters.private)
   if (filters.q) {
     const q = `%${filters.q.trim()}%`
@@ -71,5 +73,27 @@ export async function listPurchases(tx: Tx, caller: Caller, filters: ListFilters
     .limit(Math.min(filters.limit ?? 50, 500))
     .offset(filters.offset ?? 0)
     .execute()
-  return { transactions: await loadViews(tx, caller, rows.map((r) => r.id)), count: Number(totals.count), total: fromCents(numericToCents(totals.total ?? '0')) }
+  const total = numericToCents(totals.total ?? '0')
+  const linesTotal = narrowsLines(filters) ? matchedAmount(await matchedLines(tx, query.select('transactions.id')), filters) : total
+  return { transactions: await loadViews(tx, caller, rows.map((r) => r.id)), count: Number(totals.count), total: fromCents(total), lines_total: fromCents(linesTotal) }
+}
+
+// Every line of the purchases `ids` selects, with whom each was for.
+async function matchedLines(tx: Tx, ids: SelectQueryBuilder<Database, 'transactions', { id: string }>) {
+  const rows = await tx
+    .selectFrom('line_items')
+    .innerJoin('categories', 'categories.id', 'line_items.category_id')
+    .select(['line_items.id', 'line_items.amount', 'line_items.item', 'categories.path'])
+    .where('line_items.transaction_id', 'in', ids)
+    .execute()
+  const shares = await tx
+    .selectFrom('line_item_cost_centers')
+    .innerJoin('cost_centers', 'cost_centers.id', 'line_item_cost_centers.cost_center_id')
+    .innerJoin('line_items', 'line_items.id', 'line_item_cost_centers.line_item_id')
+    .select(['line_item_cost_centers.line_item_id', 'cost_centers.name', 'line_item_cost_centers.share'])
+    .where('line_items.transaction_id', 'in', ids)
+    .execute()
+  const spentFor = new Map<string, { cost_center: string; share: number | null }[]>()
+  for (const s of shares) spentFor.set(s.line_item_id, [...(spentFor.get(s.line_item_id) ?? []), { cost_center: s.name, share: s.share == null ? null : Number(s.share) }])
+  return rows.map((row) => ({ amount: numericToCents(row.amount), category: row.path, item: row.item, spent_for: spentFor.get(row.id) ?? [] }))
 }

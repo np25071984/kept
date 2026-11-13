@@ -1,10 +1,10 @@
 import { locale } from '../i18n.js'
-import { NavLink, useSearchParams } from 'react-router'
+import { Link, NavLink, useSearchParams } from 'react-router'
 import { api } from '../api.js'
 import { todayIn } from '../lib/dates.js'
-import { periodRange, type Period } from '../lib/filters.js'
+import { periodRange, toParams, type Period } from '../lib/filters.js'
 import { formatMoney } from '../lib/money.js'
-import { categoryBars, merchantBars, monthlyAverage, NOBODY, drawnBars, OTHER, peopleBars, previousRange, topLevelTotal, trend, type Bar, type Row } from '../lib/reports.js'
+import { categoryBars, merchantBars, monthlyAverage, NOBODY, drawnBars, OTHER, peopleBars, previousRange, purchasesFor, topLevelTotal, trend, type Bar, type Row } from '../lib/reports.js'
 import { useLoad, useSession } from '../session.js'
 import { CHART_HEIGHT, LABEL_Y, monthChartLayout, NARROW_CHART_WIDTH } from '../../../src/domain/monthChart.js'
 import { t } from '../i18n.js'
@@ -68,6 +68,11 @@ export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
   }
   const setDate = (key: 'from' | 'to', value: string) => { const next = new URLSearchParams(params); next.set(key, value); setParams(next, { replace: true }) }
   const query = params.toString() ? `?${params}` : ''
+  // Only Mine links: My purchases holds the member's own purchases, so a household bar would not add up there.
+  const link = (b: Bar) => {
+    const filters = scope === 'me' ? purchasesFor(tab, b, { period, from, to }) : null
+    return filters && `/purchases?${toParams(filters)}`
+  }
 
   return (
     <>
@@ -113,7 +118,7 @@ export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
         <div className="card-section folder-body">
           {breakdown.error && <p className="error">{breakdown.error}</p>}
           {breakdown.data && bars.every((b) => b.amount === 0) && <p className="muted">{t('Nothing logged in this period.')}</p>}
-          <Bars bars={drawnBars(bars)} money={money} />
+          <Bars bars={drawnBars(bars)} money={money} link={link} />
           <div className="totalline">
             <span><strong>{t('Total')}</strong> <span className="small muted">· {t(diff <= 0 ? '{amount} less than {range}' : '{amount} more than {range}', { amount: money(Math.abs(diff)), range: dayRange(prev.from, prev.to) })}</span></span>
             <strong className="num">{money(total)}</strong>
@@ -123,7 +128,7 @@ export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
           {tab === 'merchants' && <p className="small muted">{t('The five biggest merchants of the period; the rest add up as "Other merchants".')}{scope === 'household' && t(' A merchant shows by name only when at least two members bought there.')}</p>}
           <details className="table-view"><summary>{t('Show as table')}</summary>
             <table className="lines"><thead><tr><th>{t(tab === 'category' ? 'Category' : tab === 'people' ? 'People & things' : 'Merchant')}</th><th className="num">{t('This period')}</th><th className="num">{t('Same days last period')}</th></tr></thead>
-              <tbody>{bars.map((b) => <tr key={b.key}><td className={b.sub ? 'sub' : undefined}>{b.key === NOBODY || b.key === OTHER ? t(b.label) : b.label}</td><td className="num">{money(b.amount)}</td><td className="num">{money(b.prev)}</td></tr>)}
+              <tbody>{bars.map((b) => { const href = link(b); const label = barLabel(b); return <tr key={b.key}><td className={b.sub ? 'sub' : undefined}>{href ? <Link to={href}>{label}</Link> : label}</td><td className="num">{money(b.amount)}</td><td className="num">{money(b.prev)}</td></tr> })}
                 <tr><td><strong>{t('Total')}</strong></td><td className="num"><strong>{money(total)}</strong></td><td className="num">{money(prevTotal)}</td></tr></tbody>
             </table>
           </details>
@@ -133,18 +138,26 @@ export function ReportsPage({ scope, tab }: { scope: Scope; tab: Tab }) {
   )
 }
 
-function Bars({ bars, money }: { bars: Bar[]; money: (n: number) => string }) {
+const barLabel = (b: Bar) => (b.key === NOBODY || b.key === OTHER ? t(b.label) : b.label)
+
+function Bars({ bars, money, link }: { bars: Bar[]; money: (n: number) => string; link: (b: Bar) => string | null }) {
   const top = Math.max(1, ...bars.map((b) => Math.max(b.amount, b.prev)))
   const w = (n: number) => `${(n / top) * 95}%`
   return (
     <div className="hbars">
-      {bars.map((b) => (
-        <div key={b.key} className={`hbar${b.sub ? ' sub' : ''}`} title={`${b.key}: ${money(b.amount)} (before: ${money(b.prev)})`}>
-          <span>{b.key === NOBODY || b.key === OTHER ? t(b.label) : b.label}</span>
+      {bars.map((b) => {
+        const href = link(b)
+        const className = `hbar${b.sub ? ' sub' : ''}`
+        const title = `${b.key}: ${money(b.amount)} (before: ${money(b.prev)})`
+        const content = <>
+          <span>{barLabel(b)}</span>
           <span className="track"><span className="fill" style={{ width: w(b.amount) }} /><span className="prev" style={{ left: w(b.prev) }} /></span>
           <span className="val num">{money(b.amount)}</span>
-        </div>
-      ))}
+        </>
+        return href
+          ? <Link key={b.key} to={href} className={className} title={title}>{content}</Link>
+          : <div key={b.key} className={className} title={title}>{content}</div>
+      })}
     </div>
   )
 }
