@@ -3,8 +3,10 @@ import type { z } from 'zod'
 import type { TransactionQuery } from '../api/transactions.js'
 import type { Tx } from '../db/db.js'
 import type { Database } from '../db/schema.js'
+import { matchedAmount, narrowsLines } from '../domain/lineFilters.js'
 import { fromCents, numericToCents } from '../domain/money.js'
 import type { Caller } from './caller.js'
+import { loadLines } from './lines.js'
 import { loadViews, type TransactionView } from './transactions.js'
 
 // The caller's purchases, filtered and paged. Never another member's.
@@ -14,6 +16,8 @@ export type ListFilters = z.infer<typeof TransactionQuery>
 type Eb = ExpressionBuilder<Database, 'transactions'>
 
 const lower = (s: string) => s.toLowerCase()
+// A category path taken literally inside LIKE, so `_` and `%` in a name match only themselves.
+const literal = (s: string) => s.replace(/[\\%_]/g, '\\$&')
 
 function lineFilter(eb: Eb, filters: ListFilters) {
   const cats = (filters.category ?? []).map(lower)
@@ -30,7 +34,7 @@ function lineFilter(eb: Eb, filters: ListFilters) {
       .whereRef('line_items.transaction_id', '=', 'transactions.id')
       .$if(hasCategory, (q) =>
         q.where((e) => e.or([
-          ...cats.flatMap((c) => [e(e.fn('lower', ['categories.path']), '=', c), e(e.fn('lower', ['categories.path']), 'like', `${c}/%`)]),
+          ...cats.flatMap((c) => [e(e.fn('lower', ['categories.path']), '=', c), e(e.fn('lower', ['categories.path']), 'like', `${literal(c)}/%`)]),
           ...only.map((c) => e(e.fn('lower', ['categories.path']), '=', c)),
         ])))
       .$if(filters.item != null, (q) => q.where((e) => e(e.fn('lower', ['line_items.item']), '=', lower(filters.item!))))
@@ -49,11 +53,12 @@ function lineFilter(eb: Eb, filters: ListFilters) {
   )
 }
 
-export async function listPurchases(tx: Tx, caller: Caller, filters: ListFilters): Promise<{ transactions: TransactionView[]; count: number; total: number }> {
+export async function listPurchases(tx: Tx, caller: Caller, filters: ListFilters): Promise<{ transactions: TransactionView[]; count: number; total: number; lines_total?: number }> {
   let query = tx.selectFrom('transactions').where('transactions.spent_by', '=', caller.user_id)
   if (filters.from) query = query.where('transactions.date', '>=', filters.from)
   if (filters.to) query = query.where('transactions.date', '<=', filters.to)
   if (filters.merchant) query = query.where('transactions.merchant', 'ilike', `%${filters.merchant}%`)
+  if (filters.merchant_exact) query = query.where((eb) => eb(eb.fn('lower', ['transactions.merchant']), '=', lower(filters.merchant_exact!)))
   if (filters.private !== undefined) query = query.where('transactions.private', '=', filters.private)
   if (filters.q) {
     const q = `%${filters.q.trim()}%`
@@ -71,5 +76,9 @@ export async function listPurchases(tx: Tx, caller: Caller, filters: ListFilters
     .limit(Math.min(filters.limit ?? 50, 500))
     .offset(filters.offset ?? 0)
     .execute()
-  return { transactions: await loadViews(tx, caller, rows.map((r) => r.id)), count: Number(totals.count), total: fromCents(numericToCents(totals.total ?? '0')) }
+  const total = numericToCents(totals.total ?? '0')
+  // Once per list, on its first page: it reads every matching line, and later pages can't change it.
+  const linesTotal = filters.offset ? undefined : narrowsLines(filters) ? matchedAmount(await loadLines(tx, query.select('transactions.id')), filters) : total
+  return { transactions: await loadViews(tx, caller, rows.map((r) => r.id)), count: Number(totals.count), total: fromCents(total), ...(linesTotal !== undefined && { lines_total: fromCents(linesTotal) }) }
 }
+

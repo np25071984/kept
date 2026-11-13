@@ -1,4 +1,5 @@
 import { shiftMonths } from '../../../src/domain/months.js'
+import { NO_FILTERS, type Filters } from './filters.js'
 
 // Reports: the trend, and a period broken down by category, people & things or merchant,
 // each bar with a tick for the same days of the previous period.
@@ -46,6 +47,7 @@ export function categoryBars(cur: Row[], prev: Row[]): Bar[] {
 
 export const NOBODY = 'Nobody in particular'
 export const OTHER = 'Other merchants'
+export const NO_MERCHANT = 'No merchant'
 
 export function peopleBars(cur: Row[], prev: Row[], total: number, prevTotal: number): Bar[] {
   const named = [...new Set([...cur, ...prev].map((r) => r.key))]
@@ -64,6 +66,15 @@ export function merchantBars(cur: Row[], prev: Row[], top = 5): Bar[] {
   const rest = cents(cur.filter((r) => !shownKeys.has(r.key.toLowerCase())).map((r) => r.amount))
   const restPrev = cents(prev.filter((r) => !shownKeys.has(r.key.toLowerCase())).map((r) => r.amount))
   return [...shown, ...(rest || restPrev ? [{ key: OTHER, label: OTHER, amount: rest / 100, prev: restPrev / 100, sub: false }] : [])]
+}
+
+// My purchases behind a bar: the same period and the bar's category, person or thing, or merchant. "Other merchants" and
+// "No merchant" have no filter.
+export function purchasesFor(tab: 'category' | 'people' | 'merchants', bar: Bar, period: Pick<Filters, 'period' | 'from' | 'to'>): Filters | null {
+  const base: Filters = { ...NO_FILTERS, period: period.period, ...(period.period === 'custom' && { from: period.from, to: period.to }) }
+  if (tab === 'category') return { ...base, cats: [bar.key] }
+  if (tab === 'people') return bar.key === NOBODY ? { ...base, nobody: true } : { ...base, people: [bar.key] }
+  return bar.key === OTHER || bar.key === NO_MERCHANT ? null : { ...base, merchant: bar.key }
 }
 
 // The bars drawn: whatever had spending in either period, so a drop to nothing keeps its row with the previous tick.

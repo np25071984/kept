@@ -1,7 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { categoryBars, coverageNote, drawnBars, merchantBars, monthlyAverage, peopleBars, previousRange, trend } from '../../web/src/lib/reports.js'
+import { NO_FILTERS } from '../../web/src/lib/filters.js'
+import { categoryBars, coverageNote, drawnBars, merchantBars, monthlyAverage, NO_MERCHANT, NOBODY, OTHER, peopleBars, previousRange, purchasesFor, trend, type Bar } from '../../web/src/lib/reports.js'
 
 describe('reports', () => {
+  it('opens My purchases behind a bar for the same period', () => {
+    const bar = (key: string): Bar => ({ key, label: key, amount: 1, prev: 0, sub: false })
+    const month = { period: 'last_month' as const, from: '2026-09-01', to: '2026-09-30' }
+    expect(purchasesFor('category', bar('Groceries/Alcohol'), month)).toEqual({ ...NO_FILTERS, period: 'last_month', cats: ['Groceries/Alcohol'] })
+    expect(purchasesFor('people', bar('Kia'), month)).toEqual({ ...NO_FILTERS, period: 'last_month', people: ['Kia'] })
+    expect(purchasesFor('people', bar(NOBODY), month)).toEqual({ ...NO_FILTERS, period: 'last_month', nobody: true })
+    expect(purchasesFor('merchants', bar('Lidl'), { ...month, period: 'custom' })).toEqual({ ...NO_FILTERS, period: 'custom', from: '2026-09-01', to: '2026-09-30', merchant: 'Lidl' })
+    expect(purchasesFor('merchants', bar(OTHER), month)).toBeNull()
+    expect(purchasesFor('merchants', bar(NO_MERCHANT), month)).toBeNull()
+  })
+
   it('compares with the same days of the previous period', () => {
     expect(previousRange('2026-10-01', '2026-10-29')).toEqual({ from: '2026-09-01', to: '2026-09-29' })
     expect(previousRange('2026-03-01', '2026-03-31')).toEqual({ from: '2026-02-01', to: '2026-02-28' })

@@ -186,7 +186,9 @@ describe('listing purchases', () => {
     const list = async (q: string) => (await c.get(`/api/v1/transactions?${q}`)).body
     const merchants = async (q: string) => (await list(q)).transactions.map((t: { merchant: string }) => t.merchant)
 
-    expect(await list('')).toMatchObject({ count: 3, total: 90 })
+    expect(await list('')).toMatchObject({ count: 3, total: 90, lines_total: 90 })
+    expect(await list('category=Groceries/Alcohol')).toMatchObject({ count: 1, total: 30, lines_total: 12 })
+    expect(await list('cost_center=Kia&no_cost_center=true')).toMatchObject({ count: 3, total: 90, lines_total: 90 })
     expect(await merchants('category=Car')).toEqual(['Shell'])
     expect(await merchants('category=Car&category=Groceries')).toEqual(['Kroger', 'Shell'])
     expect(await merchants('category_only=Groceries/Alcohol')).toEqual(['Kroger'])
@@ -196,7 +198,15 @@ describe('listing purchases', () => {
     expect(await merchants('private=true')).toEqual(['Sephora'])
     const page = await list('limit=2&offset=2')
     expect(page).toMatchObject({ count: 3, total: 90 })
+    expect(page.lines_total).toBeUndefined()
     expect(page.transactions.map((t: { merchant: string }) => t.merchant)).toEqual(['Shell'])
+    await c.post('/api/v1/transactions', { date: '2026-10-04', amount: 9, merchant: 'Shell Select', category: 'Other' })
+    expect(await merchants('merchant_exact=shell')).toEqual(['Shell'])
+    expect(await merchants('merchant=shell')).toEqual(['Shell Select', 'Shell'])
+    await c.post('/api/v1/categories', { path: 'A_B' })
+    await c.post('/api/v1/categories', { path: 'AxB/Sub' })
+    await c.post('/api/v1/transactions', { date: '2026-10-05', amount: 7, merchant: 'Wildcard', category: 'AxB/Sub' })
+    expect(await list('category=A_B')).toMatchObject({ count: 0, lines_total: 0 })
   })
 })
 

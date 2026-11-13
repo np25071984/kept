@@ -1,10 +1,10 @@
 import { locale } from '../i18n.js'
 import { Repeat, Search, SlidersHorizontal, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { api } from '../api.js'
 import { todayIn } from '../lib/dates.js'
-import { apiParams, chips, filterCount, fromParams, NO_FILTERS, tick, toggle, toParams, type Filters } from '../lib/filters.js'
+import { apiParams, chips, filteredPart, filterCount, fromParams, NO_FILTERS, tick, toggle, toParams, type Filters } from '../lib/filters.js'
 import { formatDate, formatMoney, toCents } from '../lib/money.js'
 import type { Transaction } from '../lib/types.js'
 import { categoryTree } from '../lib/vocabulary.js'
@@ -32,7 +32,7 @@ export function PurchasesPage() {
     setLoading(true)
     try {
       const result = await api.purchases(apiParams(filters, today), PAGE, offset)
-      setPage((prev) => ({ key, count: result.count, total: result.total, items: offset && prev?.key === key ? [...prev.items, ...result.transactions] : result.transactions }))
+      setPage((prev) => ({ key, count: result.count, total: result.lines_total ?? (prev?.key === key ? prev.total : result.total), items: offset && prev?.key === key ? [...prev.items, ...result.transactions] : result.transactions }))
       setError(null)
     } catch (e) {
       setError(messageFor(e))
@@ -53,6 +53,8 @@ export function PurchasesPage() {
   const currency = setup.household.currency
   const items = page?.items ?? []
   const active = chips(filters, categories)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const parts = useMemo(() => new Map(items.map((t) => [t.id, filteredPart(t, filters)])), [items, key])
   // Nothing logged and nothing to log with: only the card that says how to start.
   const starting = !key && needsAssistant && page?.count === 0
   return (
@@ -71,7 +73,7 @@ export function PurchasesPage() {
       {active.length > 0 && (
         <div className="fchips">
           {active.map((chip) => (
-            <span key={chip.label} className="fchip">{chip.label}<button type="button" aria-label={tr('Remove {name}', { name: chip.label })} title={tr('Remove {name}', { name: chip.label })} onClick={() => apply(chip.remove(filters))}><X size={14} aria-hidden="true" /></button></span>
+            <span key={chip.id} className="fchip">{chip.label}<button type="button" aria-label={tr('Remove {name}', { name: chip.label })} title={tr('Remove {name}', { name: chip.label })} onClick={() => apply(chip.remove(filters))}><X size={14} aria-hidden="true" /></button></span>
           ))}
           <button type="button" className="link" onClick={() => { setQ(''); apply(NO_FILTERS) }}>{tr('Clear all')}</button>
         </div>
@@ -88,8 +90,8 @@ export function PurchasesPage() {
       {items.length > 0 && (
         <ul className={`purchases${loading ? ' stale' : ''}`}>
           {byMonth(items).map(([month, list]) => [
-            <li key={month} className="group"><span>{month}</span><span className="num">{formatMoney(list.reduce((s, t) => s + toCents(t.amount), 0) / 100, currency)}</span></li>,
-            ...list.map((t) => <PurchaseRow key={t.id} t={t} currency={currency} back={key} />),
+            <li key={month} className="group"><span>{month}</span><span className="num">{formatMoney(list.reduce((s, t) => s + (parts.get(t.id)?.cents ?? toCents(t.amount)), 0) / 100, currency)}</span></li>,
+            ...list.map((t) => <PurchaseRow key={t.id} t={t} part={parts.get(t.id) ?? null} currency={currency} back={key} />),
           ])}
         </ul>
       )}
@@ -196,9 +198,12 @@ export function spentFor(t: Transaction): string[] {
 
 const SOURCE_LABELS: Record<string, string> = { talk: 'chat', photo: 'receipt', document: 'receipt', email: 'email', statement: 'statement', other: 'other' }
 
-function PurchaseRow({ t, currency, back }: { t: Transaction; currency: string; back: string }) {
-  const items = t.line_items.map((line) => line.item).filter(Boolean)
-  const who = spentFor(t)
+// With a category or person filter on, the row shows the part the filters pick out, its lines' items and tags, and the
+// whole purchase under it.
+function PurchaseRow({ t, part, currency, back }: { t: Transaction; part: ReturnType<typeof filteredPart>; currency: string; back: string }) {
+  const shown = part ? { ...t, line_items: part.lines } : t
+  const items = [...new Set(shown.line_items.map((line) => line.item).filter(Boolean))]
+  const who = spentFor(shown)
   const sources = [...new Set(t.sources.map((s) => SOURCE_LABELS[s.kind] ?? s.kind))].filter((s) => !(t.repeat_id && s === 'other'))
   return (
     <li className="row-link">
@@ -208,14 +213,16 @@ function PurchaseRow({ t, currency, back }: { t: Transaction; currency: string; 
           <strong><Link className="stretched" to={`/purchases/${t.id}`} state={{ back }}>{t.merchant ?? tr('No merchant')}</Link></strong>
           {items.length > 0 && <span className="muted"> · {items.join(', ')}</span>}
           <span className="tags">
-            {categoriesOf(t).map((c) => <span key={c} className="tag">{c}</span>)}
+            {categoriesOf(shown).map((c) => <span key={c} className="tag">{c}</span>)}
             {who.map((name) => <span key={name} className="tag for">{name}</span>)}
             {t.private && <span className="tag private">{tr('Private')}</span>}
             {t.repeat_id && <Link className="tag src" to={`/recurring#${t.repeat_id}`} title={tr('Logged by a recurring bill')}><Repeat size={12} aria-hidden="true" /> {tr('recurring')}</Link>}
             {sources.map((s) => <span key={s} className="tag src">{tr(s)}</span>)}
           </span>
         </span>
-        <span className="amount">{formatMoney(t.amount, currency)}</span>
+        {part
+          ? <span className="amount-col"><span className="amount">{formatMoney(part.cents / 100, currency)}</span><span className="small muted">{tr('of {total}', { total: formatMoney(t.amount, currency) })}</span></span>
+          : <span className="amount">{formatMoney(t.amount, currency)}</span>}
       </div>
     </li>
   )

@@ -208,6 +208,8 @@ a.button { display: inline-block; padding: 8px 14px; border-radius: 8px; border:
 .hbar .prev { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--fg); opacity: 0.55; }
 .hbar .val { min-width: 84px; text-align: right; }
 .hbar.sub { font-size: 13px; color: var(--muted); }
+a.hbar { color: inherit; text-decoration: none; border-radius: 4px; }
+a.hbar:hover > span:first-child, a.hbar:focus-visible > span:first-child { text-decoration: underline; }
 .hbar.sub > span:first-child { padding-left: 12px; }
 .hbar.sub .fill { opacity: 0.45; }
 /* On a phone each row puts the name and amount on one line and gives the bar the full width under them. */

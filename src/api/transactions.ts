@@ -59,6 +59,7 @@ export const TransactionQuery = z.object({
   from: LocalDate.optional(),
   to: LocalDate.optional(),
   merchant: z.string().optional(),
+  merchant_exact: z.string().optional().describe('The whole merchant name, in any case.'),
   item: z.string().optional(),
   q: z.string().optional().describe('Merchant or item, contains.'),
   private: flag('Only private purchases, or only the rest.').optional(),
@@ -118,4 +119,5 @@ export const TransactionList = z.object({
   transactions: z.array(Transaction),
   count: z.number().int().describe('Everything that matches, beyond this page.'),
   total: z.number().describe('The sum of everything that matches.'),
+  lines_total: z.number().optional().describe('What the category, person or thing, and item filters pick out of that sum, a person or thing by its share, as the summary counts it. Equals total without those filters. On the first page (offset 0) only.'),
 })
