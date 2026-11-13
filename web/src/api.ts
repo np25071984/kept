@@ -99,7 +99,7 @@ export const api = {
     const p = new URLSearchParams(params)
     p.set('limit', String(limit))
     p.set('offset', String(offset))
-    return call<{ transactions: Transaction[]; count: number; total: number }>('GET', `/api/v1/transactions?${p}`)
+    return call<{ transactions: Transaction[]; count: number; total: number; lines_total: number }>('GET', `/api/v1/transactions?${p}`)
   },
   transactions: (filters: TransactionFilters) => call<{ transactions: Transaction[] }>('GET', `/api/v1/transactions${query({ ...filters, limit: '500' })}`).then((r) => r.transactions),
   transaction: (id: string) => call<Transaction>('GET', `/api/v1/transactions/${id}`),
