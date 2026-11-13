@@ -1,6 +1,6 @@
 import { locale } from '../i18n.js'
 import { Repeat, Search, SlidersHorizontal, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { api } from '../api.js'
 import { todayIn } from '../lib/dates.js'
@@ -32,7 +32,7 @@ export function PurchasesPage() {
     setLoading(true)
     try {
       const result = await api.purchases(apiParams(filters, today), PAGE, offset)
-      setPage((prev) => ({ key, count: result.count, total: result.lines_total, items: offset && prev?.key === key ? [...prev.items, ...result.transactions] : result.transactions }))
+      setPage((prev) => ({ key, count: result.count, total: result.lines_total ?? (prev?.key === key ? prev.total : result.total), items: offset && prev?.key === key ? [...prev.items, ...result.transactions] : result.transactions }))
       setError(null)
     } catch (e) {
       setError(messageFor(e))
@@ -53,6 +53,8 @@ export function PurchasesPage() {
   const currency = setup.household.currency
   const items = page?.items ?? []
   const active = chips(filters, categories)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const parts = useMemo(() => new Map(items.map((t) => [t.id, filteredPart(t, filters)])), [items, key])
   // Nothing logged and nothing to log with: only the card that says how to start.
   const starting = !key && needsAssistant && page?.count === 0
   return (
@@ -71,7 +73,7 @@ export function PurchasesPage() {
       {active.length > 0 && (
         <div className="fchips">
           {active.map((chip) => (
-            <span key={chip.label} className="fchip">{chip.label}<button type="button" aria-label={tr('Remove {name}', { name: chip.label })} title={tr('Remove {name}', { name: chip.label })} onClick={() => apply(chip.remove(filters))}><X size={14} aria-hidden="true" /></button></span>
+            <span key={chip.id} className="fchip">{chip.label}<button type="button" aria-label={tr('Remove {name}', { name: chip.label })} title={tr('Remove {name}', { name: chip.label })} onClick={() => apply(chip.remove(filters))}><X size={14} aria-hidden="true" /></button></span>
           ))}
           <button type="button" className="link" onClick={() => { setQ(''); apply(NO_FILTERS) }}>{tr('Clear all')}</button>
         </div>
@@ -88,8 +90,8 @@ export function PurchasesPage() {
       {items.length > 0 && (
         <ul className={`purchases${loading ? ' stale' : ''}`}>
           {byMonth(items).map(([month, list]) => [
-            <li key={month} className="group"><span>{month}</span><span className="num">{formatMoney(list.reduce((s, t) => s + (filteredPart(t, filters)?.cents ?? toCents(t.amount)), 0) / 100, currency)}</span></li>,
-            ...list.map((t) => <PurchaseRow key={t.id} t={t} part={filteredPart(t, filters)} currency={currency} back={key} />),
+            <li key={month} className="group"><span>{month}</span><span className="num">{formatMoney(list.reduce((s, t) => s + (parts.get(t.id)?.cents ?? toCents(t.amount)), 0) / 100, currency)}</span></li>,
+            ...list.map((t) => <PurchaseRow key={t.id} t={t} part={parts.get(t.id) ?? null} currency={currency} back={key} />),
           ])}
         </ul>
       )}

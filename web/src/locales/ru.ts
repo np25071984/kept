@@ -340,4 +340,5 @@ export const ru: Record<string, string> = {
   'New API key': 'Новый API-ключ',
   'New key name': 'Название ключа',
   'of {total}': 'из {total}',
+  'Merchant: {name}': 'Магазин: {name}',
 }
