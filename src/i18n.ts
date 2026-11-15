@@ -125,6 +125,8 @@ const RU: Record<string, string> = {
   Questions: 'Вопросы',
   "Can ChatGPT track my expenses?": "Может ли ChatGPT вести мои расходы?",
   "On its own, it forgets last week's purchases and files the same store differently each time. With Kept connected, it logs each purchase to your household's ledger once you confirm it, and answers questions like “How much on groceries this month?”": "Сам по себе он забывает покупки прошлой недели и каждый раз записывает один и тот же магазин по-разному. С подключённым Kept он заносит каждую покупку в учёт семьи, когда вы её подтвердите, и отвечает на вопросы вроде «Сколько ушло на продукты в этом месяце?»",
+  'How do I connect Kept to ChatGPT?': 'Как подключить Kept к ChatGPT?',
+  'On chatgpt.com, open Settings, turn on Developer Mode (mostly on paid plans) and add Kept as a custom connector or app with the address {mcp}, then sign in to Kept with your email. Claude, Gemini and other assistants take the same address in their connector settings.': 'На chatgpt.com откройте настройки, включите режим разработчика (в основном на платных тарифах) и добавьте Kept как свой коннектор или приложение с адресом {mcp}, затем войдите в Kept по email. Claude, Gemini и другие ассистенты принимают тот же адрес в настройках коннекторов.',
   'Kept on GitHub': 'Kept на GitHub',
   Privacy: 'Конфиденциальность',
   'Last updated {date}': 'Обновлено: {date}',
