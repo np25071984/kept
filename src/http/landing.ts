@@ -21,6 +21,7 @@ export const linkToCode = (escaped: string) => escaped.replace(/\[([^\]]+)\]/g, 
 // Questions people search for, answered in a line or two. [Words] link to the code.
 const FAQ: [string, string][] = [
   ["Can ChatGPT track my expenses?", "On its own, it forgets last week's purchases and files the same store differently each time. With Kept connected, it logs each purchase to your household's ledger once you confirm it, and answers questions like “How much on groceries this month?”"],
+  ["How do I connect Kept to ChatGPT?", "On chatgpt.com, open Settings, turn on Developer Mode (mostly on paid plans) and add Kept as a custom connector or app with the address {mcp}, then sign in to Kept with your email. Claude, Gemini and other assistants take the same address in their connector settings."],
   ["Will my assistant always get it right?", "Not always. Kept tells every assistant to confirm a purchase before saving it, but how closely it follows those rules depends on the assistant, its model and its effort level, so choose a stronger model or a higher effort level if you can. Say “in Kept” when you log (“log $50 at Target in Kept”)."],
   ["Can my partner and I track spending together?", "Yes. Each of you signs in with your own email and uses your own assistant. You share categories and household totals; each person's purchases stay theirs, and private ones stay out of the totals."],
   ["How much does it cost?", "Kept is free and [open source]. Some assistants need a paid plan to add it."],
@@ -171,7 +172,7 @@ ${siteHeader(lang, {
 <section id="faq">
   <h2>${t('Questions')}</h2>
   <ul class="list">
-    ${FAQ.map(([question, answer]) => `<li><h3>${t(question)}</h3><div class="small muted">${linkToCode(t(answer))}</div></li>`).join('')}
+    ${FAQ.map(([question, answer]) => `<li><h3>${t(question)}</h3><div class="small muted">${linkToCode(t(answer)).replace('{mcp}', `${origin}/mcp`)}</div></li>`).join('')}
   </ul>
 </section>
 <footer class="small muted"><span>Kept</span><a href="mailto:support@kept-ledger.com">support@kept-ledger.com</a><a href="/privacy">${t('Privacy')}</a><a href="${REPOSITORY}" class="github" aria-label="${t('Kept on GitHub')}" title="${t('Kept on GitHub')}">${GITHUB_ICON}</a></footer>

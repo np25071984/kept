@@ -30,6 +30,14 @@ describe('landing page', () => {
     expect(ru).toContain('<h3>Ассистент всегда всё делает правильно?</h3>')
   })
 
+  it('shows how to connect ChatGPT, with this server\'s address', () => {
+    const en = landingPage('en', 'https://ledger.example.org')
+    expect(en).toContain('<h3>How do I connect Kept to ChatGPT?</h3>')
+    expect(en).toContain('with the address https://ledger.example.org/mcp,')
+    expect(landingPage('ru', ORIGIN)).toContain('с адресом https://kept-ledger.com/mcp,')
+    expect(en).not.toContain('{mcp}')
+  })
+
   it('links open source claims to the code, in every language', () => {
     expect(linkToCode('free and [open source].')).toBe('free and <a href="https://github.com/np25071984/kept">open source</a>.')
     expect(linkToCode('no brackets')).toBe('no brackets')
